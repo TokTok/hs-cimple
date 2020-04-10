@@ -65,11 +65,13 @@ haskell_library(
         ":lexer",
         ":parser",
         hazel_library("aeson"),
+        hazel_library("ansi-wl-pprint"),
         hazel_library("array"),
         hazel_library("base"),
         hazel_library("bytestring"),
         hazel_library("compact"),
         hazel_library("containers"),
+        hazel_library("groom"),
         hazel_library("mtl"),
         hazel_library("text"),
     ],
@@ -80,7 +82,9 @@ hspec_test(
     size = "small",
     deps = [
         ":hs-cimple",
+        hazel_library("ansi-wl-pprint"),
         hazel_library("base"),
         hazel_library("hspec"),
+        hazel_library("text"),
     ],
 )

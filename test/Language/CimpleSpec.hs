@@ -3,9 +3,9 @@ module Language.CimpleSpec where
 
 import           Test.Hspec         (Spec, describe, it, shouldBe)
 
-import           Language.Cimple    (AlexPosn (..), Lexeme (..),
-                                     LexemeClass (..), LiteralType (..),
-                                     Node (..), Scope (..))
+import           Language.Cimple    (AlexPosn (..), CommentStyle (..),
+                                     Lexeme (..), LexemeClass (..),
+                                     LiteralType (..), Node (..), Scope (..))
 import           Language.Cimple.IO (parseText)
 
 
@@ -65,4 +65,4 @@ spec =
         it "should parse a comment" $ do
             ast <- parseText "/* hello */"
             ast `shouldBe` Right
-                [Comment [CommentWord (L (AlexPn 3 1 4) CmtWord "hello")]]
+                [Comment Regular [CommentWord (L (AlexPn 3 1 4) CmtWord "hello")]]

@@ -84,8 +84,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             MacroBodyFunCall <$> recurse expr
         MacroParam name ->
             MacroParam <$> recurse name
-        Comment contents ->
-            Comment <$> recurse contents
+        Comment doc contents ->
+            Comment doc <$> recurse contents
         CommentBlock comment ->
             CommentBlock <$> recurse comment
         CommentWord word ->
@@ -104,8 +104,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             pure Continue
         Return value ->
             Return <$> recurse value
-        Switch value cases ->
-            Switch <$> recurse value <*> recurse cases
+        SwitchStmt value cases ->
+            SwitchStmt <$> recurse value <*> recurse cases
         IfStmt cond thenStmts elseStmt ->
             IfStmt <$> recurse cond <*> recurse thenStmts <*> recurse elseStmt
         ForStmt initStmt cond next stmts ->
@@ -146,6 +146,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             CastExpr <$> recurse ty <*> recurse expr
         SizeofExpr expr ->
             SizeofExpr <$> recurse expr
+        SizeofType ty ->
+            SizeofType <$> recurse ty
         LiteralExpr ty value ->
             LiteralExpr ty <$> recurse value
         VarExpr name ->

@@ -108,6 +108,8 @@ data LexemeClass
     | PpUndef
     | CmtBlock
     | CmtStart
+    | CmtStartBlock
+    | CmtStartDoc
     | CmtSpdxCopyright
     | CmtSpdxLicense
     | CmtCode

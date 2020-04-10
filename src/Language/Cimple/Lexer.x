@@ -100,8 +100,9 @@ tokens :-
 <0,ppSC>	"// ".*					;
 <0>		$white+					;
 <0>		"//!TOKSTYLE-"				{ start ignoreSC }
-<0>		"/*""*"?				{ mkL CmtStart `andBegin` cmtSC }
-<0>		"/""*"+\n" *"\n" * :: ".+\n" *"\n" ""*"+"/"	{ mkL CmtBlock }
+<0>		"/*"					{ mkL CmtStart `andBegin` cmtSC }
+<0>		"/**"					{ mkL CmtStartDoc `andBegin` cmtSC }
+<0>		"/**""*"+				{ mkL CmtStartBlock `andBegin` cmtSC }
 <0,cmtSC>	\"(\\.|[^\"])*\"			{ mkL LitString }
 <0>		'(\\|[^'])*'				{ mkL LitChar }
 <0>		"<"[a-z0-9\.\/_]+">"			{ mkL LitSysInclude }
@@ -233,8 +234,9 @@ tokens :-
 <cmtSC>		"http://"[^ ]+				{ mkL CmtWord }
 <cmtSC>		[0-9]+"%"				{ mkL LitInteger }
 <cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
+<cmtSC>		"–"					{ mkL CmtWord }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
-<cmtSC>		\n" "+"*/"				{ mkL CmtEnd `andBegin` 0 }
+<cmtSC>		\n" "+"*"+"/"				{ mkL CmtEnd `andBegin` 0 }
 <cmtSC,codeSC>	\n" "+"*"				{ mkL PpNewline }
 <cmtSC,codeSC>	\n					{ mkL PpNewline }
 <cmtSC>		" "+					;
