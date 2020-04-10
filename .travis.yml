@@ -3,25 +3,35 @@ language: generic
 dist: xenial
 os: linux
 
-env: PACKAGE=tokstyle TARGET=x86_64-linux
+env:
+  global:
+    # HACKAGE_USERNAME=[secure]
+    - secure: "zQfxfmcR9ZOlN2/9PsvPKuPQldhJbGskYtpUo50WW0n1qGUwEYbLZEs0S4Mt/7Dyp17z3JG0fYLX2CI6M/pOLSVgqwEmzlN2tqZ1mtstABQPzI2tx/s1E7Vj1424NW56Hl85W1ZDK2EhuDYhJn+E9Sd7h1p1GL+W4KQMwXeV9J0Q0MXD76R2aIPh85UmVIMtzCJwxm+xei2eag2TluytGQurqZWNtk2wB2734HcdJYhK36f7lZOhyg9ugFliHv7wAoSaAMqgkV9mLl9xa7E4MFahfpW5dMoitsrLJWAbrvPeekrtyxzlDhsvfESkyD4uzCOEHApvL0iqseQ2cRoDIOKCVnkGhMc4b/T68sLTrz5qxhqNXrTnsMI5Co+HVOym0fUT4vq1eluKfEaHmmR9w2Mnel7yi9oxn7inbGRAWdaLa6w+Q9bLjGgs7j8fUBpxRsBgMQJPzIyNoRtm+UD3WksDiIDRwXRwSS/09YcpK2lC5cEyi5hxeh8t0G5ft2j7/zkwXen+dZ2J3wVHjy5M5MteeBMk4dI/Uhkgtf7XDSVoZru2/3+RHlM5yMBa5OtV7vnKPQg4tktymRCzkWx57XSblWQ2cor6GL5GmIRfSTkUZuBfpfaaCZPXhyLHuBPGGCLN9gluCH0PZIq1f2wuGZV5iVzfBT3clhbepC6sw80="
+    # HACKAGE_PASSWORD=[secure]
+    - secure: "d1fxqa5o87mP2xnXkWdlXVKrIsz24ZfMEIUuc9m9GEHmZalmt8tlm//6PjC26Hu9IPRYIxFP5I7lYK0jija1xBHtwzR4lB9OZb86YuhSI6+upEgjOtrko9bM6uvSqaWCQAxjdJczpbVqVBPNEL02JDlG3GnBcOWDSCnWonLnMgwSHvmG7yxCe8VToR696hd6rr0bSLgWa0Ck17osqxHUg9S+QJ1xeNIorFBPleimhVyK9Agzk4a8GnNh5G7zoppt/Ti11l+mcHH0KwDWOHQ+nODRonpeWinVC5qvkc99IKyNgB66cS/UJOvTEdqC0xpozBSW8mTVu6MFW2GmR9I7wQHNEEctA7eTYDSoPJH4CKt3qL6XuNzsa6IxpG9z3q+/lxRqqXn/CPhi4xGSaqnqyAJhNEFe2kPYwY0w7WJEf93q/ougb+8kd0cwxKQrW94AvEKFU902NqHwUhbhP+O8JburMn8UjnBUXw9bNEQXGkD1MyUikK/KuzLMUC4CYEhFAE9TJgtYC8CYh8bPYGRJvr3fuzBjK+12MoeIYAQTcS+43RzK0OCb2chLC0f5137wq65m+20HhJ1ApmfMzjsh49D/SSQKEWriutm4mEHrBRyaSkTRyZMf13RgygS7Fz1X0Emt+F9rHgxNCDUfgjcP0rdsUn0B0Gb/ZRfrmA4fyKA="
 
 cache:
-  timeout: 3
+  timeout: 600
   directories:
+    - $HOME/.local
     - $HOME/.stack
 
 script:
   - bash <(travis_retry curl -s https://raw.githubusercontent.com/TokTok/hs-tools/master/bin/travis-haskell) script
-  - ./expand_yacc.pl src/Tokstyle/Cimple/Parser.y src/Tokstyle/Cimple/Parser.y
-  - stack install
-  - tar zcf $PACKAGE-$TARGET-$TRAVIS_TAG.tar.gz -C $HOME/.local $(grep executable $PACKAGE.cabal | awk '{print "bin/"$2}')
+  - eval $(travis-haskell env)
 
 deploy:
   provider: releases
   token:
-    secure: "o1WqCKpiHuNK/YLwfMZyCVJAVYWs4Yz+4P3khO6gU7xfjVZ7Pbv62xdUJH57lfBIpAiPKOTD0mVrX/anfjrgKR3Ecr05oAj6JEtgLJm8G8fx4YepWpjc9k1ZhPxSkMmo6f5Y41uIyQsxYXxqWjQ4A3cvkxKv0LehXfPfWeQQgFL6ywl2r5oahmdqXha+v5+af+Gqpnsc9Ji8MlA6AOWCyT8A4I6QEqUgSqOqjEIojvpDGZkUCesv84pUjZ5D6Ur/3olAZmP+1he6HCy/IqExhAZeJ7QG91/VBG2G1iOsIU7TeTGi0ssoEV//pk7r9sIYJqbfCXcXbt9yokURgxb1A9y+1SMAfXm60USOM7hZRfZE95rnrm36bi60usUrf4TcdnwqlrpAgH+GfcA1ykdDLC0ghZWn/gnOHMAKivJuGuz4em9UUwKFQzF3Vh2Ud7bIJW3D2MynNDXB190qI6/pzccXyn+3LSRL7mdBUdvtCetRhfsczLPfggfY/ydRUzVyKvyMO3PCAH93vtbwkPzCUhMpNH514mo1DP0k0vZbDY5u9gwnhs40CMGbU8POvboMZwrQ2rPpsvfBUoWasU+gAQeAUPq5fzcUEbo53PUAiH063kPNmgQTO8guyBwm+kK5kzeQuNx4g7Vbf7tYM1Kh2fE10SVH15n/EepAl8Db7JY="
-  file: $PACKAGE-$TARGET-$TRAVIS_TAG.tar.gz
+    secure: "QZ67vjK2QsINgCUqUTXoiOeQ+D3zpSpoSoIM1LC7EYbUMxfQyzdFP+MAy9nggV0mnY52AR3cCSr/gNv5ytWrLnV8dIF7ht32ekpr3jnv7D+Rb3NmgMQkLMI92cF5OP777EBWGALrYGtRqj/nkSElOKBtLeXb3JBaaRiQFecIsAxe1TrVNnlrZ59F1+hT4zoaWeu2VwovWHiO+bj1Qv6Z1KsyHNyHeEMvBhFzOLSRtvKBqr8JR/U08Y+5CbelxUxw/EPuTPribv2EHlHFIcx9/3MkVlpHgVC8UhyIgYoRXWDbgBeXePPBhCo0xw6eiJ7a9vLDPXK6nbcJkroSveTPRqrk5O2GYyEtQClKQ098aeB/yDIl2cHDgCO2U+gU8gxTBT5d8JgOMl7UlI3Z7I0GHTBX6gSLsiRxz44eoEsgi/9L9L2bFe3STZreEXMCqvELZnwUNjIkO6GfN3OmV/kr5GREnh12OfDiIB8vGWc7dFNUvks/l7XOuPB6U0VAf+yieuaoGstlDidJE+R/7rBLhV6cSyG2i25KMUN4bG6EZgm45CcQ0Rq5Q2uWLzB7pmY/4Jp6FWiLieqxJLs1EMwPnJ9dSGQw4Pxw8K3rSj7ed2mqFlfZdIVKLzxkv8Yp823MFCV7OECRoBTNWpX/ibC/294jnJn84hmdKrGmDScJF7M="
+  file: $PACKAGE-$VERSION.tar.gz
   skip_cleanup: true
   on:
-    repo: TokTok/hs-tokstyle
+    repo: TokTok/hs-cimple
     tags: true
+
+after_deploy: travis-haskell deploy
+
+# Only build pull requests and releases, don't build master on pushes,
+# except through api or cron.
+if: type IN (pull_request, api, cron) OR tag IS present

@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
-module Tokstyle.Cimple.Tokens
+module Language.Cimple.Tokens
     ( LexemeClass (..)
     ) where
 
@@ -11,29 +11,37 @@ data LexemeClass
     | IdFuncType
     | IdStdType
     | IdSueType
+    | IdTyVar
     | IdVar
+    | KwBitmask
     | KwBreak
     | KwCase
+    | KwClass
     | KwConst
     | KwContinue
     | KwDefault
     | KwDo
+    | KwElse
+    | KwEnum
+    | KwError
+    | KwEvent
+    | KwExtern
     | KwFor
     | KwGoto
     | KwIf
-    | KwElse
-    | KwEnum
-    | KwExtern
+    | KwNamespace
     | KwReturn
     | KwSizeof
     | KwStatic
     | KwStruct
     | KwSwitch
+    | KwThis
     | KwTypedef
     | KwUnion
     | KwVla
     | KwVoid
     | KwWhile
+    | KwWith
     | LitFalse
     | LitTrue
     | LitChar
@@ -104,6 +112,7 @@ data LexemeClass
     | CmtSpdxLicense
     | CmtCode
     | CmtWord
+    | CmtRef
     | CmtEnd
 
     | Error

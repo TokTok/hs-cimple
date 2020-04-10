@@ -2,23 +2,14 @@ load("@ai_formation_hazel//tools:mangling.bzl", "hazel_library")
 load("@rules_haskell//haskell:defs.bzl", "haskell_binary")
 
 haskell_binary(
-    name = "check-c",
-    srcs = ["check-c.hs"],
+    name = "dump-ast",
+    srcs = ["dump-ast.hs"],
     visibility = ["//visibility:public"],
     deps = [
-        "//hs-tokstyle",
+        "//hs-cimple",
         hazel_library("base"),
-    ],
-)
-
-haskell_binary(
-    name = "check-cimple",
-    srcs = ["check-cimple.hs"],
-    visibility = ["//visibility:public"],
-    deps = [
-        "//hs-tokstyle",
-        hazel_library("base"),
-        hazel_library("text"),
+        hazel_library("bytestring"),
+        hazel_library("groom"),
     ],
 )
 
@@ -27,7 +18,7 @@ haskell_binary(
     srcs = ["dump-tokens.hs"],
     visibility = ["//visibility:public"],
     deps = [
-        "//hs-tokstyle",
+        "//hs-cimple:lexer",
         hazel_library("base"),
         hazel_library("bytestring"),
         hazel_library("groom"),

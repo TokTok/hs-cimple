@@ -1,4 +1,4 @@
-module Tokstyle.Cimple.IO
+module Language.Cimple.IO
     ( parseFile
     , parseText
     ) where
@@ -11,9 +11,9 @@ import qualified Data.Map.Strict          as Map
 import           Data.Text                (Text)
 import qualified Data.Text                as Text
 import qualified Data.Text.Encoding       as Text
-import           Tokstyle.Cimple.AST      (Node (..))
-import           Tokstyle.Cimple.Lexer    (Lexeme, runAlex)
-import           Tokstyle.Cimple.Parser   (parseCimple)
+import           Language.Cimple.AST      (Node (..))
+import           Language.Cimple.Lexer    (Lexeme, runAlex)
+import           Language.Cimple.Parser   (parseCimple)
 
 
 type CompactState a = State (Map String Text) a

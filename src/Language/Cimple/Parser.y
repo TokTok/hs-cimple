@@ -1,12 +1,12 @@
 {
-module Tokstyle.Cimple.Parser where
+module Language.Cimple.Parser where
 
-import           Tokstyle.Cimple.AST    (AssignOp (..), BinaryOp (..),
+import           Language.Cimple.AST    (AssignOp (..), BinaryOp (..),
                                          LiteralType (..), Node (..),
                                          Scope (..), UnaryOp (..))
-import           Tokstyle.Cimple.Lexer  (Alex, AlexPosn, Lexeme (..), alexError,
+import           Language.Cimple.Lexer  (Alex, AlexPosn, Lexeme (..), alexError,
                                          alexMonadScan)
-import           Tokstyle.Cimple.Tokens (LexemeClass (..))
+import           Language.Cimple.Tokens (LexemeClass (..))
 }
 
 -- Conflict between (static) FunctionDecl and (static) ConstDecl.
@@ -22,29 +22,37 @@ import           Tokstyle.Cimple.Tokens (LexemeClass (..))
     ID_FUNC_TYPE		{ L _ IdFuncType		_ }
     ID_STD_TYPE			{ L _ IdStdType			_ }
     ID_SUE_TYPE			{ L _ IdSueType			_ }
+    ID_TYVAR			{ L _ IdTyVar			_ }
     ID_VAR			{ L _ IdVar			_ }
+    bitmask			{ L _ KwBitmask			_ }
     break			{ L _ KwBreak			_ }
     case			{ L _ KwCase			_ }
+    class			{ L _ KwClass			_ }
     const			{ L _ KwConst			_ }
     continue			{ L _ KwContinue		_ }
     default			{ L _ KwDefault			_ }
     do				{ L _ KwDo			_ }
     else			{ L _ KwElse			_ }
     enum			{ L _ KwEnum			_ }
+    'error'			{ L _ KwError			_ }
+    event			{ L _ KwEvent			_ }
     extern			{ L _ KwExtern			_ }
     for				{ L _ KwFor			_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
+    namespace			{ L _ KwNamespace		_ }
     return			{ L _ KwReturn			_ }
     sizeof			{ L _ KwSizeof			_ }
     static			{ L _ KwStatic			_ }
     struct			{ L _ KwStruct			_ }
     switch			{ L _ KwSwitch			_ }
+    this			{ L _ KwThis			_ }
     typedef			{ L _ KwTypedef			_ }
     union			{ L _ KwUnion			_ }
     VLA				{ L _ KwVla			_ }
     void			{ L _ KwVoid			_ }
     while			{ L _ KwWhile			_ }
+    with			{ L _ KwWith			_ }
     LIT_CHAR			{ L _ LitChar			_ }
     LIT_FALSE			{ L _ LitFalse			_ }
     LIT_TRUE			{ L _ LitTrue			_ }
@@ -116,6 +124,7 @@ import           Tokstyle.Cimple.Tokens (LexemeClass (..))
     'License'			{ L _ CmtSpdxLicense		_ }
     COMMENT_CODE		{ L _ CmtCode			_ }
     COMMENT_WORD		{ L _ CmtWord			_ }
+    COMMENT_REF			{ L _ CmtRef			_ }
 
 %left ','
 %right '=' '+=' '-=' '*=' '/=' '%=' '<<=' '>>=' '&=' '^=' '|='
@@ -159,6 +168,41 @@ ToplevelDecl
 |	FunctionDecl							{ $1 }
 |	ConstDecl							{ $1 }
 |	Comment								{ $1 }
+|	Namespace							{ $1 }
+|	Event								{ $1 }
+|	ErrorDecl							{ $1 }
+
+Namespace :: { StringNode }
+Namespace
+:	NamespaceDeclarator						{ $1 Global }
+|	static NamespaceDeclarator					{ $2 Static }
+
+NamespaceDeclarator :: { Scope -> StringNode }
+NamespaceDeclarator
+:	class ID_SUE_TYPE TypeParams '{' ToplevelDecls '}'		{ \s -> Class s $2 $3 $5 }
+|	namespace IdVar '{' ToplevelDecls '}'				{ \s -> Namespace s $2 $4 }
+
+TypeParams :: { [StringNode] }
+TypeParams
+:									{ [] }
+|	'<' ID_TYVAR '>'						{ [TyVar $2] }
+
+Event :: { StringNode }
+Event
+:	event IdVar       '{' EventType '}'				{ Event $2 $4 }
+|	event IdVar const '{' EventType '}'				{ Event $2 $5 }
+
+EventType :: { StringNode }
+EventType
+:	Comment typedef void EventParams ';'				{ Commented $1 $4 }
+
+EventParams :: { StringNode }
+EventParams
+:	FunctionParamList						{ EventParams $1 }
+
+ErrorDecl :: { StringNode }
+ErrorDecl
+:	'error' for IdVar EnumeratorList				{ ErrorDecl $3 $4 }
 
 Comment :: { StringNode }
 Comment
@@ -173,6 +217,7 @@ CommentBody
 CommentWord :: { StringNode }
 CommentWord
 :	COMMENT_WORD							{ CommentWord $1 }
+|	COMMENT_REF							{ CommentWord $1 }
 |	COMMENT_CODE							{ CommentWord $1 }
 |	LIT_INTEGER							{ CommentWord $1 }
 |	LIT_STRING							{ CommentWord $1 }
@@ -244,7 +289,7 @@ MacroParams
 
 MacroParam :: { StringNode }
 MacroParam
-:	ID_VAR								{ MacroParam $1 }
+:	IdVar								{ MacroParam $1 }
 
 MacroBody :: { StringNode }
 MacroBody
@@ -331,7 +376,7 @@ LabelStmt
 DeclStmt :: { StringNode }
 DeclStmt
 :	VarDecl								{ $1 }
-|	VLA '(' Type ',' ID_VAR ',' Expr ')' ';'			{ VLA $3 $5 $7 }
+|	VLA '(' Type ',' IdVar ',' Expr ')' ';'				{ VLA $3 $5 $7 }
 
 SingleVarDecl :: { StringNode }
 SingleVarDecl
@@ -348,18 +393,25 @@ Declarators
 
 Declarator :: { StringNode }
 Declarator
-:	DeclSpec(Expr) '=' InitialiserExpr				{ Declarator $1 (Just $3) }
-|	DeclSpec(Expr)							{ Declarator $1 Nothing }
+:	DeclSpec '=' InitialiserExpr					{ Declarator $1 (Just $3) }
+|	DeclSpec							{ Declarator $1 Nothing }
 
 InitialiserExpr :: { StringNode }
 InitialiserExpr
 :	InitialiserList							{ InitialiserList $1 }
 |	Expr								{ $1 }
 
-DeclSpec(expr)
-:	ID_VAR								{ DeclSpecVar $1 }
-|	DeclSpec(expr) '[' ']'						{ DeclSpecArray $1 Nothing }
-|	DeclSpec(expr) '[' expr ']'					{ DeclSpecArray $1 (Just $3) }
+DeclSpec :: { StringNode }
+DeclSpec
+:	IdVar								{ DeclSpecVar $1 }
+|	DeclSpec '[' ']'						{ DeclSpecArray $1 Nothing }
+|	DeclSpec '[' Expr ']'						{ DeclSpecArray $1 (Just $3) }
+
+IdVar :: { Lexeme String }
+IdVar
+:	ID_VAR								{ $1 }
+|	default								{ $1 }
+|	'error'								{ $1 }
 
 InitialiserList :: { [StringNode] }
 InitialiserList
@@ -451,10 +503,10 @@ ExprStmt
 
 LhsExpr :: { StringNode }
 LhsExpr
-:	ID_VAR								{ VarExpr $1 }
+:	IdVar								{ VarExpr $1 }
 |	'*' LhsExpr %prec DEREF						{ UnaryExpr UopDeref $2 }
-|	LhsExpr '.' ID_VAR						{ MemberAccess $1 $3 }
-|	LhsExpr '->' ID_VAR						{ PointerAccess $1 $3 }
+|	LhsExpr '.' IdVar						{ MemberAccess $1 $3 }
+|	LhsExpr '->' IdVar						{ PointerAccess $1 $3 }
 |	LhsExpr '[' Expr ']'						{ ArrayAccess $1 $3 }
 
 FunctionCall :: { StringNode }
@@ -478,7 +530,11 @@ Arg
 
 EnumDecl :: { StringNode }
 EnumDecl
-:	typedef enum ID_SUE_TYPE EnumeratorList ID_SUE_TYPE ';'		{ EnumDecl $3 $4 $5 }
+:	enum class ID_SUE_TYPE EnumeratorList				{ EnumClass $3 $4 }
+|	enum       ID_SUE_TYPE EnumeratorList				{ EnumConsts (Just $2) $3 }
+|	enum                   EnumeratorList ';'			{ EnumConsts Nothing $2 }
+|	typedef enum ID_SUE_TYPE EnumeratorList ID_SUE_TYPE ';'		{ EnumDecl $3 $4 $5 }
+|	bitmask ID_SUE_TYPE EnumeratorList				{ EnumDecl $2 $3 $2 }
 
 EnumeratorList :: { [StringNode] }
 EnumeratorList
@@ -491,18 +547,26 @@ Enumerators
 
 Enumerator :: { StringNode }
 Enumerator
-:	ID_CONST ','							{ Enumerator $1 Nothing }
-|	ID_CONST '=' ConstExpr ','					{ Enumerator $1 (Just $3) }
+:	EnumeratorName ','						{ Enumerator $1 Nothing }
+|	EnumeratorName '=' ConstExpr ','				{ Enumerator $1 (Just $3) }
+|	namespace ID_CONST '{' Enumerators '}'				{ Namespace Global $2 $4 }
 |	Comment								{ $1 }
+
+EnumeratorName :: { Lexeme String }
+EnumeratorName
+:	ID_CONST							{ $1 }
+|	ID_SUE_TYPE							{ $1 }
 
 AggregateDecl :: { StringNode }
 AggregateDecl
 :	AggregateType ';'						{ $1 }
+|	class ID_SUE_TYPE TypeParams ';'				{ ClassForward $2 $3 }
 |	typedef AggregateType ID_SUE_TYPE ';'				{ Typedef $2 $3 }
 
 AggregateType :: { StringNode }
 AggregateType
 :	struct ID_SUE_TYPE '{' MemberDecls '}'				{ Struct $2 $4 }
+|	struct this '{' MemberDecls '}'					{ Struct $2 $4 }
 |	union ID_SUE_TYPE '{' MemberDecls '}'				{ Union $2 $4 }
 
 MemberDecls :: { [StringNode] }
@@ -512,8 +576,9 @@ MemberDecls
 
 MemberDecl :: { StringNode }
 MemberDecl
-:	QualType DeclSpec(ConstExpr) ';'				{ MemberDecl $1 $2 Nothing }
-|	QualType DeclSpec(ConstExpr) ':' LIT_INTEGER ';'		{ MemberDecl $1 $2 (Just $4) }
+:	QualType DeclSpec ';'						{ MemberDecl $1 $2 Nothing }
+|	QualType DeclSpec ':' LIT_INTEGER ';'				{ MemberDecl $1 $2 (Just $4) }
+|	namespace IdVar '{' MemberDecls '}'				{ Namespace Global $2 $4 }
 |	PreprocIfdef(MemberDecls)					{ $1 }
 |	Comment								{ $1 }
 
@@ -537,9 +602,11 @@ LeafType :: { StringNode }
 LeafType
 :	struct ID_SUE_TYPE						{ TyStruct $2 }
 |	void								{ TyStd $1 }
+|	this								{ TyStd $1 }
 |	ID_FUNC_TYPE							{ TyFunc $1 }
 |	ID_STD_TYPE							{ TyStd $1 }
 |	ID_SUE_TYPE							{ TyUserDefined $1 }
+|	ID_TYVAR							{ TyVar $1 }
 
 FunctionDecl :: { StringNode }
 FunctionDecl
@@ -548,15 +615,34 @@ FunctionDecl
 
 FunctionDeclarator :: { Scope -> StringNode }
 FunctionDeclarator
-:	FunctionPrototype(ID_VAR) ';'					{ \s -> FunctionDecl s $1 }
-|	FunctionPrototype(ID_VAR) CompoundStmt				{ \s -> FunctionDefn s $1 $2 }
+:	FunctionPrototype(IdVar) WithError				{ \s -> FunctionDecl s $1 $2 }
+|	FunctionPrototype(IdVar) CompoundStmt				{ \s -> FunctionDefn s $1 $2 }
+|	QualType DeclSpec '{' Accessors '}'				{ \s -> Property $1 $2 $4 }
+
+Accessors :: { [StringNode] }
+Accessors
+:	Accessor							{ [$1] }
+|	Accessors Accessor						{ $2 : $1 }
+
+Accessor :: { StringNode }
+Accessor
+:	IdVar FunctionParamList WithError				{ Accessor $1 $2 $3 }
+|	Comment								{ $1 }
+
+WithError :: { Maybe StringNode }
+WithError
+:	';'								{ Nothing }
+|	with 'error' EnumeratorList					{ Just (ErrorList $3) }
+|	with 'error' for IdVar ';'					{ Just (ErrorFor $4) }
 
 FunctionPrototype(id)
 :	QualType id FunctionParamList					{ FunctionPrototype $1 $2 $3 }
+|	QualType id FunctionParamList const				{ FunctionPrototype $1 $2 $3 }
 
 FunctionParamList :: { [StringNode] }
 FunctionParamList
-:	'(' void ')'							{ [] }
+:	'(' ')'								{ [] }
+|	'(' void ')'							{ [TyStd $2] }
 |	'(' FunctionParams ')'						{ reverse $2 }
 |	'(' FunctionParams ',' '...' ')'				{ reverse $ Ellipsis : $2 }
 
@@ -567,7 +653,7 @@ FunctionParams
 
 FunctionParam :: { StringNode }
 FunctionParam
-:	QualType DeclSpec(ConstExpr)					{ FunctionParam $1 $2 }
+:	QualType DeclSpec						{ FunctionParam $1 $2 }
 
 ConstDecl :: { StringNode }
 ConstDecl

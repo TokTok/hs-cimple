@@ -2,15 +2,15 @@
 {-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-module Tokstyle.Cimple.TraverseAst
+module Language.Cimple.TraverseAst
     ( TraverseAst (..)
     , AstActions (..)
     , defaultActions
     ) where
 
 import           Data.Text             (Text)
-import           Tokstyle.Cimple.AST   (Node (..))
-import           Tokstyle.Cimple.Lexer (Lexeme (..))
+import           Language.Cimple.AST   (Node (..))
+import           Language.Cimple.Lexer (Lexeme (..))
 
 class TraverseAst a where
     traverseAst :: Applicative f => AstActions f Text -> a -> f a
@@ -90,6 +90,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             CommentBlock <$> recurse comment
         CommentWord word ->
             CommentWord <$> recurse word
+        Commented comment node ->
+            Commented <$> recurse comment <*> recurse node
         ExternC decls ->
             ExternC <$> recurse decls
         CompoundStmt stmts ->
@@ -158,6 +160,10 @@ instance TraverseAst (Node (Lexeme Text)) where
             FunctionCall <$> recurse callee <*> recurse args
         CommentExpr comment expr ->
             CommentExpr <$> recurse comment <*> recurse expr
+        EnumClass name members ->
+            EnumClass <$> recurse name <*> recurse members
+        EnumConsts name members ->
+            EnumConsts <$> recurse name <*> recurse members
         EnumDecl name members tyName ->
             EnumDecl <$> recurse name <*> recurse members <*> recurse tyName
         Enumerator name value ->
@@ -166,6 +172,12 @@ instance TraverseAst (Node (Lexeme Text)) where
             Typedef <$> recurse ty <*> recurse name
         TypedefFunction ty ->
             TypedefFunction <$> recurse ty
+        Namespace scope name members ->
+            Namespace scope <$> recurse name <*> recurse members
+        Class scope name tyvars members ->
+            Class scope <$> recurse name <*> recurse tyvars <*> recurse members
+        ClassForward name tyvars ->
+            ClassForward <$> recurse name <*> recurse tyvars
         Struct name members ->
             Struct <$> recurse name <*> recurse members
         Union name members ->
@@ -180,18 +192,34 @@ instance TraverseAst (Node (Lexeme Text)) where
             TyStruct <$> recurse name
         TyFunc name ->
             TyFunc <$> recurse name
+        TyVar name ->
+            TyVar <$> recurse name
         TyStd name ->
             TyStd <$> recurse name
         TyUserDefined name ->
             TyUserDefined <$> recurse name
-        FunctionDecl scope proto ->
-            FunctionDecl scope <$> recurse proto
+        FunctionDecl scope proto errors ->
+            FunctionDecl scope <$> recurse proto <*> recurse errors
         FunctionDefn scope proto body ->
             FunctionDefn scope <$> recurse proto <*> recurse body
         FunctionPrototype ty name params ->
             FunctionPrototype <$> recurse ty <*> recurse name <*> recurse params
         FunctionParam ty decl ->
             FunctionParam <$> recurse ty <*> recurse decl
+        Event name params ->
+            Event <$> recurse name <*> recurse params
+        EventParams params ->
+            EventParams <$> recurse params
+        Property ty decl accessors ->
+            Property <$> recurse ty <*> recurse decl <*> recurse accessors
+        Accessor name params errors ->
+            Accessor <$> recurse name <*> recurse params <*> recurse errors
+        ErrorDecl name errors ->
+            ErrorDecl <$> recurse name <*> recurse errors
+        ErrorList errors ->
+            ErrorList <$> recurse errors
+        ErrorFor name ->
+            ErrorFor <$> recurse name
         Ellipsis ->
             pure Ellipsis
         ConstDecl ty name ->

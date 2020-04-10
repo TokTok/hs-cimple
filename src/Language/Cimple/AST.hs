@@ -1,7 +1,7 @@
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE DeriveTraversable #-}
-module Tokstyle.Cimple.AST
+module Language.Cimple.AST
     ( AssignOp (..)
     , BinaryOp (..)
     , UnaryOp (..)
@@ -35,8 +35,11 @@ data Node lexeme
     | Comment [Node lexeme]
     | CommentBlock lexeme
     | CommentWord lexeme
-    -- extern "C" block
+    | Commented (Node lexeme) (Node lexeme)
+    -- Namespace-like blocks
     | ExternC [Node lexeme]
+    | Class Scope lexeme [Node lexeme] [Node lexeme]
+    | Namespace Scope lexeme [Node lexeme]
     -- Statements
     | CompoundStmt [Node lexeme]
     | Break
@@ -74,8 +77,11 @@ data Node lexeme
     | FunctionCall (Node lexeme) [Node lexeme]
     | CommentExpr (Node lexeme) (Node lexeme)
     -- Type definitions
+    | EnumClass lexeme [Node lexeme]
+    | EnumConsts (Maybe lexeme) [Node lexeme]
     | EnumDecl lexeme [Node lexeme] lexeme
     | Enumerator lexeme (Maybe (Node lexeme))
+    | ClassForward lexeme [Node lexeme]
     | Typedef (Node lexeme) lexeme
     | TypedefFunction (Node lexeme)
     | Struct lexeme [Node lexeme]
@@ -86,12 +92,20 @@ data Node lexeme
     | TyStruct lexeme
     | TyFunc lexeme
     | TyStd lexeme
+    | TyVar lexeme
     | TyUserDefined lexeme
     -- Functions
-    | FunctionDecl Scope (Node lexeme)
+    | FunctionDecl Scope (Node lexeme) (Maybe (Node lexeme))
     | FunctionDefn Scope (Node lexeme) [Node lexeme]
     | FunctionPrototype (Node lexeme) lexeme [Node lexeme]
     | FunctionParam (Node lexeme) (Node lexeme)
+    | Event lexeme (Node lexeme)
+    | EventParams [Node lexeme]
+    | Property (Node lexeme) (Node lexeme) [Node lexeme]
+    | Accessor lexeme [Node lexeme] (Maybe (Node lexeme))
+    | ErrorDecl lexeme [Node lexeme]
+    | ErrorList [Node lexeme]
+    | ErrorFor lexeme
     | Ellipsis
     -- Constants
     | ConstDecl (Node lexeme) lexeme

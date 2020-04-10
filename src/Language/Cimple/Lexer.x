@@ -3,7 +3,7 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE DeriveTraversable  #-}
 {-# LANGUAGE StandaloneDeriving #-}
-module Tokstyle.Cimple.Lexer
+module Language.Cimple.Lexer
     ( Alex
     , AlexPosn (..)
     , alexError
@@ -20,7 +20,7 @@ module Tokstyle.Cimple.Lexer
 
 import           Data.Aeson             (FromJSON, ToJSON)
 import           GHC.Generics           (Generic)
-import           Tokstyle.Cimple.Tokens (LexemeClass (..))
+import           Language.Cimple.Tokens (LexemeClass (..))
 }
 
 %wrapper "monad"
@@ -42,6 +42,7 @@ tokens :-
 <0>		"WSACleanup"				{ mkL IdVar }
 <0>		"GetSystemTimeAsFileTime"		{ mkL IdVar }
 <0>		"GetTickCount"				{ mkL IdVar }
+<0>		"SecureZeroMemory"			{ mkL IdVar }
 
 -- Winapi struct members.
 <0>		"GatewayList"				{ mkL IdVar }
@@ -114,27 +115,34 @@ tokens :-
 <0>		"#undef"				{ mkL PpUndef }
 <0>		"#include"				{ mkL PpInclude }
 <0>		"#error"				{ mkL PpError }
+<0,ppSC>	"bitmask"				{ mkL KwBitmask }
 <0,ppSC>	"break"					{ mkL KwBreak }
 <0,ppSC>	"case"					{ mkL KwCase }
+<0,ppSC>	"class"					{ mkL KwClass }
 <0,ppSC>	"const"					{ mkL KwConst }
 <0,ppSC>	"continue"				{ mkL KwContinue }
 <0,ppSC>	"default"				{ mkL KwDefault }
 <0,ppSC>	"do"					{ mkL KwDo }
 <0,ppSC>	"else"					{ mkL KwElse }
 <0,ppSC>	"enum"					{ mkL KwEnum }
+<0,ppSC>	"error"					{ mkL KwError }
+<0,ppSC>	"event"					{ mkL KwEvent }
 <0,ppSC>	"extern"				{ mkL KwExtern }
 <0,ppSC>	"for"					{ mkL KwFor }
 <0,ppSC>	"goto"					{ mkL KwGoto }
 <0,ppSC>	"if"					{ mkL KwIf }
+<0,ppSC>	"namespace"				{ mkL KwNamespace }
 <0,ppSC>	"return"				{ mkL KwReturn }
 <0,ppSC>	"sizeof"				{ mkL KwSizeof }
 <0,ppSC>	"static"				{ mkL KwStatic }
 <0,ppSC>	"struct"				{ mkL KwStruct }
 <0,ppSC>	"switch"				{ mkL KwSwitch }
+<0,ppSC>	"this"					{ mkL KwThis }
 <0,ppSC>	"typedef"				{ mkL KwTypedef }
 <0,ppSC>	"union"					{ mkL KwUnion }
 <0,ppSC>	"void"					{ mkL KwVoid }
 <0,ppSC>	"while"					{ mkL KwWhile }
+<0,ppSC>	"with"					{ mkL KwWith }
 <0,ppSC>	"bool"					{ mkL IdStdType }
 <0,ppSC>	"char"					{ mkL IdStdType }
 <0,ppSC>	"double"				{ mkL IdStdType }
@@ -146,10 +154,12 @@ tokens :-
 <0,ppSC>	"signed int"				{ mkL IdStdType }
 <0,ppSC>	"unsigned int"				{ mkL IdStdType }
 <0,ppSC>	"unsigned long"				{ mkL IdStdType }
+<0,ppSC>	"unsigned long long"			{ mkL IdStdType }
 <0,ppSC>	"unsigned"				{ mkL IdStdType }
 <0,ppSC>	"va_list"				{ mkL IdStdType }
 <0,ppSC>	"false"					{ mkL LitFalse }
 <0,ppSC>	"true"					{ mkL LitTrue }
+<0,ppSC>	"`"[a-z]+				{ mkL IdTyVar }
 <0,ppSC>	"__func__"				{ mkL IdVar }
 <0,ppSC>	"__"[a-zA-Z]+"__"?			{ mkL IdConst }
 <0,ppSC>	[A-Z][A-Z0-9_]{1,2}			{ mkL IdSueType }
@@ -213,14 +223,16 @@ tokens :-
 <cmtSC>		"SPDX-License-Identifier:"		{ mkL CmtSpdxLicense }
 <cmtSC>		"GPL-3.0-or-later"			{ mkL CmtWord }
 <cmtSC>		"TODO("[^\)]+"):"			{ mkL CmtWord }
+<cmtSC>		"@code"					{ mkL CmtCode `andBegin` codeSC }
+<cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		[@\\][a-z]+				{ mkL CmtWord }
 <cmtSC>		"*"[A-Za-z][A-Za-z0-9_']*"*"		{ mkL CmtWord }
+<cmtSC>		"#"[A-Za-z][A-Za-z0-9_]*		{ mkL CmtRef }
 <cmtSC>		[A-Za-z][A-Za-z0-9_']*			{ mkL CmtWord }
 <cmtSC>		"#"[0-9]+				{ mkL CmtWord }
 <cmtSC>		"http://"[^ ]+				{ mkL CmtWord }
 <cmtSC>		[0-9]+"%"				{ mkL LitInteger }
-<cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
-<cmtSC>		"`"[^`]+"`"				{ mkL CmtCode }
+<cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
 <cmtSC>		\n" "+"*/"				{ mkL CmtEnd `andBegin` 0 }
 <cmtSC,codeSC>	\n" "+"*"				{ mkL PpNewline }
@@ -228,8 +240,9 @@ tokens :-
 <cmtSC>		" "+					;
 
 -- <code></code> blocks in comments.
+<codeSC>	"@endcode"				{ mkL CmtCode `andBegin` cmtSC }
 <codeSC>	"</code>"				{ mkL CmtCode `andBegin` cmtSC }
-<codeSC>	[^\<]+					{ mkL CmtCode }
+<codeSC>	[^@\<]+					{ mkL CmtCode }
 
 -- Error handling.
 <0,ppSC,cmtSC,codeSC>	.				{ mkL Error }

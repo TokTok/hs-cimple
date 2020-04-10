@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Tokstyle.Cimple.Diagnostics (Diagnostics, warn) where
+module Language.Cimple.Diagnostics (Diagnostics, warn) where
 
 import           Control.Monad.State.Lazy (State)
 import qualified Control.Monad.State.Lazy as State
 import           Data.Text                (Text)
 import qualified Data.Text                as Text
-import           Tokstyle.Cimple.Lexer    (Lexeme (..), lexemeLine)
+import           Language.Cimple.Lexer    (Lexeme (..), lexemeLine)
 
 type Diagnostics a = State [Text] a
 

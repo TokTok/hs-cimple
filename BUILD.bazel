@@ -9,35 +9,67 @@ project()
 
 alex_lexer(
     name = "Lexer",
-    src = "src/Tokstyle/Cimple/Lexer.x",
+    src = "src/Language/Cimple/Lexer.x",
+)
+
+haskell_library(
+    name = "lexer",
+    srcs = [
+        "src/Language/Cimple/Lexer.hs",
+        "src/Language/Cimple/Tokens.hs",
+    ],
+    src_strip_prefix = "src",
+    visibility = ["//hs-cimple:__subpackages__"],
+    deps = [
+        hazel_library("aeson"),
+        hazel_library("array"),
+        hazel_library("base"),
+    ],
 )
 
 happy_parser(
     name = "Parser",
-    src = "src/Tokstyle/Cimple/Parser.y",
+    src = "src/Language/Cimple/Parser.y",
     preproc = "expand_yacc.pl",
 )
 
 haskell_library(
-    name = "hs-tokstyle",
-    srcs = glob(["src/**/*.*hs"]) + [
-        "src/Tokstyle/Cimple/Lexer.hs",
-        "src/Tokstyle/Cimple/Parser.hs",
+    name = "parser",
+    srcs = [
+        "src/Language/Cimple/AST.hs",
+        "src/Language/Cimple/Parser.hs",
     ],
     src_strip_prefix = "src",
-    version = "0.0.5",
+    visibility = ["//hs-cimple:__subpackages__"],
+    deps = [
+        ":lexer",
+        hazel_library("aeson"),
+        hazel_library("array"),
+        hazel_library("base"),
+    ],
+)
+
+haskell_library(
+    name = "hs-cimple",
+    srcs = glob(
+        ["src/**/*.*hs"],
+        exclude = [
+            "src/Language/Cimple/AST.hs",
+            "src/Language/Cimple/Tokens.hs",
+        ],
+    ),
+    src_strip_prefix = "src",
+    version = "0.0.1",
     visibility = ["//visibility:public"],
     deps = [
+        ":lexer",
+        ":parser",
         hazel_library("aeson"),
         hazel_library("array"),
         hazel_library("base"),
         hazel_library("bytestring"),
         hazel_library("compact"),
         hazel_library("containers"),
-        hazel_library("deepseq"),
-        hazel_library("filepath"),
-        hazel_library("groom"),
-        hazel_library("language-c"),
         hazel_library("mtl"),
         hazel_library("text"),
     ],
@@ -47,7 +79,7 @@ hspec_test(
     name = "testsuite",
     size = "small",
     deps = [
-        ":hs-tokstyle",
+        ":hs-cimple",
         hazel_library("base"),
         hazel_library("hspec"),
     ],

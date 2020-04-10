@@ -1,3 +1,3 @@
-# Tokstyle
+# Haskell package: cimple
 
-C style checker for TokTok projects.
+Parser for a dialect of C including Apidsl.
