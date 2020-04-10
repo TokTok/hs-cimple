@@ -29,6 +29,7 @@ library
       Language.Cimple
     , Language.Cimple.Diagnostics
     , Language.Cimple.IO
+    , Language.Cimple.Pretty
     , Language.Cimple.TraverseAst
   other-modules:
       Language.Cimple.AST
@@ -38,12 +39,25 @@ library
   build-depends:
       base < 5
     , aeson
+    , ansi-wl-pprint
     , array
     , bytestring
     , compact
     , containers
+    , groom
     , mtl
     , text
+
+executable cimplefmt
+  default-language: Haskell2010
+  hs-source-dirs:
+      tools
+  ghc-options:
+      -Wall
+  main-is: cimplefmt.hs
+  build-depends:
+      base < 5
+    , cimple
 
 executable dump-ast
   default-language: Haskell2010
@@ -85,5 +99,7 @@ test-suite testsuite
       -fno-warn-unused-imports
   build-depends:
       base < 5
+    , ansi-wl-pprint
     , cimple
     , hspec
+    , text

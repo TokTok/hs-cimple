@@ -8,6 +8,7 @@ module Language.Cimple.AST
     , LiteralType (..)
     , Node (..)
     , Scope (..)
+    , CommentStyle (..)
     ) where
 
 import           Data.Aeson   (FromJSON, ToJSON)
@@ -32,7 +33,7 @@ data Node lexeme
     | MacroBodyFunCall (Node lexeme)
     | MacroParam lexeme
     -- Comments
-    | Comment [Node lexeme]
+    | Comment CommentStyle [Node lexeme]
     | CommentBlock lexeme
     | CommentWord lexeme
     | Commented (Node lexeme) (Node lexeme)
@@ -46,7 +47,7 @@ data Node lexeme
     | Goto lexeme
     | Continue
     | Return (Maybe (Node lexeme))
-    | Switch (Node lexeme) [Node lexeme]
+    | SwitchStmt (Node lexeme) [Node lexeme]
     | IfStmt (Node lexeme) [Node lexeme] (Maybe (Node lexeme))
     | ForStmt (Maybe (Node lexeme)) (Maybe (Node lexeme)) (Maybe (Node lexeme)) [Node lexeme]
     | WhileStmt (Node lexeme) [Node lexeme]
@@ -69,6 +70,7 @@ data Node lexeme
     | ParenExpr (Node lexeme)
     | CastExpr (Node lexeme) (Node lexeme)
     | SizeofExpr (Node lexeme)
+    | SizeofType (Node lexeme)
     | LiteralExpr LiteralType lexeme
     | VarExpr lexeme
     | MemberAccess (Node lexeme) lexeme
@@ -187,3 +189,12 @@ data Scope
 
 instance FromJSON Scope
 instance ToJSON Scope
+
+data CommentStyle
+    = Regular
+    | Doxygen
+    | Block
+    deriving (Show, Eq, Generic)
+
+instance FromJSON CommentStyle
+instance ToJSON CommentStyle
