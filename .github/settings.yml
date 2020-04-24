@@ -1,0 +1,19 @@
+---
+_extends: template
+
+repository:
+  name: hs-cimple
+  description: Cimple and Apidsl language parsers and tools
+  topics: c, dsl, parser
+  has_issues: true
+
+branches:
+  - name: "master"
+    protection:
+      required_status_checks:
+        contexts:
+          - Travis CI - Pull Request
+          - WIP
+          - code-review/reviewable
+          - coverage/coveralls
+          - license/cla
