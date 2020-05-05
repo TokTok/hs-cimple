@@ -147,9 +147,6 @@ ppDeclSpec (DeclSpecArray dspec dim) = ppDeclSpec dspec <> ppDim dim
     ppDim (Just x) = char '[' <> ppExpr x <> char ']'
 ppDeclSpec x = error $ groom x
 
-ppDeclaratorList :: [Node (Lexeme Text)] -> Doc
-ppDeclaratorList = ppCommaSep ppDeclarator
-
 ppDeclarator :: Node (Lexeme Text) -> Doc
 ppDeclarator (Declarator dspec Nothing) =
     ppDeclSpec dspec
@@ -544,7 +541,7 @@ ppDecl decl = case decl of
     Break                 -> text "break;"
     Return Nothing        -> text "return;"
     Return (Just e)       -> text "return" <+> ppExpr e <> char ';'
-    VarDecl ty declrs     -> ppType ty <+> ppDeclaratorList declrs <> char ';'
+    VarDecl ty declr      -> ppType ty <+> ppDeclarator declr <> char ';'
     IfStmt cond t e       -> ppIfStmt cond t e
     ForStmt i c n body    -> ppForStmt i c n body
     Default s             -> text "default:" <+> ppStmt s

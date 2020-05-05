@@ -57,7 +57,7 @@ data Node lexeme
     | Label lexeme (Node lexeme)
     -- Variable declarations
     | VLA (Node lexeme) lexeme (Node lexeme)
-    | VarDecl (Node lexeme) [Node lexeme]
+    | VarDecl (Node lexeme) (Node lexeme)
     | Declarator (Node lexeme) (Maybe (Node lexeme))
     | DeclSpecVar lexeme
     | DeclSpecArray (Node lexeme) (Maybe (Node lexeme))

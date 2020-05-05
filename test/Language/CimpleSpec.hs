@@ -66,3 +66,27 @@ spec =
             ast <- parseText "/* hello */"
             ast `shouldBe` Right
                 [Comment Regular [CommentWord (L (AlexPn 3 1 4) CmtWord "hello")]]
+
+        it "supports single declarators" $ do
+            ast <- parseText "int main() { int a; }"
+            ast `shouldBe` Right
+                [ FunctionDefn
+                      Global
+                      (FunctionPrototype
+                          (TyStd (L (AlexPn 0 1 1) IdStdType "int"))
+                          (L (AlexPn 4 1 5) IdVar "main")
+                          []
+                      )
+                      [ VarDecl
+                            (TyStd (L (AlexPn 13 1 14) IdStdType "int"))
+                            (Declarator
+                                (DeclSpecVar (L (AlexPn 17 1 18) IdVar "a"))
+                                Nothing
+                            )
+                      ]
+                ]
+
+        it "does not support multiple declarators per declaration" $ do
+            ast <- parseText "int main() { int a, b; }"
+            ast `shouldBe` Left
+                "Parse error near token: L (AlexPn 18 1 19) PctComma \",\""

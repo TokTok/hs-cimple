@@ -356,7 +356,7 @@ ForInit :: { Maybe (StringNode) }
 ForInit
 :	';'							{ Nothing }
 |	AssignExpr ';'						{ Just $1 }
-|	SingleVarDecl						{ Just $1 }
+|	VarDecl							{ Just $1 }
 
 ForNext :: { StringNode }
 ForNext
@@ -386,18 +386,9 @@ DeclStmt
 :	VarDecl							{ $1 }
 |	VLA '(' QualType ',' IdVar ',' Expr ')' ';'		{ VLA $3 $5 $7 }
 
-SingleVarDecl :: { StringNode }
-SingleVarDecl
-:	QualType Declarator ';'					{ VarDecl $1 [$2] }
-
 VarDecl :: { StringNode }
 VarDecl
-:	QualType Declarators ';'				{ VarDecl $1 (reverse $2) }
-
-Declarators :: { [StringNode] }
-Declarators
-:	Declarator						{ [$1] }
-|	Declarators ',' Declarator				{ $3 : $1 }
+:	QualType Declarator ';'					{ VarDecl $1 $2 }
 
 Declarator :: { StringNode }
 Declarator

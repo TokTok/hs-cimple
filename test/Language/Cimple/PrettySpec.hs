@@ -99,3 +99,9 @@ spec = do
                 >>= (`shouldBe` "void foo(int a, ...);\n")
             compact "void foo(int a, const char *msg, ...);"
                 >>= (`shouldBe` "void foo(int a, char const* msg, ...);\n")
+
+        it "supports C preprocessor directives" $ do
+            compact "#define XYZZY 123\n"
+                >>= (`shouldBe` "#define XYZZY 123\n")
+            compact "#include <tox/tox.h>\n"
+                >>= (`shouldBe` "#include <tox/tox.h>\n")

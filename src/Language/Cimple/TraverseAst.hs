@@ -122,8 +122,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             Label <$> recurse label <*> recurse stmt
         VLA ty name size ->
             VLA <$> recurse ty <*> recurse name <*> recurse size
-        VarDecl ty decls ->
-            VarDecl <$> recurse ty <*> recurse decls
+        VarDecl ty decl ->
+            VarDecl <$> recurse ty <*> recurse decl
         Declarator spec value ->
             Declarator <$> recurse spec <*> recurse value
         DeclSpecVar name ->
