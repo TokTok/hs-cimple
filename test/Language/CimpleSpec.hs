@@ -65,7 +65,11 @@ spec =
         it "should parse a comment" $ do
             ast <- parseText "/* hello */"
             ast `shouldBe` Right
-                [Comment Regular [CommentWord (L (AlexPn 3 1 4) CmtWord "hello")]]
+                [ Comment Regular
+                          (L (AlexPn 0 1 1) CmtStart "/*")
+                          [CommentWord (L (AlexPn 3 1 4) CmtWord "hello")]
+                          (L (AlexPn 9 1 10) CmtEnd "*/")
+                ]
 
         it "supports single declarators" $ do
             ast <- parseText "int main() { int a; }"

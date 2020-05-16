@@ -84,8 +84,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             MacroBodyFunCall <$> recurse expr
         MacroParam name ->
             MacroParam <$> recurse name
-        Comment doc contents ->
-            Comment doc <$> recurse contents
+        Comment doc start contents end ->
+            Comment doc <$> recurse start <*> recurse contents <*> recurse end
         CommentBlock comment ->
             CommentBlock <$> recurse comment
         CommentWord word ->

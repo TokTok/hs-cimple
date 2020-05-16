@@ -94,6 +94,7 @@ test-suite testsuite
   main-is: testsuite.hs
   other-modules:
       Language.CimpleSpec
+    , Language.Cimple.PrettySpec
   ghc-options:
       -Wall
       -fno-warn-unused-imports

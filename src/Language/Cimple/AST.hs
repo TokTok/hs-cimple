@@ -33,7 +33,7 @@ data Node lexeme
     | MacroBodyFunCall (Node lexeme)
     | MacroParam lexeme
     -- Comments
-    | Comment CommentStyle [Node lexeme]
+    | Comment CommentStyle lexeme [Node lexeme] lexeme
     | CommentBlock lexeme
     | CommentWord lexeme
     | Commented (Node lexeme) (Node lexeme)

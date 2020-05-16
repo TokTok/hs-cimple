@@ -107,6 +107,7 @@ data LexemeClass
     | PpNewline
     | PpUndef
     | CmtBlock
+    | CmtIndent
     | CmtStart
     | CmtStartBlock
     | CmtStartDoc

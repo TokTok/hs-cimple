@@ -59,21 +59,25 @@ spec = do
                 , "} Foo;"
                 ]
 
+        it "respects newlines at end of comments" $ do
+            compact "/* foo bar */" >>= (`shouldBe` "/* foo bar */\n")
+            compact "/* foo bar\n */" >>= (`shouldBe` "/* foo bar\n */\n")
+
         it "respects comment styles" $ do
-            compact "/* foo bar */" >>= (`shouldBe` "/* foo bar\n */\n")
-            compact "/** foo bar */" >>= (`shouldBe` "/** foo bar\n */\n")
-            compact "/*** foo bar */" >>= (`shouldBe` "/*** foo bar\n */\n")
-            compact "/**** foo bar */" >>= (`shouldBe` "/*** foo bar\n */\n")
+            compact "/* foo bar */" >>= (`shouldBe` "/* foo bar */\n")
+            compact "/** foo bar */" >>= (`shouldBe` "/** foo bar */\n")
+            compact "/*** foo bar */" >>= (`shouldBe` "/*** foo bar */\n")
+            compact "/**** foo bar */" >>= (`shouldBe` "/*** foo bar */\n")
 
         it "supports punctuation in comments" $ do
             compact "/* foo.bar,baz-blep */"
-                >>= (`shouldBe` "/* foo. bar, baz - blep\n */\n")
-            compact "/* foo? */" >>= (`shouldBe` "/* foo ?\n */\n")
+                >>= (`shouldBe` "/* foo. bar, baz - blep */\n")
+            compact "/* foo? */" >>= (`shouldBe` "/* foo ? */\n")
 
         it "formats number ranges and negative numbers without spacing" $ do
-            compact "/* 123 - 456 */" >>= (`shouldBe` "/* 123-456\n */\n")
-            compact "/* - 3 */" >>= (`shouldBe` "/* -3\n */\n")
-            compact "/* a-b */" >>= (`shouldBe` "/* a - b\n */\n")
+            compact "/* 123 - 456 */" >>= (`shouldBe` "/* 123-456 */\n")
+            compact "/* - 3 */" >>= (`shouldBe` "/* -3 */\n")
+            compact "/* a-b */" >>= (`shouldBe` "/* a - b */\n")
 
         it "formats pointer types with east-const" $ do
             compact "void foo(const int *a);"

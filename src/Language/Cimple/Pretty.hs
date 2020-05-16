@@ -30,7 +30,7 @@ ppLineSep go = foldr (<>) empty . List.intersperse linebreak . map go
 
 ppComment :: CommentStyle -> [Node (Lexeme Text)] -> Doc
 ppComment style cs =
-    nest 1 (ppCommentStyle style <> ppCommentBody cs) <$> text " */"
+    nest 1 (ppCommentStyle style <> ppCommentBody cs) <+> text "*/"
 
 ppCommentStyle :: CommentStyle -> Doc
 ppCommentStyle Block   = text "/***"
@@ -58,7 +58,8 @@ ppCommentBody = go . map unCommentWord
     ppWord (L _ CmtWord          t) = space <> ppText t
     ppWord (L _ CmtCode          t) = space <> ppText t
     ppWord (L _ CmtRef           t) = space <> ppText t
-    ppWord (L _ PpNewline        _) = linebreak <> char '*'
+    ppWord (L _ CmtIndent        _) = char '*'
+    ppWord (L _ PpNewline        _) = linebreak
     ppWord (L _ LitInteger       t) = space <> ppText t
     ppWord (L _ LitString        t) = space <> ppText t
     ppWord (L _ PctEMark         t) = space <> ppText t
@@ -211,7 +212,7 @@ ppNamespace pp scope name members =
     ) <$> char '}'
 
 ppEnumerator :: Node (Lexeme Text) -> Doc
-ppEnumerator (Comment    style cs     ) = ppComment style cs
+ppEnumerator (Comment    style _ cs _ ) = ppComment style cs
 ppEnumerator (Enumerator name  Nothing) = ppLexeme name <> char ','
 ppEnumerator (Enumerator name (Just value)) =
     ppLexeme name <+> char '=' <+> ppExpr value <> char ','
@@ -229,7 +230,7 @@ ppMemberDeclList :: [Node (Lexeme Text)] -> Doc
 ppMemberDeclList = ppLineSep ppMemberDecl
 
 ppAccessor :: Node (Lexeme Text) -> Doc
-ppAccessor (Comment style cs) = ppComment style cs
+ppAccessor (Comment style _ cs _) = ppComment style cs
 ppAccessor (Accessor name params errs) =
     ppLexeme name <> ppFunctionParamList params <> ppWithError errs
 ppAccessor x = error $ groom x
@@ -238,7 +239,7 @@ ppAccessorList :: [Node (Lexeme Text)] -> Doc
 ppAccessorList = ppLineSep ppAccessor
 
 ppEventType :: Node (Lexeme Text) -> Doc
-ppEventType (Commented (Comment style cs) ty) =
+ppEventType (Commented (Comment style _ cs _) ty) =
     ppComment style cs <$> ppEventType ty
 ppEventType (EventParams params) =
     text "typedef void" <> ppFunctionParamList params
@@ -360,7 +361,7 @@ ppTernaryExpr c t e =
     ppExpr c <+> char '?' <+> ppExpr t <+> char ':' <+> ppExpr e
 
 ppCommentExpr :: Node (Lexeme Text) -> Node (Lexeme Text) -> Doc
-ppCommentExpr (Comment style body) e =
+ppCommentExpr (Comment style _ body _) e =
     ppCommentStyle style <+> ppCommentBody body <+> text "*/" <+> ppExpr e
 ppCommentExpr c _ = error $ groom c
 
@@ -429,7 +430,7 @@ ppDecl decl = case decl of
     PreprocUndef name ->
         text "#undef" <+> ppLexeme name
 
-    Comment style cs ->
+    Comment style _ cs _ ->
         ppComment style cs
     CommentBlock cs ->
         ppLexeme cs

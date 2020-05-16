@@ -121,6 +121,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '/*'			{ L _ CmtStart			_ }
     '/**'			{ L _ CmtStartDoc		_ }
     '/***'			{ L _ CmtStartBlock		_ }
+    ' * '			{ L _ CmtIndent			_ }
     '*/'			{ L _ CmtEnd			_ }
     'Copyright'			{ L _ CmtSpdxCopyright		_ }
     'License'			{ L _ CmtSpdxLicense		_ }
@@ -208,9 +209,9 @@ ErrorDecl
 
 Comment :: { StringNode }
 Comment
-:	'/*' CommentBody '*/'					{ Comment Regular (reverse $2) }
-|	'/**' CommentBody '*/'					{ Comment Doxygen (reverse $2) }
-|	'/***' CommentBody '*/'					{ Comment Block (reverse $2) }
+:	'/*' CommentBody '*/'					{ Comment Regular $1 (reverse $2) $3 }
+|	'/**' CommentBody '*/'					{ Comment Doxygen $1 (reverse $2) $3 }
+|	'/***' CommentBody '*/'					{ Comment Block $1 (reverse $2) $3 }
 |	'/**/'							{ CommentBlock $1 }
 
 CommentBody :: { [StringNode] }
@@ -242,6 +243,7 @@ CommentWord
 |	'-'							{ CommentWord $1 }
 |	'='							{ CommentWord $1 }
 |	'\n'							{ CommentWord $1 }
+|	' * '							{ CommentWord $1 }
 
 PreprocIfdef(decls)
 :	'#ifdef' ID_CONST decls PreprocElse(decls) '#endif'	{ PreprocIfdef $2 $3 $4 }

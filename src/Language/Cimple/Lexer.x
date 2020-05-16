@@ -236,14 +236,17 @@ tokens :-
 <cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
 <cmtSC>		"–"					{ mkL CmtWord }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
-<cmtSC>		\n" "+"*"+"/"				{ mkL CmtEnd `andBegin` 0 }
-<cmtSC,codeSC>	\n" "+"*"				{ mkL PpNewline }
-<cmtSC,codeSC>	\n					{ mkL PpNewline }
+<cmtSC>		\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
 <cmtSC>		" "+					;
+
+<cmtNewlineSC>	" "+"*"+"/"				{ mkL CmtEnd `andBegin` 0 }
+<cmtNewlineSC>	" "+"*"					{ mkL CmtIndent `andBegin` cmtSC }
 
 -- <code></code> blocks in comments.
 <codeSC>	"@endcode"				{ mkL CmtCode `andBegin` cmtSC }
 <codeSC>	"</code>"				{ mkL CmtCode `andBegin` cmtSC }
+<codeSC>	\n					{ mkL PpNewline }
+<codeSC>	\n" "+"*"				{ mkL PpNewline }
 <codeSC>	[^@\<]+					{ mkL CmtCode }
 
 -- Error handling.
