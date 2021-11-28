@@ -11,5 +11,7 @@ branches:
     protection:
       required_status_checks:
         contexts:
-          - cirrus-ci
-          - code-review/reviewable
+          - "Cabal Build / build (pull_request)"
+          - "cirrus-ci"
+          - "Codacy Static Code Analysis"
+          - "code-review/reviewable"

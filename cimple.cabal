@@ -42,8 +42,8 @@ library
     , ansi-wl-pprint
     , array
     , bytestring
-    , compact
     , containers
+    , ghc-compact
     , groom
     , mtl
     , text

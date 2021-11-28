@@ -5,12 +5,12 @@ module Language.Cimple.IO
 
 import           Control.Monad.State.Lazy (State, get, put, runState)
 import qualified Data.ByteString          as BS
-import qualified Data.Compact             as Compact
 import           Data.Map.Strict          (Map)
 import qualified Data.Map.Strict          as Map
 import           Data.Text                (Text)
 import qualified Data.Text                as Text
 import qualified Data.Text.Encoding       as Text
+import qualified GHC.Compact              as Compact
 import           Language.Cimple.AST      (Node (..))
 import           Language.Cimple.Lexer    (Lexeme, runAlex)
 import           Language.Cimple.Parser   (parseCimple)
