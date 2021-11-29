@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveFunctor     #-}
 {-# LANGUAGE DeriveGeneric     #-}
 {-# LANGUAGE DeriveTraversable #-}
+{-# LANGUAGE StrictData        #-}
 module Language.Cimple.AST
     ( AssignOp (..)
     , BinaryOp (..)

@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE StrictData    #-}
 module Language.Cimple.Tokens
     ( LexemeClass (..)
     ) where

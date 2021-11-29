@@ -1,4 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE StrictData        #-}
 module Language.Cimple.Diagnostics (Diagnostics, warn) where
 
 import           Control.Monad.State.Lazy (State)
