@@ -2,6 +2,7 @@
 {-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StrictData          #-}
 module Language.Cimple.TraverseAst
     ( TraverseAst (..)
     , AstActions (..)

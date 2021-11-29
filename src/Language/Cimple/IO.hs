@@ -1,3 +1,4 @@
+{-# LANGUAGE StrictData #-}
 module Language.Cimple.IO
     ( parseFile
     , parseText
