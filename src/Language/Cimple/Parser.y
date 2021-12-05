@@ -269,12 +269,20 @@ PreprocInclude
 PreprocDefine :: { StringNode }
 PreprocDefine
 :	'#define' ID_CONST '\n'					{ PreprocDefine $2 }
-|	'#define' ID_CONST ConstExpr '\n'			{ PreprocDefineConst $2 $3 }
+|	'#define' ID_CONST PreprocConstExpr '\n'		{ PreprocDefineConst $2 $3 }
 |	'#define' ID_CONST MacroParamList MacroBody '\n'	{ PreprocDefineMacro $2 $3 $4 }
 
 PreprocUndef :: { StringNode }
 PreprocUndef
 :	'#undef' ID_CONST					{ PreprocUndef $2 }
+
+-- Used for "#define" to ensure all non-atomic expressions are inside ().
+PreprocConstExpr :: { StringNode }
+PreprocConstExpr
+:	LiteralExpr						{ $1 }
+|	'defined' '(' ID_CONST ')'				{ PreprocDefined $3 }
+|	'(' PureExpr(ConstExpr) ')'				{ $2 }
+|	'(' QualType ')' PreprocConstExpr			{ CastExpr $2 $4 }
 
 ConstExpr :: { StringNode }
 ConstExpr
