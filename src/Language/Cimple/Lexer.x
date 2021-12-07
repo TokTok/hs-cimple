@@ -82,9 +82,8 @@ tokens :-
 <0,ppSC>	"crypto_box_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
 <0,ppSC>	"crypto_hash_sha256_"[A-Z][A-Z0-9_]*	{ mkL IdConst }
 <0,ppSC>	"crypto_hash_sha512_"[A-Z][A-Z0-9_]*	{ mkL IdConst }
+<0,ppSC>	"crypto_pwhash_scryptsalsa208sha256_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
 <0,ppSC>	"crypto_sign_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
-<0>		"MAX"					{ mkL IdConst }
-<0>		"MIN"					{ mkL IdConst }
 
 -- Standard C (ish).
 <ppSC>		defined					{ mkL PpDefined }
@@ -115,7 +114,6 @@ tokens :-
 <0>		"#define"				{ mkL PpDefine `andBegin` ppSC }
 <0>		"#undef"				{ mkL PpUndef }
 <0>		"#include"				{ mkL PpInclude }
-<0>		"#error"				{ mkL PpError }
 <0,ppSC>	"bitmask"				{ mkL KwBitmask }
 <0,ppSC>	"break"					{ mkL KwBreak }
 <0,ppSC>	"case"					{ mkL KwCase }
@@ -136,6 +134,7 @@ tokens :-
 <0,ppSC>	"return"				{ mkL KwReturn }
 <0,ppSC>	"sizeof"				{ mkL KwSizeof }
 <0,ppSC>	"static"				{ mkL KwStatic }
+<0,ppSC>	"static_assert"				{ mkL KwStaticAssert }
 <0,ppSC>	"struct"				{ mkL KwStruct }
 <0,ppSC>	"switch"				{ mkL KwSwitch }
 <0,ppSC>	"this"					{ mkL KwThis }

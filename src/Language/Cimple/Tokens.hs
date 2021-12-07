@@ -34,6 +34,7 @@ data LexemeClass
     | KwReturn
     | KwSizeof
     | KwStatic
+    | KwStaticAssert
     | KwStruct
     | KwSwitch
     | KwThis
@@ -100,7 +101,6 @@ data LexemeClass
     | PpElif
     | PpElse
     | PpEndif
-    | PpError
     | PpIf
     | PpIfdef
     | PpIfndef

@@ -416,9 +416,6 @@ ppDecl decl = case decl of
     PreprocScopedDefine def stmts undef ->
         ppDecl def <$> ppStmtList stmts <$> ppDecl undef
 
-    PreprocError msg ->
-        text "#error" <+> ppLexeme msg
-
     PreprocInclude hdr ->
         text "#include" <+> ppLexeme hdr
     PreprocDefine name ->
@@ -429,6 +426,9 @@ ppDecl decl = case decl of
         text "#define" <+> ppLexeme name <> ppMacroParamList params <+> ppMacroBody body
     PreprocUndef name ->
         text "#undef" <+> ppLexeme name
+
+    StaticAssert cond msg ->
+        text "static_assert" <+> ppExpr cond <> char ',' <+> ppLexeme msg <> text ");"
 
     Comment style _ cs _ ->
         ppComment style cs

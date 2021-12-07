@@ -44,6 +44,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     return			{ L _ KwReturn			_ }
     sizeof			{ L _ KwSizeof			_ }
     static			{ L _ KwStatic			_ }
+    static_assert		{ L _ KwStaticAssert		_ }
     struct			{ L _ KwStruct			_ }
     switch			{ L _ KwSwitch			_ }
     this			{ L _ KwThis			_ }
@@ -110,7 +111,6 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '#elif'			{ L _ PpElif			_ }
     '#else'			{ L _ PpElse			_ }
     '#endif'			{ L _ PpEndif			_ }
-    '#error'			{ L _ PpError			_ }
     '#if'			{ L _ PpIf			_ }
     '#ifdef'			{ L _ PpIfdef			_ }
     '#ifndef'			{ L _ PpIfndef			_ }
@@ -163,7 +163,6 @@ ToplevelDecl
 |	PreprocInclude						{ $1 }
 |	PreprocDefine						{ $1 }
 |	PreprocUndef						{ $1 }
-|	PreprocError						{ $1 }
 |	ExternC							{ $1 }
 |	TypedefDecl						{ $1 }
 |	AggregateDecl						{ $1 }
@@ -174,6 +173,11 @@ ToplevelDecl
 |	Namespace						{ $1 }
 |	Event							{ $1 }
 |	ErrorDecl						{ $1 }
+|	StaticAssert						{ $1 }
+
+StaticAssert :: { StringNode }
+StaticAssert
+:	static_assert '(' ConstExpr ',' LIT_STRING ')' ';'	{ StaticAssert $3 $5 }
 
 Namespace :: { StringNode }
 Namespace
@@ -256,10 +260,6 @@ PreprocElse(decls)
 :								{ PreprocElse [] }
 |	'#else' decls						{ PreprocElse $2 }
 |	'#elif' ConstExpr '\n' decls PreprocElse(decls)		{ PreprocElif $2 $4 $5 }
-
-PreprocError :: { StringNode }
-PreprocError
-:	'#error' LIT_STRING					{ PreprocError $2 }
 
 PreprocInclude :: { StringNode }
 PreprocInclude
@@ -472,12 +472,17 @@ PureExpr(x)
 
 LiteralExpr :: { StringNode }
 LiteralExpr
-:	LIT_CHAR						{ LiteralExpr Char $1 }
+:	StringLiteralExpr					{ $1 }
+|	LIT_CHAR						{ LiteralExpr Char $1 }
 |	LIT_INTEGER						{ LiteralExpr Int $1 }
 |	LIT_FALSE						{ LiteralExpr Bool $1 }
 |	LIT_TRUE						{ LiteralExpr Bool $1 }
-|	LIT_STRING						{ LiteralExpr String $1 }
 |	ID_CONST						{ LiteralExpr ConstId $1 }
+
+StringLiteralExpr :: { StringNode }
+StringLiteralExpr
+:	LIT_STRING						{ LiteralExpr String $1 }
+|	StringLiteralExpr LIT_STRING				{ $1 }
 
 Expr :: { StringNode }
 Expr

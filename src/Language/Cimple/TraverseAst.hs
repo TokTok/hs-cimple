@@ -71,8 +71,6 @@ instance TraverseAst (Node (Lexeme Text)) where
             PreprocElse <$> recurse decls
         PreprocElif cond decls elseBranch ->
             PreprocElif <$> recurse cond <*> recurse decls <*> recurse elseBranch
-        PreprocError msg ->
-            PreprocError <$> recurse msg
         PreprocUndef name ->
             PreprocUndef <$> recurse name
         PreprocDefined name ->
@@ -85,6 +83,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             MacroBodyFunCall <$> recurse expr
         MacroParam name ->
             MacroParam <$> recurse name
+        StaticAssert cond msg ->
+            StaticAssert <$> recurse cond <*> recurse msg
         Comment doc start contents end ->
             Comment doc <$> recurse start <*> recurse contents <*> recurse end
         CommentBlock comment ->

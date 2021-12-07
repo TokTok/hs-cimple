@@ -26,13 +26,13 @@ data Node lexeme
     | PreprocIfndef lexeme [Node lexeme] (Node lexeme)
     | PreprocElse [Node lexeme]
     | PreprocElif (Node lexeme) [Node lexeme] (Node lexeme)
-    | PreprocError lexeme
     | PreprocUndef lexeme
     | PreprocDefined lexeme
     | PreprocScopedDefine (Node lexeme) [Node lexeme] (Node lexeme)
     | MacroBodyStmt [Node lexeme]
     | MacroBodyFunCall (Node lexeme)
     | MacroParam lexeme
+    | StaticAssert (Node lexeme) lexeme
     -- Comments
     | Comment CommentStyle lexeme [Node lexeme] lexeme
     | CommentBlock lexeme
