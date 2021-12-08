@@ -254,12 +254,12 @@ PreprocIfdef(decls)
 |	'#ifndef' ID_CONST decls PreprocElse(decls) '#endif'	{ PreprocIfndef $2 $3 $4 }
 
 PreprocIf(decls)
-:	'#if' ConstExpr '\n' decls PreprocElse(decls) '#endif'	{ PreprocIf $2 $4 $5 }
+:	'#if' PreprocConstExpr '\n' decls PreprocElse(decls) '#endif'	{ PreprocIf $2 $4 $5 }
 
 PreprocElse(decls)
 :								{ PreprocElse [] }
 |	'#else' decls						{ PreprocElse $2 }
-|	'#elif' ConstExpr '\n' decls PreprocElse(decls)		{ PreprocElif $2 $4 $5 }
+|	'#elif' PreprocConstExpr '\n' decls PreprocElse(decls)	{ PreprocElif $2 $4 $5 }
 
 PreprocInclude :: { StringNode }
 PreprocInclude
@@ -269,26 +269,17 @@ PreprocInclude
 PreprocDefine :: { StringNode }
 PreprocDefine
 :	'#define' ID_CONST '\n'					{ PreprocDefine $2 }
-|	'#define' ID_CONST PreprocConstExpr '\n'		{ PreprocDefineConst $2 $3 }
+|	'#define' ID_CONST PreprocSafeExpr(ConstExpr) '\n'	{ PreprocDefineConst $2 $3 }
 |	'#define' ID_CONST MacroParamList MacroBody '\n'	{ PreprocDefineMacro $2 $3 $4 }
 
 PreprocUndef :: { StringNode }
 PreprocUndef
 :	'#undef' ID_CONST					{ PreprocUndef $2 }
 
--- Used for "#define" to ensure all non-atomic expressions are inside ().
 PreprocConstExpr :: { StringNode }
 PreprocConstExpr
-:	LiteralExpr						{ $1 }
+:	PureExpr(PreprocConstExpr)				{ $1 }
 |	'defined' '(' ID_CONST ')'				{ PreprocDefined $3 }
-|	'(' PureExpr(ConstExpr) ')'				{ $2 }
-|	'(' QualType ')' PreprocConstExpr			{ CastExpr $2 $4 }
-
-ConstExpr :: { StringNode }
-ConstExpr
-:	LiteralExpr						{ $1 }
-|	'defined' '(' ID_CONST ')'				{ PreprocDefined $3 }
-|	PureExpr(ConstExpr)					{ $1 }
 
 MacroParamList :: { [StringNode] }
 MacroParamList
@@ -441,8 +432,21 @@ CompoundStmt :: { [StringNode] }
 CompoundStmt
 :	'{' Stmts '}'						{ reverse $2 }
 
+-- Expressions that are safe for use as macro body without () around it..
+PreprocSafeExpr(x)
+:	LiteralExpr						{ $1 }
+|	'(' x ')'						{ ParenExpr $2 }
+|	'(' QualType ')' x %prec CAST				{ CastExpr $2 $4 }
+|	sizeof '(' x ')'					{ SizeofExpr $3 }
+|	sizeof '(' QualType ')'					{ SizeofType $3 }
+
+ConstExpr :: { StringNode }
+ConstExpr
+:	PureExpr(ConstExpr)					{ $1 }
+
 PureExpr(x)
-:	x '!=' x						{ BinaryExpr $1 BopNe $3 }
+:	PreprocSafeExpr(x)					{ $1 }
+|	x '!=' x						{ BinaryExpr $1 BopNe $3 }
 |	x '==' x						{ BinaryExpr $1 BopEq $3 }
 |	x '||' x						{ BinaryExpr $1 BopOr $3 }
 |	x '^' x							{ BinaryExpr $1 BopBitXor $3 }
@@ -461,14 +465,10 @@ PureExpr(x)
 |	x '>=' x						{ BinaryExpr $1 BopGe $3 }
 |	x '>>' x						{ BinaryExpr $1 BopRsh $3 }
 |	x '?' x ':' x						{ TernaryExpr $1 $3 $5 }
-|	'(' x ')'						{ ParenExpr $2 }
 |	'!' x							{ UnaryExpr UopNot $2 }
 |	'~' x							{ UnaryExpr UopNeg $2 }
 |	'-' x %prec NEG						{ UnaryExpr UopMinus $2 }
 |	'&' x %prec ADDRESS					{ UnaryExpr UopAddress $2 }
-|	'(' QualType ')' x %prec CAST				{ CastExpr $2 $4 }
-|	sizeof '(' x ')'					{ SizeofExpr $3 }
-|	sizeof '(' QualType ')'					{ SizeofType $3 }
 
 LiteralExpr :: { StringNode }
 LiteralExpr
@@ -488,7 +488,6 @@ Expr :: { StringNode }
 Expr
 :	LhsExpr							{ $1 }
 |	ExprStmt						{ $1 }
-|	LiteralExpr						{ $1 }
 |	FunctionCall						{ $1 }
 |	PureExpr(Expr)						{ $1 }
 
