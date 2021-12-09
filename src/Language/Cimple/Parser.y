@@ -347,26 +347,17 @@ IfStmt
 
 ForStmt :: { StringNode }
 ForStmt
-:	for '('
-	ForInit
-	Opt(Expr) ';'
-	Opt(ForNext) ')'
-	CompoundStmt						{ ForStmt $3 $4 $6 $8 }
+:	for '(' ForInit Expr ';' ForNext ')' CompoundStmt	{ ForStmt $3 $4 $6 $8 }
 
-ForInit :: { Maybe (StringNode) }
+ForInit :: { StringNode }
 ForInit
-:	';'							{ Nothing }
-|	AssignExpr ';'						{ Just $1 }
-|	VarDecl							{ Just $1 }
+:	AssignExpr ';'						{ $1 }
+|	VarDecl							{ $1 }
 
 ForNext :: { StringNode }
 ForNext
 :	ExprStmt						{ $1 }
 |	AssignExpr						{ $1 }
-
-Opt(x)
-:								{ Nothing }
-|	x							{ Just $1 }
 
 WhileStmt :: { StringNode }
 WhileStmt

@@ -18,10 +18,6 @@ ppText = text . Text.unpack
 ppLexeme :: Lexeme Text -> Doc
 ppLexeme = ppText . lexemeText
 
-ppOpt :: (a -> Doc) -> Maybe a -> Doc
-ppOpt _ Nothing  = empty
-ppOpt f (Just x) = f x
-
 ppCommaSep :: (a -> Doc) -> [a] -> Doc
 ppCommaSep go = foldr (<>) empty . List.intersperse (text ", ") . map go
 
@@ -279,23 +275,20 @@ ppIfStmt cond t (Just e) =
     ) <$> nest 2 (char '}' <> text " else " <> ppDecl e)
 
 ppForStmt
-    :: Maybe (Node (Lexeme Text))
-    -> Maybe (Node (Lexeme Text))
-    -> Maybe (Node (Lexeme Text))
+    :: Node (Lexeme Text)
+    -> Node (Lexeme Text)
+    -> Node (Lexeme Text)
     -> [Node (Lexeme Text)]
     -> Doc
 ppForStmt i c n body =
     nest 2 (
         text "for ("
-        <> ppForInit i
-        <+> ppOpt ppExpr c <> char ';'
-        <+> ppOpt ppExpr n
+        <> ppDecl i
+        <+> ppExpr c <> char ';'
+        <+> ppExpr n
         <> text ") {" <$>
         ppStmtList body
     ) <$> char '}'
-  where
-    ppForInit Nothing  = char ';'
-    ppForInit (Just s) = ppDecl s
 
 ppWhileStmt
     :: Node (Lexeme Text)

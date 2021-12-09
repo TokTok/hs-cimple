@@ -1,6 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE StrictData        #-}
-module Language.Cimple.Diagnostics (Diagnostics, warn) where
+module Language.Cimple.Diagnostics
+  ( Diagnostics
+  , warn
+  ) where
 
 import           Control.Monad.State.Lazy (State)
 import qualified Control.Monad.State.Lazy as State

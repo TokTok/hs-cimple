@@ -50,7 +50,7 @@ data Node lexeme
     | Return (Maybe (Node lexeme))
     | SwitchStmt (Node lexeme) [Node lexeme]
     | IfStmt (Node lexeme) [Node lexeme] (Maybe (Node lexeme))
-    | ForStmt (Maybe (Node lexeme)) (Maybe (Node lexeme)) (Maybe (Node lexeme)) [Node lexeme]
+    | ForStmt (Node lexeme) (Node lexeme) (Node lexeme) [Node lexeme]
     | WhileStmt (Node lexeme) [Node lexeme]
     | DoWhileStmt [Node lexeme] (Node lexeme)
     | Case (Node lexeme) (Node lexeme)
