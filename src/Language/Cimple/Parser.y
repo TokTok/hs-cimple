@@ -369,9 +369,15 @@ DoWhileStmt
 
 LabelStmt :: { StringNode }
 LabelStmt
-:	case Expr ':' Stmt					{ Case $2 $4 }
-|	default ':' Stmt					{ Default $3 }
+:	case Expr ':' AfterLabelStmt				{ Case $2 $4 }
+|	default ':' AfterLabelStmt				{ Default $3 }
 |	ID_CONST ':' Stmt					{ Label $1 $3 }
+
+AfterLabelStmt :: { StringNode }
+AfterLabelStmt
+:	CompoundStmt						{ CompoundStmt $1 }
+|	LabelStmt						{ $1 }
+|	return Expr ';'						{ Return (Just $2) }
 
 DeclStmt :: { StringNode }
 DeclStmt
@@ -475,6 +481,14 @@ StringLiteralExpr
 :	LIT_STRING						{ LiteralExpr String $1 }
 |	StringLiteralExpr LIT_STRING				{ $1 }
 
+LhsExpr :: { StringNode }
+LhsExpr
+:	IdVar							{ VarExpr $1 }
+|	'*' LhsExpr %prec DEREF					{ UnaryExpr UopDeref $2 }
+|	LhsExpr '.' IdVar					{ MemberAccess $1 $3 }
+|	LhsExpr '->' IdVar					{ PointerAccess $1 $3 }
+|	LhsExpr '[' Expr ']'					{ ArrayAccess $1 $3 }
+
 Expr :: { StringNode }
 Expr
 :	LhsExpr							{ $1 }
@@ -504,14 +518,6 @@ ExprStmt :: { StringNode }
 ExprStmt
 :	'++' Expr						{ UnaryExpr UopIncr $2 }
 |	'--' Expr						{ UnaryExpr UopDecr $2 }
-
-LhsExpr :: { StringNode }
-LhsExpr
-:	IdVar							{ VarExpr $1 }
-|	'*' LhsExpr %prec DEREF					{ UnaryExpr UopDeref $2 }
-|	LhsExpr '.' IdVar					{ MemberAccess $1 $3 }
-|	LhsExpr '->' IdVar					{ PointerAccess $1 $3 }
-|	LhsExpr '[' Expr ']'					{ ArrayAccess $1 $3 }
 
 FunctionCall :: { StringNode }
 FunctionCall
