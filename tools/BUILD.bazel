@@ -35,3 +35,14 @@ haskell_binary(
         hazel_library("text"),
     ],
 )
+
+haskell_binary(
+    name = "include-graph",
+    srcs = ["include-graph.hs"],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//hs-cimple",
+        hazel_library("base"),
+        hazel_library("groom"),
+    ],
+)

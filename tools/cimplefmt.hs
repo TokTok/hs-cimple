@@ -11,7 +11,7 @@ processFile source = do
     ast <- parseFile source
     case ast of
         Left  err -> fail err
-        Right ok  -> print $ ppTranslationUnit ok
+        Right ok  -> print $ ppTranslationUnit $ snd ok
 
 
 main :: IO ()

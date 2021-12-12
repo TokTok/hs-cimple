@@ -13,7 +13,7 @@ spec :: Spec
 spec =
     describe "C parsing" $ do
         it "should parse a simple function" $ do
-            ast <- parseText "int a(void) { return 3; }"
+            let ast = parseText "int a(void) { return 3; }"
             ast `shouldBe` Right
                 [ FunctionDefn
                       Global
@@ -33,7 +33,7 @@ spec =
                 ]
 
         it "should parse a type declaration" $ do
-            ast <- parseText "typedef struct Foo { int x; } Foo;"
+            let ast = parseText "typedef struct Foo { int x; } Foo;"
             ast `shouldBe` Right
                 [ Typedef
                       (Struct
@@ -48,7 +48,7 @@ spec =
                 ]
 
         it "should parse a struct with bit fields" $ do
-            ast <- parseText "typedef struct Foo { int x : 123; } Foo;"
+            let ast = parseText "typedef struct Foo { int x : 123; } Foo;"
             ast `shouldBe` Right
                 [ Typedef
                       (Struct
@@ -63,7 +63,7 @@ spec =
                 ]
 
         it "should parse a comment" $ do
-            ast <- parseText "/* hello */"
+            let ast = parseText "/* hello */"
             ast `shouldBe` Right
                 [ Comment Regular
                           (L (AlexPn 0 1 1) CmtStart "/*")
@@ -72,7 +72,7 @@ spec =
                 ]
 
         it "supports single declarators" $ do
-            ast <- parseText "int main() { int a; }"
+            let ast = parseText "int main() { int a; }"
             ast `shouldBe` Right
                 [ FunctionDefn
                       Global
@@ -91,6 +91,6 @@ spec =
                 ]
 
         it "does not support multiple declarators per declaration" $ do
-            ast <- parseText "int main() { int a, b; }"
+            let ast = parseText "int main() { int a, b; }"
             ast `shouldBe` Left
                 "Parse error near token: L (AlexPn 18 1 19) PctComma \",\""

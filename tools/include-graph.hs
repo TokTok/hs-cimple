@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
 import           Language.Cimple.IO      (parseProgram)
@@ -11,7 +10,7 @@ main :: IO ()
 main = do
   args <- getArgs
   case args of
-    [] -> fail "Usage: dump-ast [FILE]..."
+    [] -> fail "Usage: include-graph [FILE]..."
     srcs ->
       parseProgram srcs
       >>= getRight

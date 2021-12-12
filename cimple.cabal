@@ -30,6 +30,7 @@ library
     , Language.Cimple.Diagnostics
     , Language.Cimple.IO
     , Language.Cimple.Pretty
+    , Language.Cimple.Program
     , Language.Cimple.TraverseAst
   other-modules:
       Language.Cimple.AST
@@ -43,7 +44,6 @@ library
     , array
     , bytestring
     , containers
-    , ghc-compact
     , groom
     , mtl
     , text
@@ -86,6 +86,18 @@ executable dump-tokens
     , cimple
     , groom
     , text
+
+executable include-graph
+  default-language: Haskell2010
+  hs-source-dirs:
+      tools
+  ghc-options:
+      -Wall
+  main-is: include-graph.hs
+  build-depends:
+      base < 5
+    , cimple
+    , groom
 
 test-suite testsuite
   type: exitcode-stdio-1.0

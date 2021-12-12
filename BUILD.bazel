@@ -70,7 +70,6 @@ haskell_library(
         hazel_library("base"),
         hazel_library("bytestring"),
         hazel_library("containers"),
-        hazel_library("ghc-compact"),
         hazel_library("groom"),
         hazel_library("mtl"),
         hazel_library("text"),
