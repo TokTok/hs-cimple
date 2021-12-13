@@ -59,7 +59,7 @@ haskell_library(
         ],
     ),
     src_strip_prefix = "src",
-    version = "0.0.1",
+    version = "0.0.2",
     visibility = ["//visibility:public"],
     deps = [
         ":lexer",
@@ -70,6 +70,7 @@ haskell_library(
         hazel_library("base"),
         hazel_library("bytestring"),
         hazel_library("containers"),
+        hazel_library("filepath"),
         hazel_library("groom"),
         hazel_library("mtl"),
         hazel_library("text"),
