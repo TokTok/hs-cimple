@@ -427,6 +427,8 @@ ppDecl decl = case decl of
         ppComment style cs
     CommentBlock cs ->
         ppLexeme cs
+    Commented c d ->
+        ppDecl c <$> ppDecl d
 
     ClassForward name [] ->
         text "class" <+> ppLexeme name <> char ';'

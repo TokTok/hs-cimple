@@ -34,6 +34,8 @@ data Node lexeme
     | MacroParam lexeme
     | StaticAssert (Node lexeme) lexeme
     -- Comments
+    | LicenseDecl lexeme [Node lexeme]
+    | CopyrightDecl lexeme (Maybe lexeme) [lexeme]
     | Comment CommentStyle lexeme [Node lexeme] lexeme
     | CommentBlock lexeme
     | CommentWord lexeme

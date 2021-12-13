@@ -14,6 +14,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
 
 %name parseCimple
 %error {parseError}
+%errorhandlertype explist
 %lexer {lexwrap} {L _ Eof _}
 %monad {Alex}
 %tokentype {Lexeme String}
@@ -125,9 +126,9 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '*/'			{ L _ CmtEnd			_ }
     'Copyright'			{ L _ CmtSpdxCopyright		_ }
     'License'			{ L _ CmtSpdxLicense		_ }
-    COMMENT_CODE		{ L _ CmtCode			_ }
-    COMMENT_WORD		{ L _ CmtWord			_ }
-    COMMENT_REF			{ L _ CmtRef			_ }
+    CMT_CODE			{ L _ CmtCode			_ }
+    CMT_WORD			{ L _ CmtWord			_ }
+    CMT_REF			{ L _ CmtRef			_ }
 
 %left ','
 %right '=' '+=' '-=' '*=' '/=' '%=' '<<=' '>>=' '&=' '^=' '|='
@@ -150,6 +151,29 @@ import           Language.Cimple.Tokens (LexemeClass (..))
 TranslationUnit :: { [StringNode] }
 TranslationUnit
 :	ToplevelDecls						{ reverse $1 }
+|	LicenseDecl ToplevelDecls				{ $1 : reverse $2 }
+
+LicenseDecl :: { StringNode }
+LicenseDecl
+:	'/*' 'License' CMT_WORD '\n' CopyrightDecls '*/'	{ LicenseDecl $3 $5 }
+
+CopyrightDecls :: { [StringNode] }
+CopyrightDecls
+:	CopyrightDecl						{ [$1] }
+|	CopyrightDecls CopyrightDecl				{ $2 : $1 }
+
+CopyrightDecl :: { StringNode }
+CopyrightDecl
+:	' * ' 'Copyright' CopyrightDates CopyrightOwner '\n'	{ CopyrightDecl (fst $3) (snd $3) $4 }
+
+CopyrightDates :: { (StringLexeme, Maybe StringLexeme) }
+CopyrightDates
+:	LIT_INTEGER						{ ($1, Nothing) }
+|	LIT_INTEGER '-' LIT_INTEGER				{ ($1, Just $3) }
+
+CopyrightOwner :: { [StringLexeme] }
+CopyrightOwner
+:	CMT_WORD CommentWords					{ $1 : reverse $2 }
 
 ToplevelDecls :: { [StringNode] }
 ToplevelDecls
@@ -158,22 +182,30 @@ ToplevelDecls
 
 ToplevelDecl :: { StringNode }
 ToplevelDecl
-:	PreprocIfdef(TranslationUnit)				{ $1 }
-|	PreprocIf(TranslationUnit)				{ $1 }
+:	PreprocIfdef(ToplevelDecls)				{ $1 }
+|	PreprocIf(ToplevelDecls)				{ $1 }
 |	PreprocInclude						{ $1 }
-|	PreprocDefine						{ $1 }
 |	PreprocUndef						{ $1 }
 |	ExternC							{ $1 }
-|	TypedefDecl						{ $1 }
-|	AggregateDecl						{ $1 }
-|	EnumDecl						{ $1 }
-|	FunctionDecl						{ $1 }
-|	ConstDecl						{ $1 }
 |	Comment							{ $1 }
 |	Namespace						{ $1 }
 |	Event							{ $1 }
 |	ErrorDecl						{ $1 }
 |	StaticAssert						{ $1 }
+|	Commented(CommentableDecl)				{ $1 }
+
+CommentableDecl :: { StringNode }
+CommentableDecl
+:	TypedefDecl						{ $1 }
+|	AggregateDecl						{ $1 }
+|	EnumDecl						{ $1 }
+|	FunctionDecl						{ $1 }
+|	ConstDecl						{ $1 }
+|	PreprocDefine						{ $1 }
+
+DocComment :: { StringNode }
+DocComment
+:	'/**' CommentTokens '*/'				{ Comment Doxygen $1 (reverse $2) $3 }
 
 StaticAssert :: { StringNode }
 StaticAssert
@@ -186,8 +218,8 @@ Namespace
 
 NamespaceDeclarator :: { Scope -> StringNode }
 NamespaceDeclarator
-:	class ID_SUE_TYPE TypeParams '{' TranslationUnit '}'	{ \s -> Class s $2 $3 $5 }
-|	namespace IdVar '{' TranslationUnit '}'			{ \s -> Namespace s $2 $4 }
+:	class ID_SUE_TYPE TypeParams '{' ToplevelDecls '}'	{ \s -> Class s $2 $3 (reverse $5) }
+|	namespace IdVar '{' ToplevelDecls '}'			{ \s -> Namespace s $2 (reverse $4) }
 
 TypeParams :: { [StringNode] }
 TypeParams
@@ -196,12 +228,12 @@ TypeParams
 
 Event :: { StringNode }
 Event
-:	event IdVar       '{' EventType '}'			{ Event $2 $4 }
-|	event IdVar const '{' EventType '}'			{ Event $2 $5 }
+:	event IdVar       '{' Commented(EventType) '}'		{ Event $2 $4 }
+|	event IdVar const '{' Commented(EventType) '}'		{ Event $2 $5 }
 
 EventType :: { StringNode }
 EventType
-:	Comment typedef void EventParams ';'			{ Commented $1 $4 }
+:	typedef void EventParams ';'				{ $3 }
 
 EventParams :: { StringNode }
 EventParams
@@ -213,53 +245,59 @@ ErrorDecl
 
 Comment :: { StringNode }
 Comment
-:	'/*' CommentBody '*/'					{ Comment Regular $1 (reverse $2) $3 }
-|	'/**' CommentBody '*/'					{ Comment Doxygen $1 (reverse $2) $3 }
-|	'/***' CommentBody '*/'					{ Comment Block $1 (reverse $2) $3 }
+:	'/*' CommentTokens '*/'					{ Comment Regular $1 (reverse $2) $3 }
+|	'/***' CommentTokens '*/'				{ Comment Block $1 (reverse $2) $3 }
 |	'/**/'							{ CommentBlock $1 }
 
-CommentBody :: { [StringNode] }
-CommentBody
-:	CommentWord						{ [$1] }
-|	CommentBody CommentWord					{ $2 : $1 }
+CommentTokens :: { [StringNode] }
+CommentTokens
+:	CommentToken						{ [$1] }
+|	CommentTokens CommentToken				{ $2 : $1 }
 
-CommentWord :: { StringNode }
-CommentWord
-:	COMMENT_WORD						{ CommentWord $1 }
-|	COMMENT_REF						{ CommentWord $1 }
-|	COMMENT_CODE						{ CommentWord $1 }
-|	LIT_INTEGER						{ CommentWord $1 }
-|	LIT_STRING						{ CommentWord $1 }
-|	'Copyright'						{ CommentWord $1 }
-|	'License'						{ CommentWord $1 }
-|	'.'							{ CommentWord $1 }
-|	'?'							{ CommentWord $1 }
-|	'!'							{ CommentWord $1 }
-|	','							{ CommentWord $1 }
-|	';'							{ CommentWord $1 }
-|	':'							{ CommentWord $1 }
-|	'('							{ CommentWord $1 }
-|	')'							{ CommentWord $1 }
-|	'<'							{ CommentWord $1 }
-|	'>'							{ CommentWord $1 }
-|	'/'							{ CommentWord $1 }
-|	'+'							{ CommentWord $1 }
-|	'-'							{ CommentWord $1 }
-|	'='							{ CommentWord $1 }
+CommentToken :: { StringNode }
+CommentToken
+:	CommentWord						{ CommentWord $1 }
 |	'\n'							{ CommentWord $1 }
 |	' * '							{ CommentWord $1 }
 
+CommentWords :: { [StringLexeme] }
+CommentWords
+:								{ [] }
+|	CommentWords CommentWord				{ $2 : $1 }
+
+CommentWord :: { StringLexeme }
+CommentWord
+:	CMT_WORD						{ $1 }
+|	CMT_REF							{ $1 }
+|	CMT_CODE						{ $1 }
+|	LIT_INTEGER						{ $1 }
+|	LIT_STRING						{ $1 }
+|	'.'							{ $1 }
+|	'?'							{ $1 }
+|	'!'							{ $1 }
+|	','							{ $1 }
+|	';'							{ $1 }
+|	':'							{ $1 }
+|	'('							{ $1 }
+|	')'							{ $1 }
+|	'<'							{ $1 }
+|	'>'							{ $1 }
+|	'/'							{ $1 }
+|	'+'							{ $1 }
+|	'-'							{ $1 }
+|	'='							{ $1 }
+
 PreprocIfdef(decls)
-:	'#ifdef' ID_CONST decls PreprocElse(decls) '#endif'	{ PreprocIfdef $2 $3 $4 }
-|	'#ifndef' ID_CONST decls PreprocElse(decls) '#endif'	{ PreprocIfndef $2 $3 $4 }
+:	'#ifdef' ID_CONST decls PreprocElse(decls) '#endif'	{ PreprocIfdef $2 (reverse $3) $4 }
+|	'#ifndef' ID_CONST decls PreprocElse(decls) '#endif'	{ PreprocIfndef $2 (reverse $3) $4 }
 
 PreprocIf(decls)
-:	'#if' PreprocConstExpr '\n' decls PreprocElse(decls) '#endif'	{ PreprocIf $2 $4 $5 }
+:	'#if' PreprocConstExpr '\n' decls PreprocElse(decls) '#endif'	{ PreprocIf $2 (reverse $4) $5 }
 
 PreprocElse(decls)
 :								{ PreprocElse [] }
 |	'#else' decls						{ PreprocElse $2 }
-|	'#elif' PreprocConstExpr '\n' decls PreprocElse(decls)	{ PreprocElif $2 $4 $5 }
+|	'#elif' PreprocConstExpr '\n' decls PreprocElse(decls)	{ PreprocElif $2 (reverse $4) $5 }
 
 PreprocInclude :: { StringNode }
 PreprocInclude
@@ -552,8 +590,12 @@ EnumeratorList
 
 Enumerators :: { [StringNode] }
 Enumerators
-:	Enumerator						{ [$1] }
-|	Enumerators Enumerator					{ $2 : $1 }
+:	Commented(Enumerator)					{ [$1] }
+|	Enumerators Commented(Enumerator)			{ $2 : $1 }
+
+Commented(x)
+:	x							{ $1 }
+|	DocComment x						{ Commented $1 $2 }
 
 Enumerator :: { StringNode }
 Enumerator
@@ -585,8 +627,8 @@ MemberDeclList
 
 MemberDecls :: { [StringNode] }
 MemberDecls
-:	MemberDecl						{ [$1] }
-|	MemberDecls MemberDecl					{ $2 : $1 }
+:	Commented(MemberDecl)					{ [$1] }
+|	MemberDecls Commented(MemberDecl)			{ $2 : $1 }
 
 MemberDecl :: { StringNode }
 MemberDecl
@@ -636,11 +678,7 @@ FunctionDeclarator :: { Scope -> StringNode }
 FunctionDeclarator
 :	FunctionPrototype(IdVar) WithError			{ \s -> FunctionDecl s $1 $2 }
 |	FunctionPrototype(IdVar) CompoundStmt			{ \s -> FunctionDefn s $1 $2 }
-|	QualType DeclSpec '{' AccessorList '}'			{ \s -> Property $1 $2 $4 }
-
-AccessorList :: { [StringNode] }
-AccessorList
-:	Accessors						{ reverse $1 }
+|	QualType DeclSpec '{' Accessors '}'			{ \s -> Property $1 $2 (reverse $4) }
 
 Accessors :: { [StringNode] }
 Accessors
@@ -685,10 +723,12 @@ ConstDecl
 |	static const LeafType ID_VAR '=' InitialiserExpr ';'	{ ConstDefn Static $3 $4 $6 }
 
 {
-type StringNode = Node (Lexeme String)
+type StringLexeme = Lexeme String
+type StringNode = Node StringLexeme
 
-parseError :: Show text => Lexeme text -> Alex a
-parseError token = alexError $ "Parse error near token: " <> show token
+parseError :: Show text => (Lexeme text, [String]) -> Alex a
+parseError (token, options) =
+    alexError $ "Parse error near token: " <> show token <> "; expected one of " <> show options
 
 lexwrap :: (Lexeme String -> Alex a) -> Alex a
 lexwrap = (alexMonadScan >>=)

@@ -93,4 +93,4 @@ spec =
         it "does not support multiple declarators per declaration" $ do
             let ast = parseText "int main() { int a, b; }"
             ast `shouldBe` Left
-                "Parse error near token: L (AlexPn 18 1 19) PctComma \",\""
+                "Parse error near token: L (AlexPn 18 1 19) PctComma \",\"; expected one of [\"';'\"]"

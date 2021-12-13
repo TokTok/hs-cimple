@@ -17,10 +17,11 @@ class TraverseAst a where
     traverseAst :: Applicative f => AstActions f Text -> a -> f a
 
 data AstActions f text = AstActions
-    { doNodes  :: [Node (Lexeme text)] -> f [Node (Lexeme text)] -> f [Node (Lexeme text)]
-    , doNode   ::  Node (Lexeme text)  -> f (Node (Lexeme text)) -> f (Node (Lexeme text))
-    , doLexeme ::        Lexeme text   -> f       (Lexeme text)  -> f       (Lexeme text)
-    , doText   ::               text   -> f               text   -> f               text
+    { doNodes   :: [Node (Lexeme text)] -> f [Node (Lexeme text)] -> f [Node (Lexeme text)]
+    , doNode    ::  Node (Lexeme text)  -> f (Node (Lexeme text)) -> f (Node (Lexeme text))
+    , doLexemes ::       [Lexeme text]  -> f       [Lexeme text]  -> f       [Lexeme text]
+    , doLexeme  ::        Lexeme text   -> f       (Lexeme text)  -> f       (Lexeme text)
+    , doText    ::               text   -> f               text   -> f               text
     }
 
 instance TraverseAst a => TraverseAst (Maybe a) where
@@ -29,10 +30,11 @@ instance TraverseAst a => TraverseAst (Maybe a) where
 
 defaultActions :: Applicative f => AstActions f lexeme
 defaultActions = AstActions
-    { doNodes  = const id
-    , doNode   = const id
-    , doLexeme = const id
-    , doText   = const id
+    { doNodes   = const id
+    , doNode    = const id
+    , doLexeme  = const id
+    , doLexemes = const id
+    , doText    = const id
     }
 
 instance TraverseAst Text where
@@ -48,6 +50,10 @@ instance TraverseAst (Lexeme Text) where
       where
         recurse :: TraverseAst a => a -> f a
         recurse = traverseAst astActions
+
+instance TraverseAst [Lexeme Text] where
+    traverseAst astActions = doLexemes astActions <*>
+        traverse (traverseAst astActions)
 
 instance TraverseAst (Node (Lexeme Text)) where
     traverseAst :: forall f . Applicative f
@@ -85,6 +91,10 @@ instance TraverseAst (Node (Lexeme Text)) where
             MacroParam <$> recurse name
         StaticAssert cond msg ->
             StaticAssert <$> recurse cond <*> recurse msg
+        LicenseDecl license copyrights ->
+            LicenseDecl <$> recurse license <*> recurse copyrights
+        CopyrightDecl from to owner ->
+            CopyrightDecl <$> recurse from <*> recurse to <*> recurse owner
         Comment doc start contents end ->
             Comment doc <$> recurse start <*> recurse contents <*> recurse end
         CommentBlock comment ->

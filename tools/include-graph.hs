@@ -14,7 +14,7 @@ main = do
     srcs ->
       parseProgram srcs
       >>= getRight
-      >>= mapM_ (putStrLn . groom) . Program.toList
+      >>= mapM_ (putStrLn . groom) . Program.includeGraph
   where
     getRight (Left err) = fail err
     getRight (Right ok) = return ok

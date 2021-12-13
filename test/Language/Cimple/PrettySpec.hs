@@ -73,7 +73,7 @@ spec = do
 
         it "respects comment styles" $ do
             compact "/* foo bar */" `shouldBe` "/* foo bar */\n"
-            compact "/** foo bar */" `shouldBe` "/** foo bar */\n"
+            compact "/** foo bar */ int a(void);" `shouldBe` "/** foo bar */\nint a(void);\n"
             compact "/*** foo bar */" `shouldBe` "/*** foo bar */\n"
             compact "/**** foo bar */" `shouldBe` "/*** foo bar */\n"
 
