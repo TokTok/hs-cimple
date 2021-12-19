@@ -233,6 +233,7 @@ tokens :-
 <cmtSC>		"http://"[^ ]+				{ mkL CmtWord }
 <cmtSC>		[0-9]+"%"				{ mkL LitInteger }
 <cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
+<cmtSC>		"${"([^\}])+"}"				{ mkL CmtCode }
 <cmtSC>		"–"					{ mkL CmtWord }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
 <cmtSC>		\n					{ mkL PpNewline `andBegin` cmtNewlineSC }

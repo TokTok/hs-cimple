@@ -4,15 +4,16 @@ module Language.Cimple.Parser where
 import           Language.Cimple.AST    (AssignOp (..), BinaryOp (..),
                                          CommentStyle (..), LiteralType (..),
                                          Node (..), Scope (..), UnaryOp (..))
-import           Language.Cimple.Lexer  (Alex, AlexPosn, Lexeme (..), alexError,
-                                         alexMonadScan)
+import           Language.Cimple.Lexer  (Alex, AlexPosn (..), Lexeme (..),
+                                         alexError, alexMonadScan)
 import           Language.Cimple.Tokens (LexemeClass (..))
 }
 
 -- Conflict between (static) FunctionDecl and (static) ConstDecl.
 %expect 2
 
-%name parseCimple
+%name parseTranslationUnit TranslationUnit
+
 %error {parseError}
 %errorhandlertype explist
 %lexer {lexwrap} {L _ Eof _}
@@ -182,30 +183,22 @@ ToplevelDecls
 
 ToplevelDecl :: { StringNode }
 ToplevelDecl
-:	PreprocIfdef(ToplevelDecls)				{ $1 }
+:	AggregateDecl						{ $1 }
+|	Comment							{ $1 }
+|	ConstDecl						{ $1 }
+|	EnumDecl						{ $1 }
+|	ErrorDecl						{ $1 }
+|	Event							{ $1 }
+|	ExternC							{ $1 }
+|	FunctionDecl						{ $1 }
+|	Namespace						{ $1 }
+|	PreprocDefine						{ $1 }
+|	PreprocIfdef(ToplevelDecls)				{ $1 }
 |	PreprocIf(ToplevelDecls)				{ $1 }
 |	PreprocInclude						{ $1 }
 |	PreprocUndef						{ $1 }
-|	ExternC							{ $1 }
-|	Comment							{ $1 }
-|	Namespace						{ $1 }
-|	Event							{ $1 }
-|	ErrorDecl						{ $1 }
 |	StaticAssert						{ $1 }
-|	Commented(CommentableDecl)				{ $1 }
-
-CommentableDecl :: { StringNode }
-CommentableDecl
-:	TypedefDecl						{ $1 }
-|	AggregateDecl						{ $1 }
-|	EnumDecl						{ $1 }
-|	FunctionDecl						{ $1 }
-|	ConstDecl						{ $1 }
-|	PreprocDefine						{ $1 }
-
-DocComment :: { StringNode }
-DocComment
-:	'/**' CommentTokens '*/'				{ Comment Doxygen $1 (reverse $2) $3 }
+|	TypedefDecl						{ $1 }
 
 StaticAssert :: { StringNode }
 StaticAssert
@@ -228,8 +221,8 @@ TypeParams
 
 Event :: { StringNode }
 Event
-:	event IdVar       '{' Commented(EventType) '}'		{ Event $2 $4 }
-|	event IdVar const '{' Commented(EventType) '}'		{ Event $2 $5 }
+:	event IdVar       '{' Comment EventType '}'		{ Event $2 (Commented $4 $5) }
+|	event IdVar const '{' Comment EventType '}'		{ Event $2 (Commented $5 $6) }
 
 EventType :: { StringNode }
 EventType
@@ -246,6 +239,7 @@ ErrorDecl
 Comment :: { StringNode }
 Comment
 :	'/*' CommentTokens '*/'					{ Comment Regular $1 (reverse $2) $3 }
+|	'/**' CommentTokens '*/'				{ Comment Doxygen $1 (reverse $2) $3 }
 |	'/***' CommentTokens '*/'				{ Comment Block $1 (reverse $2) $3 }
 |	'/**/'							{ CommentBlock $1 }
 
@@ -585,7 +579,7 @@ Arg
 EnumDecl :: { StringNode }
 EnumDecl
 :	enum class ID_SUE_TYPE EnumeratorList			{ EnumClass $3 $4 }
-|	enum       ID_SUE_TYPE EnumeratorList			{ EnumConsts (Just $2) $3 }
+|	enum       ID_SUE_TYPE EnumeratorList ';'		{ EnumConsts (Just $2) $3 }
 |	enum                   EnumeratorList ';'		{ EnumConsts Nothing $2 }
 |	typedef enum ID_SUE_TYPE EnumeratorList ID_SUE_TYPE ';'	{ EnumDecl $3 $4 $5 }
 |	bitmask ID_SUE_TYPE EnumeratorList			{ EnumDecl $2 $3 $2 }
@@ -596,12 +590,8 @@ EnumeratorList
 
 Enumerators :: { [StringNode] }
 Enumerators
-:	Commented(Enumerator)					{ [$1] }
-|	Enumerators Commented(Enumerator)			{ $2 : $1 }
-
-Commented(x)
-:	x							{ $1 }
-|	DocComment x						{ Commented $1 $2 }
+:	Enumerator						{ [$1] }
+|	Enumerators Enumerator					{ $2 : $1 }
 
 Enumerator :: { StringNode }
 Enumerator
@@ -633,8 +623,8 @@ MemberDeclList
 
 MemberDecls :: { [StringNode] }
 MemberDecls
-:	Commented(MemberDecl)					{ [$1] }
-|	MemberDecls Commented(MemberDecl)			{ $2 : $1 }
+:	MemberDecl						{ [$1] }
+|	MemberDecls MemberDecl					{ $2 : $1 }
 
 MemberDecl :: { StringNode }
 MemberDecl
@@ -733,8 +723,9 @@ type StringLexeme = Lexeme String
 type StringNode = Node StringLexeme
 
 parseError :: Show text => (Lexeme text, [String]) -> Alex a
-parseError (token, options) =
-    alexError $ "Parse error near token: " <> show token <> "; expected one of " <> show options
+parseError (L (AlexPn _ line col) c t, options) =
+    alexError $ show line <> ":" <> show col <> ": Parse error near " <> show c <> ": "
+        <> show t <> "; expected one of " <> show options
 
 lexwrap :: (Lexeme String -> Alex a) -> Alex a
 lexwrap = (alexMonadScan >>=)
