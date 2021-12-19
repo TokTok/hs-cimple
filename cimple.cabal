@@ -40,6 +40,7 @@ library
     , Language.Cimple.SemCheck.Includes
     , Language.Cimple.Tokens
     , Language.Cimple.TranslationUnit
+    , Language.Cimple.TreeParser
   build-depends:
       base < 5
     , aeson

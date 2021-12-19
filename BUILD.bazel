@@ -49,6 +49,26 @@ haskell_library(
     ],
 )
 
+happy_parser(
+    name = "TreeParser",
+    src = "src/Language/Cimple/TreeParser.y",
+    preproc = "expand_yacc.pl",
+)
+
+haskell_library(
+    name = "tree_parser",
+    srcs = ["src/Language/Cimple/TreeParser.hs"],
+    src_strip_prefix = "src",
+    visibility = ["//hs-cimple:__subpackages__"],
+    deps = [
+        ":lexer",
+        ":parser",
+        hazel_library("array"),
+        hazel_library("base"),
+        hazel_library("text"),
+    ],
+)
+
 haskell_library(
     name = "hs-cimple",
     srcs = glob(
@@ -64,6 +84,7 @@ haskell_library(
     deps = [
         ":lexer",
         ":parser",
+        ":tree_parser",
         hazel_library("aeson"),
         hazel_library("ansi-wl-pprint"),
         hazel_library("array"),
