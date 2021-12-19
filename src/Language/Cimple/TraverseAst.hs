@@ -155,6 +155,8 @@ instance TraverseAst (Node (Lexeme Text)) where
             ParenExpr <$> recurse expr
         CastExpr ty expr ->
             CastExpr <$> recurse ty <*> recurse expr
+        CompoundExpr ty expr ->
+            CompoundExpr <$> recurse ty <*> recurse expr
         SizeofExpr expr ->
             SizeofExpr <$> recurse expr
         SizeofType ty ->

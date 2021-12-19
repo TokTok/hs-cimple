@@ -340,6 +340,7 @@ ppExpr expr = case expr of
     FunctionCall c  a -> ppFunctionCall c a
     ArrayAccess  e  i -> ppExpr e <> char '[' <> ppExpr i <> char ']'
     CastExpr     ty e -> char '(' <> ppType ty <> char ')' <> ppExpr e
+    CompoundExpr ty e -> char '(' <> ppType ty <> char ')' <+> char '{' <> ppExpr e <> char '}'
     PreprocDefined  n -> text "defined(" <> ppLexeme n <> char ')'
     InitialiserList l -> ppInitialiserList l
     PointerAccess e m -> ppExpr e <> text "->" <> ppLexeme m

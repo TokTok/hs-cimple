@@ -72,6 +72,7 @@ data Node lexeme
     | AssignExpr (Node lexeme) AssignOp (Node lexeme)
     | ParenExpr (Node lexeme)
     | CastExpr (Node lexeme) (Node lexeme)
+    | CompoundExpr (Node lexeme) (Node lexeme)
     | SizeofExpr (Node lexeme)
     | SizeofType (Node lexeme)
     | LiteralExpr LiteralType lexeme

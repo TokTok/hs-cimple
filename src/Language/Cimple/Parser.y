@@ -532,7 +532,13 @@ Expr
 :	LhsExpr							{ $1 }
 |	ExprStmt						{ $1 }
 |	FunctionCall						{ $1 }
+|	CompoundExpr						{ $1 }
 |	PureExpr(Expr)						{ $1 }
+
+-- Allow `(Type){0}` to set struct values to all-zero.
+CompoundExpr :: { StringNode }
+CompoundExpr
+:	'(' QualType ')' '{' Expr '}'				{ CompoundExpr $2 $5 }
 
 AssignExpr :: { StringNode }
 AssignExpr
