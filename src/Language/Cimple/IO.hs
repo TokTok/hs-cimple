@@ -50,7 +50,7 @@ parseText contents =
         runAlex (Text.unpack contents) Parser.parseTranslationUnit
 
 parseTextStrict :: Text -> Either String [Node (Lexeme Text)]
-parseTextStrict = parseText >=> TreeParser.parseTranslationUnit
+parseTextStrict = parseText >=> TreeParser.toEither . TreeParser.parseTranslationUnit
 
 
 parseFile :: FilePath -> IO (Either String (TranslationUnit Text))
