@@ -44,7 +44,7 @@ normaliseIncludes (file, ast) =
 
     go :: FilePath -> AstActions (State [FilePath]) Text
     go dir = defaultActions
-        { doNode = \node act ->
+        { doNode = \_ node act ->
             case node of
                 PreprocInclude (L spos LitString include) -> do
                     let includePath = relativeTo dir $ tread include

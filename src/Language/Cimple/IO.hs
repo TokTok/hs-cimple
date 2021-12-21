@@ -50,7 +50,7 @@ parseText contents =
         runAlex (Text.unpack contents) Parser.parseTranslationUnit
 
 parseTextStrict :: Text -> Either String [Node (Lexeme Text)]
-parseTextStrict = parseText >=> TreeParser.parseTranslationUnit
+parseTextStrict = parseText >=> TreeParser.toEither . TreeParser.parseTranslationUnit
 
 
 parseFile :: FilePath -> IO (Either String (TranslationUnit Text))
@@ -64,9 +64,13 @@ parseFile source =
     addSource (Right ok) = Right (source, ok)
 
 
+parseFiles' :: [FilePath] -> IO (Either String [TranslationUnit Text])
+parseFiles' sources = sequenceA <$> traverse parseFile sources
+
+
 parseFiles :: [FilePath] -> IO (Either String [TranslationUnit Text])
-parseFiles sources = sequenceA <$> traverse parseFile sources
+parseFiles sources = fmap Program.toList . (>>= Program.fromList) <$> parseFiles' sources
 
 
 parseProgram :: [FilePath] -> IO (Either String (Program Text))
-parseProgram sources = (>>= Program.fromList) <$> parseFiles sources
+parseProgram sources = (>>= Program.fromList) <$> parseFiles' sources

@@ -1,16 +1,19 @@
 {
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 module Language.Cimple.TreeParser where
 
 import           Data.Text             (Text)
-import           Language.Cimple.AST   (Node (..))
+import           Language.Cimple.AST   (CommentStyle (..), Node (..))
 import           Language.Cimple.Lexer (Lexeme)
 }
 
 %name parseTranslationUnit TranslationUnit
+%name parseDecls Decls
+%name parseHeaderBody HeaderBody
 
 %error {parseError}
 %errorhandlertype explist
-%monad {TreeLexer}
+%monad {TreeParser}
 %tokentype {TextNode}
 %token
     ifndefDefine	{ PreprocIfndef _ body (PreprocElse []) | isDefine body }
@@ -20,6 +23,8 @@ import           Language.Cimple.Lexer (Lexeme)
     ifndefInclude	{ PreprocIfndef{} | isPreproc tk && hasInclude tk }
     ifdefInclude	{ PreprocIfdef{} | isPreproc tk && hasInclude tk }
     ifInclude		{ PreprocIf{} | isPreproc tk && hasInclude tk }
+
+    docComment		{ Comment Doxygen _ _ _ }
 
     -- Preprocessor
     preprocInclude	{ PreprocInclude{} }
@@ -126,18 +131,27 @@ import           Language.Cimple.Lexer (Lexeme)
 
 TranslationUnit :: { [TextNode] }
 TranslationUnit
-:	licenseDecl comment Header				{ [$1, $2, $3] }
-|	licenseDecl comment Source				{ [$1, $2, $3] }
-|	licenseDecl         Header				{ [$1, $2] }
-|	licenseDecl         Source				{ [$1, $2] }
+:	licenseDecl FileComment Header				{ [$1, $2, $3] }
+|	licenseDecl FileComment Source				{ $1 : $2 : $3 }
+|	licenseDecl             Header				{ [$1, $2] }
+|	licenseDecl             Source				{ $1 : $2 }
+
+FileComment :: { TextNode }
+FileComment
+:	comment							{ $1 }
+|	docComment						{ $1 }
 
 Header :: { TextNode }
 Header
-:	preprocIfndef						{ $1 }
+:	preprocIfndef						{% recurse parseHeaderBody $1 }
 
-Source :: { TextNode }
+HeaderBody :: { [TextNode] }
+HeaderBody
+:	preprocDefine Includes Decls				{ $1 : reverse $2 ++ reverse $3 }
+
+Source :: { [TextNode] }
 Source
-:	Features preprocInclude Includes Decls			{ $2 }
+:	Features preprocInclude Includes Decls			{ $1 ++ [$2] ++ reverse $3 ++ reverse $4 }
 
 Features :: { [TextNode] }
 Features
@@ -169,26 +183,40 @@ Decls
 
 Decl :: { TextNode }
 Decl
+:	comment							{ $1 }
+|	CommentableDecl						{ $1 }
+|	docComment CommentableDecl				{ Commented $1 $2 }
+
+CommentableDecl :: { TextNode }
+CommentableDecl
 :	functionDecl						{ $1 }
 |	functionDefn						{ $1 }
 |	struct							{ $1 }
 |	typedef							{ $1 }
-|	comment							{ $1 }
+|	constDecl						{ $1 }
 |	constDefn						{ $1 }
+|	enumConsts						{ $1 }
 |	enumDecl						{ $1 }
+|	externC							{% recurse parseDecls $1 }
+|	preprocDefine						{ $1 }
 |	preprocDefineConst					{ $1 }
 |	preprocDefineMacro					{ $1 }
-|	preprocIf						{ $1 }
-|	preprocIfdef						{ $1 }
-|	preprocIfndef						{ $1 }
+|	preprocIf						{% recurse parseDecls $1 }
+|	preprocIfdef						{% recurse parseDecls $1 }
+|	preprocIfndef						{% recurse parseDecls $1 }
 |	staticAssert						{ $1 }
+|	typedefFunction						{ $1 }
 |	IfDefine						{ $1 }
 
 {
 type TextLexeme = Lexeme Text
 type TextNode = Node TextLexeme
 
-type TreeLexer a = Either String a
+newtype TreeParser a = TreeParser { toEither :: Either String a }
+    deriving (Functor, Applicative, Monad)
+
+instance MonadFail TreeParser where
+    fail = TreeParser . Left
 
 
 isDefine :: [TextNode] -> Bool
@@ -217,9 +245,21 @@ hasInclude (PreprocElse ed)        = any hasInclude ed
 hasInclude _                       = False
 
 
-parseError :: ([TextNode], [String]) -> TreeLexer a
+recurse :: ([TextNode] -> TreeParser [TextNode]) -> TextNode -> TreeParser TextNode
+recurse f (ExternC ds)          = ExternC <$> f ds
+recurse f (PreprocIf c t e)     = PreprocIf c <$> f t <*> recurse f e
+recurse f (PreprocIfdef c t e)  = PreprocIfdef c <$> f t <*> recurse f e
+recurse f (PreprocIfndef c t e) = PreprocIfndef c <$> f t <*> recurse f e
+recurse f (PreprocIfndef c t e) = PreprocIfndef c <$> f t <*> recurse f e
+recurse f (PreprocElif c t e)   = PreprocElif c <$> f t <*> recurse f e
+recurse f (PreprocElse [])      = return $ PreprocElse []
+recurse f (PreprocElse e)       = PreprocElse <$> f e
+recurse _ ns                    = fail $ show ns
+
+
+parseError :: ([TextNode], [String]) -> TreeParser a
 parseError ([], options) =
-    Left $ "end of file; expected one of " <> show options
+    fail $ "end of file; expected one of " <> show options
 parseError (n:_, options) =
-    Left $ show n <> "; expected one of " <> show options
+    fail $ show n <> "; expected one of " <> show options
 }
