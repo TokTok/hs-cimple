@@ -2,6 +2,7 @@
 {-# LANGUAGE InstanceSigs        #-}
 {-# LANGUAGE LambdaCase          #-}
 {-# LANGUAGE NamedFieldPuns      #-}
+{-# LANGUAGE RecordWildCards     #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE StrictData          #-}
 module Language.Cimple.TraverseAst
@@ -32,7 +33,7 @@ instance TraverseAst a => TraverseAst (Maybe a) where
     traverseAst _          Nothing  = pure Nothing
     traverseAst astActions (Just x) = Just <$> traverseAst astActions x
 
-defaultActions :: Applicative f => AstActions f lexeme
+defaultActions :: Applicative f => AstActions f text
 defaultActions = AstActions
     { currentFile = "<stdin>"
     , doUnits     = const id
@@ -47,25 +48,25 @@ defaultActions = AstActions
 instance TraverseAst Text where
     traverseAst :: forall f . Applicative f
                 => AstActions f Text -> Text -> f Text
-    traverseAst astActions@AstActions{currentFile} = doText astActions currentFile <*> pure
+    traverseAst AstActions{..} = doText currentFile <*> pure
 
 instance TraverseAst (Lexeme Text) where
     traverseAst :: forall f . Applicative f
                 => AstActions f Text -> Lexeme Text -> f (Lexeme Text)
-    traverseAst astActions@AstActions{currentFile} = doLexeme astActions currentFile <*> \case
-        L p c s -> L p c <$> recurse s
+    traverseAst astActions@AstActions{..} = doLexeme currentFile <*>
+        \(L p c s) -> L p c <$> recurse s
       where
         recurse :: TraverseAst a => a -> f a
         recurse = traverseAst astActions
 
 instance TraverseAst [Lexeme Text] where
-    traverseAst astActions@AstActions{currentFile} = doLexemes astActions currentFile <*>
+    traverseAst astActions@AstActions{..} = doLexemes currentFile <*>
         traverse (traverseAst astActions)
 
 instance TraverseAst (Node (Lexeme Text)) where
     traverseAst :: forall f . Applicative f
                 => AstActions f Text -> Node (Lexeme Text) -> f (Node (Lexeme Text))
-    traverseAst astActions@AstActions{currentFile} = doNode astActions currentFile <*> \case
+    traverseAst astActions@AstActions{..} = doNode currentFile <*> \case
         PreprocInclude path ->
             PreprocInclude <$> recurse path
         PreprocDefine name ->
@@ -254,15 +255,13 @@ instance TraverseAst (Node (Lexeme Text)) where
         recurse = traverseAst astActions
 
 instance TraverseAst [Node (Lexeme Text)] where
-    traverseAst astActions@AstActions{currentFile} = doNodes astActions currentFile <*>
+    traverseAst astActions@AstActions{..} = doNodes currentFile <*>
         traverse (traverseAst astActions)
 
 instance TraverseAst (FilePath, [Node (Lexeme Text)]) where
-    traverseAst astActions tu@(currentFile, _) = doUnit astActions' <*>
-        traverse (traverseAst astActions') $ tu
-      where
-        astActions' = astActions{currentFile}
+    traverseAst astActions@AstActions{doUnit} tu@(currentFile, _) = doUnit <*>
+        traverse (traverseAst astActions{currentFile}) $ tu
 
 instance TraverseAst [(FilePath, [Node (Lexeme Text)])] where
-    traverseAst astActions = doUnits astActions <*>
+    traverseAst astActions@AstActions{..} = doUnits <*>
         traverse (traverseAst astActions)

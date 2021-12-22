@@ -346,6 +346,7 @@ ppExpr expr = case expr of
     PointerAccess e m -> ppExpr e <> text "->" <> ppLexeme m
     MemberAccess  e m -> ppExpr e <> text "." <> ppLexeme m
     CommentExpr   c e -> ppCommentExpr c e
+    LicenseDecl l cs  -> ppLicenseDecl l cs
 
     x                 -> error $ groom x
 
@@ -353,6 +354,21 @@ ppTernaryExpr
     :: Node (Lexeme Text) -> Node (Lexeme Text) -> Node (Lexeme Text) -> Doc
 ppTernaryExpr c t e =
     ppExpr c <+> char '?' <+> ppExpr t <+> char ':' <+> ppExpr e
+
+ppLicenseDecl :: Lexeme Text -> [Node (Lexeme Text)] -> Doc
+ppLicenseDecl l cs =
+    ppCommentStyle Regular <+> ppLexeme l <$>
+    ppLineSep ppCopyrightDecl cs
+
+ppCopyrightDecl :: Node (Lexeme Text) -> Doc
+ppCopyrightDecl (CopyrightDecl from (Just to) owner) =
+    ppLexeme from <> char '-' <> ppLexeme to <+>
+    ppCommentBody (map CommentWord owner)
+ppCopyrightDecl (CopyrightDecl from Nothing owner) =
+    ppLexeme from <+>
+    ppCommentBody (map CommentWord owner)
+ppCopyrightDecl x =
+    error $ groom x
 
 ppCommentExpr :: Node (Lexeme Text) -> Node (Lexeme Text) -> Doc
 ppCommentExpr (Comment style _ body _) e =
