@@ -1,5 +1,7 @@
 {
-module Language.Cimple.Parser where
+module Language.Cimple.Parser
+    ( parseTranslationUnit
+    ) where
 
 import           Language.Cimple.AST    (AssignOp (..), BinaryOp (..),
                                          CommentStyle (..), LiteralType (..),

@@ -1,6 +1,10 @@
 {
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
-module Language.Cimple.TreeParser where
+module Language.Cimple.TreeParser
+    ( TreeParser
+    , parseTranslationUnit
+    , toEither
+    ) where
 
 import           Data.Text             (Text)
 import           Language.Cimple.AST   (CommentStyle (..), Node (..))
@@ -258,8 +262,7 @@ recurse _ ns                    = fail $ show ns
 
 
 parseError :: ([TextNode], [String]) -> TreeParser a
-parseError ([], options) =
-    fail $ "end of file; expected one of " <> show options
-parseError (n:_, options) =
-    fail $ show n <> "; expected one of " <> show options
+parseError ([], options)  = fail $ "end of file; expected one of " <> show options
+parseError (n:_, [])      = fail $ show n <> "; expected end of file"
+parseError (n:_, options) = fail $ show n <> "; expected one of " <> show options
 }
