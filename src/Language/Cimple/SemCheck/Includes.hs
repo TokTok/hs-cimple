@@ -42,7 +42,7 @@ normaliseIncludes (file, ast) =
   where
     (ast', includes) = State.runState (traverseAst (go (takeDirectory file)) ast) []
 
-    go :: FilePath -> AstActions (State [FilePath]) Text
+    go :: FilePath -> AstActions (State [FilePath]) () Text
     go dir = defaultActions
         { doNode = \_ node act ->
             case node of

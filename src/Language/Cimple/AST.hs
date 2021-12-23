@@ -15,111 +15,112 @@ module Language.Cimple.AST
 import           Data.Aeson   (FromJSON, ToJSON)
 import           GHC.Generics (Generic)
 
-data Node lexeme
+data Node a lexeme
+    = Attr a
     -- Preprocessor
-    = PreprocInclude lexeme
+    | PreprocInclude lexeme
     | PreprocDefine lexeme
-    | PreprocDefineConst lexeme (Node lexeme)
-    | PreprocDefineMacro lexeme [Node lexeme] (Node lexeme)
-    | PreprocIf (Node lexeme) [Node lexeme] (Node lexeme)
-    | PreprocIfdef lexeme [Node lexeme] (Node lexeme)
-    | PreprocIfndef lexeme [Node lexeme] (Node lexeme)
-    | PreprocElse [Node lexeme]
-    | PreprocElif (Node lexeme) [Node lexeme] (Node lexeme)
+    | PreprocDefineConst lexeme (Node a lexeme)
+    | PreprocDefineMacro lexeme [Node a lexeme] (Node a lexeme)
+    | PreprocIf (Node a lexeme) [Node a lexeme] (Node a lexeme)
+    | PreprocIfdef lexeme [Node a lexeme] (Node a lexeme)
+    | PreprocIfndef lexeme [Node a lexeme] (Node a lexeme)
+    | PreprocElse [Node a lexeme]
+    | PreprocElif (Node a lexeme) [Node a lexeme] (Node a lexeme)
     | PreprocUndef lexeme
     | PreprocDefined lexeme
-    | PreprocScopedDefine (Node lexeme) [Node lexeme] (Node lexeme)
-    | MacroBodyStmt [Node lexeme]
-    | MacroBodyFunCall (Node lexeme)
+    | PreprocScopedDefine (Node a lexeme) [Node a lexeme] (Node a lexeme)
+    | MacroBodyStmt [Node a lexeme]
+    | MacroBodyFunCall (Node a lexeme)
     | MacroParam lexeme
-    | StaticAssert (Node lexeme) lexeme
+    | StaticAssert (Node a lexeme) lexeme
     -- Comments
-    | LicenseDecl lexeme [Node lexeme]
+    | LicenseDecl lexeme [Node a lexeme]
     | CopyrightDecl lexeme (Maybe lexeme) [lexeme]
-    | Comment CommentStyle lexeme [Node lexeme] lexeme
+    | Comment CommentStyle lexeme [Node a lexeme] lexeme
     | CommentBlock lexeme
     | CommentWord lexeme
-    | Commented (Node lexeme) (Node lexeme)
+    | Commented (Node a lexeme) (Node a lexeme)
     -- Namespace-like blocks
-    | ExternC [Node lexeme]
-    | Class Scope lexeme [Node lexeme] [Node lexeme]
-    | Namespace Scope lexeme [Node lexeme]
+    | ExternC [Node a lexeme]
+    | Class Scope lexeme [Node a lexeme] [Node a lexeme]
+    | Namespace Scope lexeme [Node a lexeme]
     -- Statements
-    | CompoundStmt [Node lexeme]
+    | CompoundStmt [Node a lexeme]
     | Break
     | Goto lexeme
     | Continue
-    | Return (Maybe (Node lexeme))
-    | SwitchStmt (Node lexeme) [Node lexeme]
-    | IfStmt (Node lexeme) [Node lexeme] (Maybe (Node lexeme))
-    | ForStmt (Node lexeme) (Node lexeme) (Node lexeme) [Node lexeme]
-    | WhileStmt (Node lexeme) [Node lexeme]
-    | DoWhileStmt [Node lexeme] (Node lexeme)
-    | Case (Node lexeme) (Node lexeme)
-    | Default (Node lexeme)
-    | Label lexeme (Node lexeme)
+    | Return (Maybe (Node a lexeme))
+    | SwitchStmt (Node a lexeme) [Node a lexeme]
+    | IfStmt (Node a lexeme) [Node a lexeme] (Maybe (Node a lexeme))
+    | ForStmt (Node a lexeme) (Node a lexeme) (Node a lexeme) [Node a lexeme]
+    | WhileStmt (Node a lexeme) [Node a lexeme]
+    | DoWhileStmt [Node a lexeme] (Node a lexeme)
+    | Case (Node a lexeme) (Node a lexeme)
+    | Default (Node a lexeme)
+    | Label lexeme (Node a lexeme)
     -- Variable declarations
-    | VLA (Node lexeme) lexeme (Node lexeme)
-    | VarDecl (Node lexeme) (Node lexeme)
-    | Declarator (Node lexeme) (Maybe (Node lexeme))
+    | VLA (Node a lexeme) lexeme (Node a lexeme)
+    | VarDecl (Node a lexeme) (Node a lexeme)
+    | Declarator (Node a lexeme) (Maybe (Node a lexeme))
     | DeclSpecVar lexeme
-    | DeclSpecArray (Node lexeme) (Maybe (Node lexeme))
+    | DeclSpecArray (Node a lexeme) (Maybe (Node a lexeme))
     -- Expressions
-    | InitialiserList [Node lexeme]
-    | UnaryExpr UnaryOp (Node lexeme)
-    | BinaryExpr (Node lexeme) BinaryOp (Node lexeme)
-    | TernaryExpr (Node lexeme) (Node lexeme) (Node lexeme)
-    | AssignExpr (Node lexeme) AssignOp (Node lexeme)
-    | ParenExpr (Node lexeme)
-    | CastExpr (Node lexeme) (Node lexeme)
-    | CompoundExpr (Node lexeme) (Node lexeme)
-    | SizeofExpr (Node lexeme)
-    | SizeofType (Node lexeme)
+    | InitialiserList [Node a lexeme]
+    | UnaryExpr UnaryOp (Node a lexeme)
+    | BinaryExpr (Node a lexeme) BinaryOp (Node a lexeme)
+    | TernaryExpr (Node a lexeme) (Node a lexeme) (Node a lexeme)
+    | AssignExpr (Node a lexeme) AssignOp (Node a lexeme)
+    | ParenExpr (Node a lexeme)
+    | CastExpr (Node a lexeme) (Node a lexeme)
+    | CompoundExpr (Node a lexeme) (Node a lexeme)
+    | SizeofExpr (Node a lexeme)
+    | SizeofType (Node a lexeme)
     | LiteralExpr LiteralType lexeme
     | VarExpr lexeme
-    | MemberAccess (Node lexeme) lexeme
-    | PointerAccess (Node lexeme) lexeme
-    | ArrayAccess (Node lexeme) (Node lexeme)
-    | FunctionCall (Node lexeme) [Node lexeme]
-    | CommentExpr (Node lexeme) (Node lexeme)
+    | MemberAccess (Node a lexeme) lexeme
+    | PointerAccess (Node a lexeme) lexeme
+    | ArrayAccess (Node a lexeme) (Node a lexeme)
+    | FunctionCall (Node a lexeme) [Node a lexeme]
+    | CommentExpr (Node a lexeme) (Node a lexeme)
     -- Type definitions
-    | EnumClass lexeme [Node lexeme]
-    | EnumConsts (Maybe lexeme) [Node lexeme]
-    | EnumDecl lexeme [Node lexeme] lexeme
-    | Enumerator lexeme (Maybe (Node lexeme))
-    | ClassForward lexeme [Node lexeme]
-    | Typedef (Node lexeme) lexeme
-    | TypedefFunction (Node lexeme)
-    | Struct lexeme [Node lexeme]
-    | Union lexeme [Node lexeme]
-    | MemberDecl (Node lexeme) (Node lexeme) (Maybe lexeme)
-    | TyConst (Node lexeme)
-    | TyPointer (Node lexeme)
+    | EnumClass lexeme [Node a lexeme]
+    | EnumConsts (Maybe lexeme) [Node a lexeme]
+    | EnumDecl lexeme [Node a lexeme] lexeme
+    | Enumerator lexeme (Maybe (Node a lexeme))
+    | ClassForward lexeme [Node a lexeme]
+    | Typedef (Node a lexeme) lexeme
+    | TypedefFunction (Node a lexeme)
+    | Struct lexeme [Node a lexeme]
+    | Union lexeme [Node a lexeme]
+    | MemberDecl (Node a lexeme) (Node a lexeme) (Maybe lexeme)
+    | TyConst (Node a lexeme)
+    | TyPointer (Node a lexeme)
     | TyStruct lexeme
     | TyFunc lexeme
     | TyStd lexeme
     | TyVar lexeme
     | TyUserDefined lexeme
     -- Functions
-    | FunctionDecl Scope (Node lexeme) (Maybe (Node lexeme))
-    | FunctionDefn Scope (Node lexeme) [Node lexeme]
-    | FunctionPrototype (Node lexeme) lexeme [Node lexeme]
-    | FunctionParam (Node lexeme) (Node lexeme)
-    | Event lexeme (Node lexeme)
-    | EventParams [Node lexeme]
-    | Property (Node lexeme) (Node lexeme) [Node lexeme]
-    | Accessor lexeme [Node lexeme] (Maybe (Node lexeme))
-    | ErrorDecl lexeme [Node lexeme]
-    | ErrorList [Node lexeme]
+    | FunctionDecl Scope (Node a lexeme) (Maybe (Node a lexeme))
+    | FunctionDefn Scope (Node a lexeme) [Node a lexeme]
+    | FunctionPrototype (Node a lexeme) lexeme [Node a lexeme]
+    | FunctionParam (Node a lexeme) (Node a lexeme)
+    | Event lexeme (Node a lexeme)
+    | EventParams [Node a lexeme]
+    | Property (Node a lexeme) (Node a lexeme) [Node a lexeme]
+    | Accessor lexeme [Node a lexeme] (Maybe (Node a lexeme))
+    | ErrorDecl lexeme [Node a lexeme]
+    | ErrorList [Node a lexeme]
     | ErrorFor lexeme
     | Ellipsis
     -- Constants
-    | ConstDecl (Node lexeme) lexeme
-    | ConstDefn Scope (Node lexeme) lexeme (Node lexeme)
+    | ConstDecl (Node a lexeme) lexeme
+    | ConstDefn Scope (Node a lexeme) lexeme (Node a lexeme)
     deriving (Show, Eq, Generic, Functor, Foldable, Traversable)
 
-instance FromJSON lexeme => FromJSON (Node lexeme)
-instance ToJSON lexeme => ToJSON (Node lexeme)
+instance (FromJSON a, FromJSON lexeme) => FromJSON (Node a lexeme)
+instance (ToJSON a, ToJSON lexeme) => ToJSON (Node a lexeme)
 
 data AssignOp
     = AopEq

@@ -722,7 +722,7 @@ ConstDecl
 
 {
 type StringLexeme = Lexeme String
-type StringNode = Node StringLexeme
+type StringNode = Node () StringLexeme
 
 parseError :: Show text => (Lexeme text, [String]) -> Alex a
 parseError (L (AlexPn _ line col) c t, options) =

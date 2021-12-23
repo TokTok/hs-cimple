@@ -19,8 +19,8 @@ import           Language.Cimple.SemCheck.Includes (collectIncludes,
 import           Language.Cimple.TranslationUnit   (TranslationUnit)
 
 
-data Program a = Program
-  { progAsts     :: Map FilePath [Node (Lexeme a)]
+data Program text = Program
+  { progAsts     :: Map FilePath [Node () (Lexeme text)]
   , progIncludes :: Graph () FilePath
   }
 

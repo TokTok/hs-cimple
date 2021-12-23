@@ -36,20 +36,20 @@ cacheText s = do
             return text
 
 
-process :: [Node (Lexeme String)] -> [Node (Lexeme Text)]
+process :: [Node a (Lexeme String)] -> [Node a (Lexeme Text)]
 process stringAst =
     evalState (mapM (mapM (mapM cacheText)) stringAst) Map.empty
 
 
-parseText :: Text -> Either String [Node (Lexeme Text)]
+parseText :: Text -> Either String [Node () (Lexeme Text)]
 parseText contents =
     process <$> res
   where
-    res :: Either String [Node (Lexeme String)]
+    res :: Either String [Node () (Lexeme String)]
     res =
         runAlex (Text.unpack contents) Parser.parseTranslationUnit
 
-parseTextStrict :: Text -> Either String [Node (Lexeme Text)]
+parseTextStrict :: Text -> Either String [Node () (Lexeme Text)]
 parseTextStrict = parseText >=> TreeParser.toEither . TreeParser.parseTranslationUnit
 
 

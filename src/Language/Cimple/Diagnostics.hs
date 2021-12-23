@@ -33,11 +33,11 @@ warn :: HasDiagnostics diags => FilePath -> Lexeme Text -> Text -> DiagnosticsT 
 warn file l w = State.modify (addDiagnostic $ sloc file l <> ": " <> w)
 
 
-sloc :: FilePath -> Lexeme a -> Text
+sloc :: FilePath -> Lexeme text -> Text
 sloc file l = Text.pack file <> ":" <> Text.pack (show (lexemeLine l))
 
 
-at :: Node (Lexeme Text) -> Lexeme Text
+at :: Node a (Lexeme Text) -> Lexeme Text
 at n =
     case foldMap (:[]) n of
         []  -> L (AlexPn 0 0 0) Error "unknown source location"

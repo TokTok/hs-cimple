@@ -6,4 +6,4 @@ module Language.Cimple.TranslationUnit
 import           Language.Cimple.AST   (Node)
 import           Language.Cimple.Lexer (Lexeme)
 
-type TranslationUnit a = (FilePath, [Node (Lexeme a)])
+type TranslationUnit text = (FilePath, [Node () (Lexeme text)])

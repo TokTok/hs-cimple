@@ -214,7 +214,7 @@ CommentableDecl
 
 {
 type TextLexeme = Lexeme Text
-type TextNode = Node TextLexeme
+type TextNode = Node () TextLexeme
 
 newtype TreeParser a = TreeParser { toEither :: Either String a }
     deriving (Functor, Applicative, Monad)
