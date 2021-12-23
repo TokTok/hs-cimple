@@ -79,7 +79,7 @@ haskell_library(
         ],
     ),
     src_strip_prefix = "src",
-    version = "0.0.4",
+    version = "0.0.5",
     visibility = ["//visibility:public"],
     deps = [
         ":lexer",

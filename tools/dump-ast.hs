@@ -1,10 +1,9 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main (main) where
 
-import           Language.Cimple.IO      (parseProgram)
-import qualified Language.Cimple.Program as Program
-import           System.Environment      (getArgs)
-import           Text.Groom              (groom)
+import           Language.Cimple.IO (parseFiles)
+import           System.Environment (getArgs)
+import           Text.Groom         (groom)
 
 
 main :: IO ()
@@ -13,9 +12,9 @@ main = do
   case args of
     [] -> fail "Usage: dump-ast [FILE]..."
     srcs ->
-      parseProgram srcs
+      parseFiles srcs
       >>= getRight
-      >>= mapM_ (putStrLn . groom) . Program.toList
+      >>= mapM_ (putStrLn . groom)
   where
     getRight (Left err) = fail err
     getRight (Right ok) = return ok

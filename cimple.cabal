@@ -1,5 +1,5 @@
 name:                 cimple
-version:              0.0.4
+version:              0.0.5
 synopsis:             Simple C-like programming language
 homepage:             https://toktok.github.io/
 license:              GPL-3
@@ -31,7 +31,6 @@ library
     , Language.Cimple.IO
     , Language.Cimple.Pretty
     , Language.Cimple.Program
-    , Language.Cimple.TraverseAst
   other-modules:
       Language.Cimple.AST
     , Language.Cimple.Graph
@@ -40,6 +39,7 @@ library
     , Language.Cimple.SemCheck.Includes
     , Language.Cimple.Tokens
     , Language.Cimple.TranslationUnit
+    , Language.Cimple.TraverseAst
     , Language.Cimple.TreeParser
   build-depends:
       base < 5

@@ -12,8 +12,8 @@ import           Language.Cimple.AST             (Node (..))
 import           Language.Cimple.Lexer           (Lexeme (..))
 import           Language.Cimple.Tokens          (LexemeClass (..))
 import           Language.Cimple.TranslationUnit (TranslationUnit)
-import           Language.Cimple.TraverseAst     (AstActions (..),
-                                                  defaultActions, traverseAst)
+import           Language.Cimple.TraverseAst     (IdentityActions, doNode,
+                                                  identityActions, traverseAst)
 import           System.FilePath                 (joinPath, splitPath,
                                                   takeDirectory)
 
@@ -36,24 +36,25 @@ relativeTo dir file = go (splitPath dir) (splitPath file)
     go d f         = joinPath (d ++ f)
 
 
+normaliseIncludes' :: FilePath -> IdentityActions (State [FilePath]) () Text
+normaliseIncludes' dir = identityActions
+    { doNode = \_ node act ->
+        case node of
+            PreprocInclude (L spos LitString include) -> do
+                let includePath = relativeTo dir $ tread include
+                State.modify (includePath :)
+                return $ PreprocInclude (L spos LitString (tshow includePath))
+
+            _ -> act
+    }
+
+  where
+    tshow = Text.pack . show
+    tread = read . Text.unpack
+
+
 normaliseIncludes :: TranslationUnit Text -> (TranslationUnit Text, [FilePath])
 normaliseIncludes (file, ast) =
     ((file, ast'), includes)
   where
-    (ast', includes) = State.runState (traverseAst (go (takeDirectory file)) ast) []
-
-    go :: FilePath -> AstActions (State [FilePath]) () Text
-    go dir = defaultActions
-        { doNode = \_ node act ->
-            case node of
-                PreprocInclude (L spos LitString include) -> do
-                    let includePath = relativeTo dir $ tread include
-                    State.modify (includePath :)
-                    return $ PreprocInclude (L spos LitString (tshow includePath))
-
-                _ -> act
-        }
-
-      where
-        tshow = Text.pack . show
-        tread = read . Text.unpack
+    (ast', includes) = State.runState (traverseAst (normaliseIncludes' (takeDirectory file)) ast) []

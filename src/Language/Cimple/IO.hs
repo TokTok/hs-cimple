@@ -20,42 +20,41 @@ import qualified Language.Cimple.Parser          as Parser
 import           Language.Cimple.Program         (Program)
 import qualified Language.Cimple.Program         as Program
 import           Language.Cimple.TranslationUnit (TranslationUnit)
+import           Language.Cimple.TraverseAst     (TextActions, mapAst,
+                                                  textActions)
 import qualified Language.Cimple.TreeParser      as TreeParser
 
-type CacheState a = State (Map String Text) a
+type StringNode = Node () (Lexeme String)
+type TextNode = Node () (Lexeme Text)
 
-cacheText :: String -> CacheState Text
-cacheText s = do
-    m <- get
-    case Map.lookup s m of
-        Nothing -> do
-            let text = Text.pack s
-            put $ Map.insert s text m
-            return text
-        Just text ->
-            return text
-
-
-process :: [Node a (Lexeme String)] -> [Node a (Lexeme Text)]
-process stringAst =
-    evalState (mapM (mapM (mapM cacheText)) stringAst) Map.empty
-
-
-parseText :: Text -> Either String [Node () (Lexeme Text)]
-parseText contents =
-    process <$> res
+toTextAst :: [StringNode] -> [TextNode]
+toTextAst stringAst =
+    evalState (mapAst cacheActions stringAst) Map.empty
   where
-    res :: Either String [Node () (Lexeme String)]
-    res =
-        runAlex (Text.unpack contents) Parser.parseTranslationUnit
+    cacheActions :: TextActions (State (Map String Text)) () String Text
+    cacheActions = textActions $ \s -> do
+        m <- get
+        case Map.lookup s m of
+            Nothing -> do
+                let text = Text.pack s
+                put $ Map.insert s text m
+                return text
+            Just text ->
+                return text
 
-parseTextStrict :: Text -> Either String [Node () (Lexeme Text)]
-parseTextStrict = parseText >=> TreeParser.toEither . TreeParser.parseTranslationUnit
+
+parseText :: Text -> Either String [TextNode]
+parseText contents =
+    toTextAst <$> runAlex (Text.unpack contents) Parser.parseTranslationUnit
+
+parseTextPedantic :: Text -> Either String [TextNode]
+parseTextPedantic =
+    parseText >=> TreeParser.toEither . TreeParser.parseTranslationUnit
 
 
 parseFile :: FilePath -> IO (Either String (TranslationUnit Text))
 parseFile source =
-    addSource . parseTextStrict . Text.decodeUtf8 <$> BS.readFile source
+    addSource . parseTextPedantic . Text.decodeUtf8 <$> BS.readFile source
   where
     -- Add source filename to the error message, if any.
     addSource (Left err) = Left $ source <> ":" <> err

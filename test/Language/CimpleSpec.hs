@@ -1,16 +1,28 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Language.CimpleSpec where
 
+import           Data.Text          (Text)
+import qualified Data.Text          as Text
 import           Test.Hspec         (Spec, describe, it, shouldBe)
 
 import           Language.Cimple    (AlexPosn (..), CommentStyle (..),
                                      Lexeme (..), LexemeClass (..),
-                                     LiteralType (..), Node (..), Scope (..))
+                                     LiteralType (..), Node (..), Scope (..),
+                                     TextActions, mapAst, textActions)
 import           Language.Cimple.IO (parseText)
 
 
 spec :: Spec
-spec =
+spec = do
+    describe "TraverseAst" $ do
+        it "should map the same way as mapM" $ do
+            let Right ast = parseText "int a(void) { return 3; }"
+            let actions :: TextActions Maybe () Text String
+                actions = textActions (Just . Text.unpack)
+            mapM (mapM (mapM (Just . Text.unpack))) ast
+                `shouldBe`
+                mapAst actions ast
+
     describe "C parsing" $ do
         it "should parse a simple function" $ do
             let ast = parseText "int a(void) { return 3; }"
