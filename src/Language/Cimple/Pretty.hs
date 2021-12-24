@@ -24,7 +24,7 @@ ppCommaSep go = foldr (<>) empty . List.intersperse (text ", ") . map go
 ppLineSep :: (a -> Doc) -> [a] -> Doc
 ppLineSep go = foldr (<>) empty . List.intersperse linebreak . map go
 
-ppComment :: Show a => CommentStyle -> [Node a (Lexeme Text)] -> Doc
+ppComment :: CommentStyle -> [Lexeme Text] -> Doc
 ppComment style cs =
     nest 1 (ppCommentStyle style <> ppCommentBody cs) <+> text "*/"
 
@@ -33,8 +33,8 @@ ppCommentStyle Block   = text "/***"
 ppCommentStyle Doxygen = text "/**"
 ppCommentStyle Regular = text "/*"
 
-ppCommentWords :: [Lexeme Text] -> Doc
-ppCommentWords = go
+ppCommentBody :: [Lexeme Text] -> Doc
+ppCommentBody = go
   where
     go (L _ LitInteger t1 : L _ PctMinus m : L _ LitInteger t2 : xs) =
         space <> ppText t1 <> ppText m <> ppText t2 <> go xs
@@ -70,12 +70,6 @@ ppCommentWords = go
     ppWord (L _ PctLess          t) = space <> ppText t
     ppWord (L _ PctComma         t) = space <> ppText t
     ppWord x                        = error $ groom x
-
-ppCommentBody :: Show a => [Node a (Lexeme Text)] -> Doc
-ppCommentBody = ppCommentWords . map unCommentWord
-  where
-    unCommentWord (CommentWord l) = l
-    unCommentWord x               = error $ groom x
 
 ppScope :: Scope -> Doc
 ppScope Global = empty
@@ -188,12 +182,12 @@ ppFunctionCall callee args =
 
 ppMacroBody :: Show a => Node a (Lexeme Text) -> Doc
 ppMacroBody (MacroBodyFunCall e@FunctionCall{}) = ppExpr e
-ppMacroBody (MacroBodyStmt body) =
+ppMacroBody (MacroBodyStmt (CompoundStmt body)) =
     nest 2 (
         text "do {" <$>
         ppStmtList body
     ) <$> text "} while (0)"
-ppMacroBody x                                   = error $ groom x
+ppMacroBody x = error $ groom x
 
 ppMacroParam :: Show a => Node a (Lexeme Text) -> Doc
 ppMacroParam (MacroParam l) = ppLexeme l
@@ -372,10 +366,10 @@ ppLicenseDecl l cs =
 ppCopyrightDecl :: Show a => Node a (Lexeme Text) -> Doc
 ppCopyrightDecl (CopyrightDecl from (Just to) owner) =
     ppLexeme from <> char '-' <> ppLexeme to <+>
-    ppCommentWords owner
+    ppCommentBody owner
 ppCopyrightDecl (CopyrightDecl from Nothing owner) =
     ppLexeme from <+>
-    ppCommentWords owner
+    ppCommentBody owner
 ppCopyrightDecl x =
     error $ groom x
 
@@ -529,7 +523,7 @@ ppDecl decl = case decl of
         ppScope scope <>
         ppFunctionPrototype ty name params <>
         ppWithError err
-    FunctionDefn scope (FunctionPrototype ty name params) body ->
+    FunctionDefn scope (FunctionPrototype ty name params) (CompoundStmt body) ->
         ppScope scope <>
         ppFunctionPrototype ty name params <$>
         ppCompoundStmt body
@@ -559,24 +553,24 @@ ppDecl decl = case decl of
         ) <$> char '}'
 
     -- Statements
-    Continue              -> text "continue;"
-    Break                 -> text "break;"
-    Return Nothing        -> text "return;"
-    Return (Just e)       -> text "return" <+> ppExpr e <> char ';'
-    VarDecl ty declr      -> ppType ty <+> ppDeclarator declr <> char ';'
-    IfStmt cond t e       -> ppIfStmt cond t e
-    ForStmt i c n body    -> ppForStmt i c n body
-    Default s             -> text "default:" <+> ppStmt s
-    Label l s             -> ppLexeme l <> char ':' <$> ppStmt s
-    Goto l                -> text "goto " <> ppLexeme l <> char ';'
-    Case        e    s    -> text "case " <> ppExpr e <> char ':' <+> ppStmt s
-    WhileStmt   c    body -> ppWhileStmt c body
-    DoWhileStmt body c    -> ppDoWhileStmt body c
-    SwitchStmt  c    body -> ppSwitchStmt c body
-    CompoundStmt body     -> char '{' <$> ppStmtList body <$> char '}'
-    VLA ty n sz           -> ppVLA ty n sz
+    Continue                          -> text "continue;"
+    Break                             -> text "break;"
+    Return Nothing                    -> text "return;"
+    Return (Just e)                   -> text "return" <+> ppExpr e <> char ';'
+    VarDecl ty declr                  -> ppType ty <+> ppDeclarator declr <> char ';'
+    IfStmt cond (CompoundStmt t) e    -> ppIfStmt cond t e
+    ForStmt i c n (CompoundStmt body) -> ppForStmt i c n body
+    Default s                         -> text "default:" <+> ppStmt s
+    Label l s                         -> ppLexeme l <> char ':' <$> ppStmt s
+    Goto l                            -> text "goto " <> ppLexeme l <> char ';'
+    Case e s                          -> text "case " <> ppExpr e <> char ':' <+> ppStmt s
+    WhileStmt c (CompoundStmt body)   -> ppWhileStmt c body
+    DoWhileStmt (CompoundStmt body) c -> ppDoWhileStmt body c
+    SwitchStmt c body                 -> ppSwitchStmt c body
+    CompoundStmt body                 -> char '{' <$> ppStmtList body <$> char '}'
+    VLA ty n sz                       -> ppVLA ty n sz
 
-    x                     -> ppExpr x <> char ';'
+    x                                 -> ppExpr x <> char ';'
 
 
 ppVLA :: Show a => Node a (Lexeme Text) -> Lexeme Text -> Node a (Lexeme Text) -> Doc

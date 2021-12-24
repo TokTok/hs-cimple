@@ -147,8 +147,6 @@ instance TraverseAst iattr oattr itext otext (Node iattr (Lexeme itext))
             Comment doc <$> recurse start <*> recurse contents <*> recurse end
         CommentBlock comment ->
             CommentBlock <$> recurse comment
-        CommentWord word ->
-            CommentWord <$> recurse word
         Commented comment node ->
             Commented <$> recurse comment <*> recurse node
         ExternC decls ->

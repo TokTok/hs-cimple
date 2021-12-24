@@ -52,7 +52,6 @@ import           Language.Cimple.Lexer (Lexeme)
     copyrightDecl	{ CopyrightDecl{} }
     comment		{ Comment{} }
     commentBlock	{ CommentBlock{} }
-    commentWord		{ CommentWord{} }
     commented		{ Commented{} }
     -- Namespace-like blocks
     externC		{ ExternC{} }

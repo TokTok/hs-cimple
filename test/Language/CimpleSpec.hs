@@ -34,14 +34,14 @@ spec = do
                           (L (AlexPn 4 1 5) IdVar "a")
                           [TyStd (L (AlexPn 6 1 7) KwVoid "void")]
                       )
-                      [ Return
+                      (CompoundStmt [ Return
                             (Just
                                 (LiteralExpr
                                     Int
                                     (L (AlexPn 21 1 22) LitInteger "3")
                                 )
                             )
-                      ]
+                      ])
                 ]
 
         it "should parse a type declaration" $ do
@@ -79,7 +79,7 @@ spec = do
             ast `shouldBe` Right
                 [ Comment Regular
                           (L (AlexPn 0 1 1) CmtStart "/*")
-                          [CommentWord (L (AlexPn 3 1 4) CmtWord "hello")]
+                          [L (AlexPn 3 1 4) CmtWord "hello"]
                           (L (AlexPn 9 1 10) CmtEnd "*/")
                 ]
 
@@ -93,13 +93,13 @@ spec = do
                           (L (AlexPn 4 1 5) IdVar "main")
                           []
                       )
-                      [ VarDecl
+                      (CompoundStmt [ VarDecl
                             (TyStd (L (AlexPn 13 1 14) IdStdType "int"))
                             (Declarator
                                 (DeclSpecVar (L (AlexPn 17 1 18) IdVar "a"))
                                 Nothing
                             )
-                      ]
+                      ])
                 ]
 
         it "does not support multiple declarators per declaration" $ do

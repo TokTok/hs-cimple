@@ -30,16 +30,15 @@ data Node attr lexeme
     | PreprocUndef lexeme
     | PreprocDefined lexeme
     | PreprocScopedDefine (Node attr lexeme) [Node attr lexeme] (Node attr lexeme)
-    | MacroBodyStmt [Node attr lexeme]
+    | MacroBodyStmt (Node attr lexeme)
     | MacroBodyFunCall (Node attr lexeme)
     | MacroParam lexeme
     | StaticAssert (Node attr lexeme) lexeme
     -- Comments
     | LicenseDecl lexeme [Node attr lexeme]
     | CopyrightDecl lexeme (Maybe lexeme) [lexeme]
-    | Comment CommentStyle lexeme [Node attr lexeme] lexeme
+    | Comment CommentStyle lexeme [lexeme] lexeme
     | CommentBlock lexeme
-    | CommentWord lexeme
     | Commented (Node attr lexeme) (Node attr lexeme)
     -- Namespace-like blocks
     | ExternC [Node attr lexeme]
@@ -52,10 +51,10 @@ data Node attr lexeme
     | Continue
     | Return (Maybe (Node attr lexeme))
     | SwitchStmt (Node attr lexeme) [Node attr lexeme]
-    | IfStmt (Node attr lexeme) [Node attr lexeme] (Maybe (Node attr lexeme))
-    | ForStmt (Node attr lexeme) (Node attr lexeme) (Node attr lexeme) [Node attr lexeme]
-    | WhileStmt (Node attr lexeme) [Node attr lexeme]
-    | DoWhileStmt [Node attr lexeme] (Node attr lexeme)
+    | IfStmt (Node attr lexeme) (Node attr lexeme) (Maybe (Node attr lexeme))
+    | ForStmt (Node attr lexeme) (Node attr lexeme) (Node attr lexeme) (Node attr lexeme)
+    | WhileStmt (Node attr lexeme) (Node attr lexeme)
+    | DoWhileStmt (Node attr lexeme) (Node attr lexeme)
     | Case (Node attr lexeme) (Node attr lexeme)
     | Default (Node attr lexeme)
     | Label lexeme (Node attr lexeme)
@@ -103,7 +102,7 @@ data Node attr lexeme
     | TyUserDefined lexeme
     -- Functions
     | FunctionDecl Scope (Node attr lexeme) (Maybe (Node attr lexeme))
-    | FunctionDefn Scope (Node attr lexeme) [Node attr lexeme]
+    | FunctionDefn Scope (Node attr lexeme) (Node attr lexeme)
     | FunctionPrototype (Node attr lexeme) lexeme [Node attr lexeme]
     | FunctionParam (Node attr lexeme) (Node attr lexeme)
     | Event lexeme (Node attr lexeme)

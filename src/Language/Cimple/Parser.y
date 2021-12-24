@@ -245,16 +245,16 @@ Comment
 |	'/***' CommentTokens '*/'				{ Comment Block $1 (reverse $2) $3 }
 |	'/**/'							{ CommentBlock $1 }
 
-CommentTokens :: { [StringNode] }
+CommentTokens :: { [StringLexeme] }
 CommentTokens
 :	CommentToken						{ [$1] }
 |	CommentTokens CommentToken				{ $2 : $1 }
 
-CommentToken :: { StringNode }
+CommentToken :: { StringLexeme }
 CommentToken
-:	CommentWord						{ CommentWord $1 }
-|	'\n'							{ CommentWord $1 }
-|	' * '							{ CommentWord $1 }
+:	CommentWord						{ $1 }
+|	'\n'							{ $1 }
+|	' * '							{ $1 }
 
 CommentWords :: { [StringLexeme] }
 CommentWords
@@ -355,9 +355,8 @@ Stmt
 :	PreprocIfdef(Stmts)					{ $1 }
 |	PreprocIf(Stmts)					{ $1 }
 |	PreprocDefine Stmts PreprocUndef			{ PreprocScopedDefine $1 $2 $3 }
-|	LabelStmt						{ $1 }
 |	DeclStmt						{ $1 }
-|	CompoundStmt						{ CompoundStmt $1 }
+|	CompoundStmt						{ $1 }
 |	IfStmt							{ $1 }
 |	ForStmt							{ $1 }
 |	WhileStmt						{ $1 }
@@ -367,17 +366,18 @@ Stmt
 |	FunctionCall ';'					{ $1 }
 |	break ';'						{ Break }
 |	goto ID_CONST ';'					{ Goto $2 }
+|	ID_CONST ':' Stmt					{ Label $1 $3 }
 |	continue ';'						{ Continue }
 |	return ';'						{ Return Nothing }
 |	return Expr ';'						{ Return (Just $2) }
-|	switch '(' Expr ')' CompoundStmt			{ SwitchStmt $3 $5 }
+|	switch '(' Expr ')' '{' SwitchCases '}'			{ SwitchStmt $3 $6 }
 |	Comment							{ $1 }
 
 IfStmt :: { StringNode }
 IfStmt
 :	if '(' Expr ')' CompoundStmt				{ IfStmt $3 $5 Nothing }
 |	if '(' Expr ')' CompoundStmt else IfStmt		{ IfStmt $3 $5 (Just $7) }
-|	if '(' Expr ')' CompoundStmt else CompoundStmt		{ IfStmt $3 $5 (Just (CompoundStmt $7)) }
+|	if '(' Expr ')' CompoundStmt else CompoundStmt		{ IfStmt $3 $5 (Just $7) }
 
 ForStmt :: { StringNode }
 ForStmt
@@ -401,16 +401,20 @@ DoWhileStmt :: { StringNode }
 DoWhileStmt
 :	do CompoundStmt while '(' Expr ')' ';'			{ DoWhileStmt $2 $5 }
 
-LabelStmt :: { StringNode }
-LabelStmt
-:	case Expr ':' AfterLabelStmt				{ Case $2 $4 }
-|	default ':' AfterLabelStmt				{ Default $3 }
-|	ID_CONST ':' Stmt					{ Label $1 $3 }
+SwitchCases :: { [StringNode] }
+SwitchCases
+:	SwitchCase						{ [$1] }
+|	SwitchCases SwitchCase					{ $2 : $1 }
 
-AfterLabelStmt :: { StringNode }
-AfterLabelStmt
-:	CompoundStmt						{ CompoundStmt $1 }
-|	LabelStmt						{ $1 }
+SwitchCase :: { StringNode }
+SwitchCase
+:	case Expr ':' SwitchCaseBody				{ Case $2 $4 }
+|	default ':' SwitchCaseBody				{ Default $3 }
+
+SwitchCaseBody :: { StringNode }
+SwitchCaseBody
+:	CompoundStmt						{ $1 }
+|	SwitchCase						{ $1 }
 |	return Expr ';'						{ Return (Just $2) }
 
 DeclStmt :: { StringNode }
@@ -459,9 +463,9 @@ Initialiser
 :	Expr							{ $1 }
 |	InitialiserList						{ InitialiserList $1 }
 
-CompoundStmt :: { [StringNode] }
+CompoundStmt :: { StringNode }
 CompoundStmt
-:	'{' Stmts '}'						{ reverse $2 }
+:	'{' Stmts '}'						{ CompoundStmt (reverse $2) }
 
 -- Expressions that are safe for use as macro body without () around it..
 PreprocSafeExpr(x)
@@ -745,7 +749,7 @@ externC _ lang _ _ =
         <> ": extern \"C\" declaration invalid (did you spell __cplusplus right?)"
 
 macroBodyStmt
-    :: [StringNode]
+    :: StringNode
     -> Lexeme String
     -> Alex StringNode
 macroBodyStmt decls (L _ _ "0") =
