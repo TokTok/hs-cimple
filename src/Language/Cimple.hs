@@ -15,5 +15,5 @@ import           Language.Cimple.TraverseAst as X
 
 type AstActions a = X.IdentityActions (State a) () Text
 
-defaultActions :: X.IdentityActions (State a) () Text
+defaultActions :: AstActions state
 defaultActions = X.identityActions
