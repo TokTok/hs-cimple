@@ -6,8 +6,9 @@ module Language.Cimple.TreeParser
     , toEither
     ) where
 
+import           Data.Fix              (Fix (..))
 import           Data.Text             (Text)
-import           Language.Cimple.AST   (CommentStyle (..), Node (..))
+import           Language.Cimple.AST   (CommentStyle (..), Node, NodeF (..))
 import           Language.Cimple.Lexer (Lexeme)
 }
 
@@ -20,115 +21,103 @@ import           Language.Cimple.Lexer (Lexeme)
 %monad {TreeParser}
 %tokentype {TextNode}
 %token
-    ifndefDefine	{ PreprocIfndef _ body (PreprocElse []) | isDefine body }
-    ifdefDefine		{ PreprocIfdef _ body (PreprocElse []) | isDefine body }
-    ifDefine		{ PreprocIf _ body (PreprocElse []) | isDefine body }
+    ifndefDefine	{ Fix (PreprocIfndef _ body (Fix (PreprocElse []))) | isDefine body }
+    ifdefDefine		{ Fix (PreprocIfdef _ body (Fix (PreprocElse []))) | isDefine body }
+    ifDefine		{ Fix (PreprocIf _ body (Fix (PreprocElse []))) | isDefine body }
 
-    ifndefInclude	{ PreprocIfndef{} | isPreproc tk && hasInclude tk }
-    ifdefInclude	{ PreprocIfdef{} | isPreproc tk && hasInclude tk }
-    ifInclude		{ PreprocIf{} | isPreproc tk && hasInclude tk }
+    ifndefInclude	{ Fix (PreprocIfndef{}) | isPreproc tk && hasInclude tk }
+    ifdefInclude	{ Fix (PreprocIfdef{}) | isPreproc tk && hasInclude tk }
+    ifInclude		{ Fix (PreprocIf{}) | isPreproc tk && hasInclude tk }
 
-    docComment		{ Comment Doxygen _ _ _ }
+    docComment		{ Fix (Comment Doxygen _ _ _) }
 
     -- Preprocessor
-    preprocInclude	{ PreprocInclude{} }
-    preprocDefine	{ PreprocDefine{} }
-    preprocDefineConst	{ PreprocDefineConst{} }
-    preprocDefineMacro	{ PreprocDefineMacro{} }
-    preprocIf		{ PreprocIf{} }
-    preprocIfdef	{ PreprocIfdef{} }
-    preprocIfndef	{ PreprocIfndef{} }
-    preprocElse		{ PreprocElse{} }
-    preprocElif		{ PreprocElif{} }
-    preprocUndef	{ PreprocUndef{} }
-    preprocDefined	{ PreprocDefined{} }
-    preprocScopedDefine	{ PreprocScopedDefine{} }
-    macroBodyStmt	{ MacroBodyStmt{} }
-    macroBodyFunCall	{ MacroBodyFunCall{} }
-    macroParam		{ MacroParam{} }
-    staticAssert	{ StaticAssert{} }
+    preprocInclude	{ Fix (PreprocInclude{}) }
+    preprocDefine	{ Fix (PreprocDefine{}) }
+    preprocDefineConst	{ Fix (PreprocDefineConst{}) }
+    preprocDefineMacro	{ Fix (PreprocDefineMacro{}) }
+    preprocIf		{ Fix (PreprocIf{}) }
+    preprocIfdef	{ Fix (PreprocIfdef{}) }
+    preprocIfndef	{ Fix (PreprocIfndef{}) }
+    preprocElse		{ Fix (PreprocElse{}) }
+    preprocElif		{ Fix (PreprocElif{}) }
+    preprocUndef	{ Fix (PreprocUndef{}) }
+    preprocDefined	{ Fix (PreprocDefined{}) }
+    preprocScopedDefine	{ Fix (PreprocScopedDefine{}) }
+    macroBodyStmt	{ Fix (MacroBodyStmt{}) }
+    macroBodyFunCall	{ Fix (MacroBodyFunCall{}) }
+    macroParam		{ Fix (MacroParam{}) }
+    staticAssert	{ Fix (StaticAssert{}) }
     -- Comments
-    licenseDecl		{ LicenseDecl{} }
-    copyrightDecl	{ CopyrightDecl{} }
-    comment		{ Comment{} }
-    commentBlock	{ CommentBlock{} }
-    commented		{ Commented{} }
+    licenseDecl		{ Fix (LicenseDecl{}) }
+    copyrightDecl	{ Fix (CopyrightDecl{}) }
+    comment		{ Fix (Comment{}) }
+    commentBlock	{ Fix (CommentBlock{}) }
+    commented		{ Fix (Commented{}) }
     -- Namespace-like blocks
-    externC		{ ExternC{} }
-    class		{ Class{} }
-    namespace		{ Namespace{} }
+    externC		{ Fix (ExternC{}) }
     -- Statements
-    compoundStmt	{ CompoundStmt{} }
-    break		{ Break }
-    goto		{ Goto{} }
-    continue		{ Continue }
-    return		{ Return{} }
-    switchStmt		{ SwitchStmt{} }
-    ifStmt		{ IfStmt{} }
-    forStmt		{ ForStmt{} }
-    whileStmt		{ WhileStmt{} }
-    doWhileStmt		{ DoWhileStmt{} }
-    case		{ Case{} }
-    default		{ Default{} }
-    label		{ Label{} }
+    compoundStmt	{ Fix (CompoundStmt{}) }
+    break		{ Fix (Break) }
+    goto		{ Fix (Goto{}) }
+    continue		{ Fix (Continue) }
+    return		{ Fix (Return{}) }
+    switchStmt		{ Fix (SwitchStmt{}) }
+    ifStmt		{ Fix (IfStmt{}) }
+    forStmt		{ Fix (ForStmt{}) }
+    whileStmt		{ Fix (WhileStmt{}) }
+    doWhileStmt		{ Fix (DoWhileStmt{}) }
+    case		{ Fix (Case{}) }
+    default		{ Fix (Default{}) }
+    label		{ Fix (Label{}) }
     -- Variable declarations
-    vLA			{ VLA{} }
-    varDecl		{ VarDecl{} }
-    declarator		{ Declarator{} }
-    declSpecVar		{ DeclSpecVar{} }
-    declSpecArray	{ DeclSpecArray{} }
+    vLA			{ Fix (VLA{}) }
+    varDecl		{ Fix (VarDecl{}) }
+    declarator		{ Fix (Declarator{}) }
+    declSpecVar		{ Fix (DeclSpecVar{}) }
+    declSpecArray	{ Fix (DeclSpecArray{}) }
     -- Expressions
-    initialiserList	{ InitialiserList{} }
-    unaryExpr		{ UnaryExpr{} }
-    binaryExpr		{ BinaryExpr{} }
-    ternaryExpr		{ TernaryExpr{} }
-    assignExpr		{ AssignExpr{} }
-    parenExpr		{ ParenExpr{} }
-    castExpr		{ CastExpr{} }
-    compoundExpr	{ CompoundExpr{} }
-    sizeofExpr		{ SizeofExpr{} }
-    sizeofType		{ SizeofType{} }
-    literalExpr		{ LiteralExpr{} }
-    varExpr		{ VarExpr{} }
-    memberAccess	{ MemberAccess{} }
-    pointerAccess	{ PointerAccess{} }
-    arrayAccess		{ ArrayAccess{} }
-    functionCall	{ FunctionCall{} }
-    commentExpr		{ CommentExpr{} }
+    initialiserList	{ Fix (InitialiserList{}) }
+    unaryExpr		{ Fix (UnaryExpr{}) }
+    binaryExpr		{ Fix (BinaryExpr{}) }
+    ternaryExpr		{ Fix (TernaryExpr{}) }
+    assignExpr		{ Fix (AssignExpr{}) }
+    parenExpr		{ Fix (ParenExpr{}) }
+    castExpr		{ Fix (CastExpr{}) }
+    compoundExpr	{ Fix (CompoundExpr{}) }
+    sizeofExpr		{ Fix (SizeofExpr{}) }
+    sizeofType		{ Fix (SizeofType{}) }
+    literalExpr		{ Fix (LiteralExpr{}) }
+    varExpr		{ Fix (VarExpr{}) }
+    memberAccess	{ Fix (MemberAccess{}) }
+    pointerAccess	{ Fix (PointerAccess{}) }
+    arrayAccess		{ Fix (ArrayAccess{}) }
+    functionCall	{ Fix (FunctionCall{}) }
+    commentExpr		{ Fix (CommentExpr{}) }
     -- Type definitions
-    enumClass		{ EnumClass{} }
-    enumConsts		{ EnumConsts{} }
-    enumDecl		{ EnumDecl{} }
-    enumerator		{ Enumerator{} }
-    classForward	{ ClassForward{} }
-    typedef		{ Typedef{} }
-    typedefFunction	{ TypedefFunction{} }
-    struct		{ Struct{} }
-    union		{ Union{} }
-    memberDecl		{ MemberDecl{} }
-    tyConst		{ TyConst{} }
-    tyPointer		{ TyPointer{} }
-    tyStruct		{ TyStruct{} }
-    tyFunc		{ TyFunc{} }
-    tyStd		{ TyStd{} }
-    tyVar		{ TyVar{} }
-    tyUserDefined	{ TyUserDefined{} }
+    enumConsts		{ Fix (EnumConsts{}) }
+    enumDecl		{ Fix (EnumDecl{}) }
+    enumerator		{ Fix (Enumerator{}) }
+    typedef		{ Fix (Typedef{}) }
+    typedefFunction	{ Fix (TypedefFunction{}) }
+    struct		{ Fix (Struct{}) }
+    union		{ Fix (Union{}) }
+    memberDecl		{ Fix (MemberDecl{}) }
+    tyConst		{ Fix (TyConst{}) }
+    tyPointer		{ Fix (TyPointer{}) }
+    tyStruct		{ Fix (TyStruct{}) }
+    tyFunc		{ Fix (TyFunc{}) }
+    tyStd		{ Fix (TyStd{}) }
+    tyUserDefined	{ Fix (TyUserDefined{}) }
     -- Functions
-    functionDecl	{ FunctionDecl{} }
-    functionDefn	{ FunctionDefn{} }
-    functionPrototype	{ FunctionPrototype{} }
-    functionParam	{ FunctionParam{} }
-    event		{ Event{} }
-    eventParams		{ EventParams{} }
-    property		{ Property{} }
-    accessor		{ Accessor{} }
-    errorDecl		{ ErrorDecl{} }
-    errorList		{ ErrorList{} }
-    errorFor		{ ErrorFor{} }
-    ellipsis		{ Ellipsis }
+    functionDecl	{ Fix (FunctionDecl{}) }
+    functionDefn	{ Fix (FunctionDefn{}) }
+    functionPrototype	{ Fix (FunctionPrototype{}) }
+    functionParam	{ Fix (FunctionParam{}) }
+    ellipsis		{ Fix (Ellipsis) }
     -- Constants
-    constDecl		{ ConstDecl{} }
-    constDefn		{ ConstDefn{} }
+    constDecl		{ Fix (ConstDecl{}) }
+    constDefn		{ Fix (ConstDefn{}) }
 
 %%
 
@@ -188,7 +177,7 @@ Decl :: { TextNode }
 Decl
 :	comment							{ $1 }
 |	CommentableDecl						{ $1 }
-|	docComment CommentableDecl				{ Commented $1 $2 }
+|	docComment CommentableDecl				{ Fix $ Commented $1 $2 }
 
 CommentableDecl :: { TextNode }
 CommentableDecl
@@ -213,7 +202,7 @@ CommentableDecl
 
 {
 type TextLexeme = Lexeme Text
-type TextNode = Node () TextLexeme
+type TextNode = Node TextLexeme
 
 newtype TreeParser a = TreeParser { toEither :: Either String a }
     deriving (Functor, Applicative, Monad)
@@ -223,41 +212,41 @@ instance MonadFail TreeParser where
 
 
 isDefine :: [TextNode] -> Bool
-isDefine (PreprocUndef{}:d)     = isDefine d
-isDefine [PreprocDefine{}]      = True
-isDefine [PreprocDefineConst{}] = True
-isDefine _                      = False
+isDefine (Fix PreprocUndef{}:d)     = isDefine d
+isDefine [Fix PreprocDefine{}]      = True
+isDefine [Fix PreprocDefineConst{}] = True
+isDefine _                          = False
 
 isPreproc :: TextNode -> Bool
-isPreproc PreprocInclude{}        = True
-isPreproc PreprocUndef{}          = True
-isPreproc PreprocDefine{}         = True
-isPreproc PreprocDefineConst{}    = True
-isPreproc (PreprocIf _ td ed)     = all isPreproc td && isPreproc ed
-isPreproc (PreprocIfdef _ td ed)  = all isPreproc td && isPreproc ed
-isPreproc (PreprocIfndef _ td ed) = all isPreproc td && isPreproc ed
-isPreproc (PreprocElse ed)        = all isPreproc ed
-isPreproc _                       = False
+isPreproc (Fix PreprocInclude{})        = True
+isPreproc (Fix PreprocUndef{})          = True
+isPreproc (Fix PreprocDefine{})         = True
+isPreproc (Fix PreprocDefineConst{})    = True
+isPreproc (Fix (PreprocIf _ td ed))     = all isPreproc td && isPreproc ed
+isPreproc (Fix (PreprocIfdef _ td ed))  = all isPreproc td && isPreproc ed
+isPreproc (Fix (PreprocIfndef _ td ed)) = all isPreproc td && isPreproc ed
+isPreproc (Fix (PreprocElse ed))        = all isPreproc ed
+isPreproc _                             = False
 
 hasInclude :: TextNode -> Bool
-hasInclude PreprocInclude{}        = True
-hasInclude (PreprocIf _ td ed)     = any hasInclude td || hasInclude ed
-hasInclude (PreprocIfdef _ td ed)  = any hasInclude td || hasInclude ed
-hasInclude (PreprocIfndef _ td ed) = any hasInclude td || hasInclude ed
-hasInclude (PreprocElse ed)        = any hasInclude ed
-hasInclude _                       = False
+hasInclude (Fix PreprocInclude{})        = True
+hasInclude (Fix (PreprocIf _ td ed))     = any hasInclude td || hasInclude ed
+hasInclude (Fix (PreprocIfdef _ td ed))  = any hasInclude td || hasInclude ed
+hasInclude (Fix (PreprocIfndef _ td ed)) = any hasInclude td || hasInclude ed
+hasInclude (Fix (PreprocElse ed))        = any hasInclude ed
+hasInclude _                             = False
 
 
 recurse :: ([TextNode] -> TreeParser [TextNode]) -> TextNode -> TreeParser TextNode
-recurse f (ExternC ds)          = ExternC <$> f ds
-recurse f (PreprocIf c t e)     = PreprocIf c <$> f t <*> recurse f e
-recurse f (PreprocIfdef c t e)  = PreprocIfdef c <$> f t <*> recurse f e
-recurse f (PreprocIfndef c t e) = PreprocIfndef c <$> f t <*> recurse f e
-recurse f (PreprocIfndef c t e) = PreprocIfndef c <$> f t <*> recurse f e
-recurse f (PreprocElif c t e)   = PreprocElif c <$> f t <*> recurse f e
-recurse f (PreprocElse [])      = return $ PreprocElse []
-recurse f (PreprocElse e)       = PreprocElse <$> f e
-recurse _ ns                    = fail $ show ns
+recurse f (Fix (ExternC ds))          = Fix <$> (ExternC <$> f ds)
+recurse f (Fix (PreprocIf c t e))     = Fix <$> (PreprocIf c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocIfdef c t e))  = Fix <$> (PreprocIfdef c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocIfndef c t e)) = Fix <$> (PreprocIfndef c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocIfndef c t e)) = Fix <$> (PreprocIfndef c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocElif c t e))   = Fix <$> (PreprocElif c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocElse []))      = return $ Fix $ PreprocElse []
+recurse f (Fix (PreprocElse e))       = Fix <$> (PreprocElse <$> f e)
+recurse _ ns                          = fail $ "TreeParser.recurse: " <> show ns
 
 
 parseError :: ([TextNode], [String]) -> TreeParser a

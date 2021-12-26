@@ -12,38 +12,30 @@ data LexemeClass
     | IdFuncType
     | IdStdType
     | IdSueType
-    | IdTyVar
     | IdVar
-    | KwBitmask
     | KwBreak
     | KwCase
-    | KwClass
     | KwConst
     | KwContinue
     | KwDefault
     | KwDo
     | KwElse
     | KwEnum
-    | KwError
-    | KwEvent
     | KwExtern
     | KwFor
     | KwGoto
     | KwIf
-    | KwNamespace
     | KwReturn
     | KwSizeof
     | KwStatic
     | KwStaticAssert
     | KwStruct
     | KwSwitch
-    | KwThis
     | KwTypedef
     | KwUnion
     | KwVla
     | KwVoid
     | KwWhile
-    | KwWith
     | LitFalse
     | LitTrue
     | LitChar

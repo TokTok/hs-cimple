@@ -35,8 +35,7 @@ spec = do
         it "pretty-prints a simple C function" $ do
             let pp = pretty "int a(void) { return 3; }"
             pp `shouldBe` unlines
-                [ "int a(void)"
-                , "{"
+                [ "int a(void) {"
                 , "  return 3;"
                 , "}"
                 ]
@@ -53,8 +52,7 @@ spec = do
         it "pretty-prints a simple C function" $ do
             let pp = compact "int a(void) { return 3; }"
             pp `shouldBe` unlines
-                [ "int a(void)"
-                , "{"
+                [ "int a(void) {"
                 , "return 3;"
                 , "}"
                 ]
@@ -93,18 +91,13 @@ spec = do
             compact "void foo(int const *a);"
                 `shouldBe` "void foo(int const* a);\n"
 
-        it "supports type-variables" $ do
-            compact "void foo(`a a);" `shouldBe` "void foo(`a a);\n"
-            compact "`a id(const `a a) { return a; }"
-                `shouldBe` "`a id(`a const a)\n{\nreturn a;\n}\n"
-
         it "formats expressions and statements" $ do
             compact "void foo() { return 1+2*3/4; }"
-                `shouldBe` "void foo()\n{\nreturn 1 + 2 * 3 / 4;\n}\n"
+                `shouldBe` "void foo() {\nreturn 1 + 2 * 3 / 4;\n}\n"
             compact "void foo() { a = ~b << !c; }"
-                `shouldBe` "void foo()\n{\na = ~b << !c;\n}\n"
+                `shouldBe` "void foo() {\na = ~b << !c;\n}\n"
             compact "void foo() { int a[] = {1,2,3}; }"
-                `shouldBe` "void foo()\n{\nint a[] = { 1, 2, 3 };\n}\n"
+                `shouldBe` "void foo() {\nint a[] = { 1, 2, 3 };\n}\n"
 
         it "supports variadic functions" $ do
             compact "void foo(int a, ...);"

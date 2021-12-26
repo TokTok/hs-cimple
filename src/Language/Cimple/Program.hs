@@ -10,7 +10,7 @@ module Language.Cimple.Program
 import           Data.Map.Strict                   (Map)
 import qualified Data.Map.Strict                   as Map
 import           Data.Text                         (Text)
-import           Language.Cimple.AST               (Node (..))
+import           Language.Cimple.AST               (Node)
 import           Language.Cimple.Graph             (Graph)
 import qualified Language.Cimple.Graph             as Graph
 import           Language.Cimple.Lexer             (Lexeme (..))
@@ -20,7 +20,7 @@ import           Language.Cimple.TranslationUnit   (TranslationUnit)
 
 
 data Program text = Program
-  { progAsts     :: Map FilePath [Node () (Lexeme text)]
+  { progAsts     :: Map FilePath [Node (Lexeme text)]
   , progIncludes :: Graph () FilePath
   }
 

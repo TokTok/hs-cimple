@@ -14,56 +14,53 @@ module Language.Cimple.TraverseAst
     , doNodes, doNode
     , doLexemes, doLexeme
     , doText
-    , doAttr
 
     , astActions
-    , AttrActions, attrActions
     , TextActions, textActions
     , IdentityActions, identityActions
     ) where
 
-import           Language.Cimple.AST   (Node (..))
+import           Data.Fix              (Fix (..))
+import           Language.Cimple.AST   (Node, NodeF (..))
 import           Language.Cimple.Lexer (Lexeme (..))
 
-class TraverseAst iattr oattr itext otext a where
-    type Mapped iattr oattr itext otext a
+class TraverseAst itext otext a where
+    type Mapped itext otext a
     mapFileAst
         :: Applicative f
-        => AstActions f iattr oattr itext otext
+        => AstActions f itext otext
         -> FilePath
         -> a
-        -> f (Mapped iattr oattr itext otext a)
+        -> f (Mapped itext otext a)
 
 traverseAst
-    :: (TraverseAst iattr oattr itext otext    a, Applicative f)
-    => AstActions f iattr oattr itext otext -> a
-    -> f    (Mapped iattr oattr itext otext    a)
+    :: (TraverseAst itext otext    a, Applicative f)
+    => AstActions f itext otext -> a
+    -> f    (Mapped itext otext    a)
 traverseAst = flip mapFileAst "<stdin>"
 
-data AstActions f iattr oattr itext otext = AstActions
-    { doFiles     :: [(FilePath, [Node iattr (Lexeme itext)])] -> f [(FilePath, [Node oattr (Lexeme otext)])] -> f [(FilePath, [Node oattr (Lexeme otext)])]
-    , doFile      ::  (FilePath, [Node iattr (Lexeme itext)])  -> f  (FilePath, [Node oattr (Lexeme otext)])  -> f  (FilePath, [Node oattr (Lexeme otext)])
-    , doNodes     :: FilePath -> [Node iattr (Lexeme itext)]   -> f             [Node oattr (Lexeme otext)]   -> f             [Node oattr (Lexeme otext)]
-    , doNode      :: FilePath ->  Node iattr (Lexeme itext)    -> f             (Node oattr (Lexeme otext))   -> f             (Node oattr (Lexeme otext))
-    , doLexemes   :: FilePath ->             [Lexeme itext]    -> f                         [Lexeme otext]    -> f                         [Lexeme otext]
-    , doLexeme    :: FilePath ->              Lexeme itext     -> f                         (Lexeme otext)    -> f                         (Lexeme otext)
-    , doText      :: FilePath ->                     itext                                                    -> f                                 otext
-    , doAttr      :: FilePath ->       iattr                                                                  -> f                   oattr
+data AstActions f itext otext = AstActions
+    { doFiles     :: [(FilePath, [Node (Lexeme itext)])] -> f [(FilePath, [Node (Lexeme otext)])] -> f [(FilePath, [Node (Lexeme otext)])]
+    , doFile      ::  (FilePath, [Node (Lexeme itext)])  -> f  (FilePath, [Node (Lexeme otext)])  -> f  (FilePath, [Node (Lexeme otext)])
+    , doNodes     :: FilePath -> [Node (Lexeme itext)]   -> f             [Node (Lexeme otext)]   -> f             [Node (Lexeme otext)]
+    , doNode      :: FilePath ->  Node (Lexeme itext)    -> f             (Node (Lexeme otext))   -> f             (Node (Lexeme otext))
+    , doLexemes   :: FilePath ->       [Lexeme itext]    -> f                   [Lexeme otext]    -> f                   [Lexeme otext]
+    , doLexeme    :: FilePath ->        Lexeme itext     -> f                   (Lexeme otext)    -> f                   (Lexeme otext)
+    , doText      :: FilePath ->               itext                                              -> f                           otext
     }
 
-instance TraverseAst iattr oattr itext otext        a
-      => TraverseAst iattr oattr itext otext (Maybe a) where
-    type        Mapped iattr oattr itext otext (Maybe a)
-       = Maybe (Mapped iattr oattr itext otext        a)
+instance TraverseAst itext otext        a
+      => TraverseAst itext otext (Maybe a) where
+    type        Mapped itext otext (Maybe a)
+       = Maybe (Mapped itext otext        a)
     mapFileAst _       _           Nothing  = pure Nothing
     mapFileAst actions currentFile (Just x) = Just <$> mapFileAst actions currentFile x
 
 astActions
     :: Applicative f
-    => (iattr -> f oattr)
-    -> (itext -> f otext)
-    -> AstActions f iattr oattr itext otext
-astActions fa ft = AstActions
+    => (itext -> f otext)
+    -> AstActions f itext otext
+astActions ft = AstActions
     { doFiles     = const id
     , doFile      = const id
     , doNodes     = const $ const id
@@ -71,247 +68,216 @@ astActions fa ft = AstActions
     , doLexeme    = const $ const id
     , doLexemes   = const $ const id
     , doText      = const ft
-    , doAttr      = const fa
     }
 
-type AttrActions f iattr oattr text = AstActions f iattr oattr text text
-attrActions :: Applicative f => (iattr -> f oattr) -> AttrActions f iattr oattr text
-attrActions = flip astActions pure
+type TextActions f itext otext = AstActions f itext otext
+textActions :: Applicative f => (itext -> f otext) -> TextActions f itext otext
+textActions = astActions
 
-type TextActions f attr itext otext = AstActions f attr attr itext otext
-textActions :: Applicative f => (itext -> f otext) -> TextActions f attr itext otext
-textActions = astActions pure
-
-type IdentityActions f attr text = AstActions f attr attr text text
-identityActions :: Applicative f => AstActions f attr attr text text
-identityActions = astActions pure pure
+type IdentityActions f text = AstActions f text text
+identityActions :: Applicative f => AstActions f text text
+identityActions = astActions pure
 
 
-instance TraverseAst iattr oattr itext otext (Lexeme itext) where
-    type Mapped iattr oattr itext otext (Lexeme itext)
-                                      =  Lexeme otext
+instance TraverseAst itext otext (Lexeme itext) where
+    type Mapped itext otext (Lexeme itext)
+                          =  Lexeme otext
     mapFileAst :: forall f . Applicative f
-               => AstActions f iattr oattr itext otext -> FilePath -> Lexeme itext -> f (Lexeme otext)
+               => AstActions f itext otext -> FilePath -> Lexeme itext -> f (Lexeme otext)
     mapFileAst AstActions{..} currentFile = doLexeme currentFile <*>
         \(L p c s) -> L p c <$> doText currentFile s
 
-instance TraverseAst iattr oattr itext otext [Lexeme itext] where
-    type Mapped iattr oattr itext otext [Lexeme itext]
-                                      = [Lexeme otext]
+instance TraverseAst itext otext [Lexeme itext] where
+    type Mapped itext otext [Lexeme itext]
+                          = [Lexeme otext]
     mapFileAst actions@AstActions{..} currentFile = doLexemes currentFile <*>
         traverse (mapFileAst actions currentFile)
 
-instance TraverseAst iattr oattr itext otext (Node iattr (Lexeme itext)) where
-    type Mapped iattr oattr itext otext (Node iattr (Lexeme itext))
-                                      =  Node oattr (Lexeme otext)
+instance TraverseAst itext otext (Node (Lexeme itext)) where
+    type Mapped itext otext (Node (Lexeme itext))
+                          =  Node (Lexeme otext)
     mapFileAst
         :: forall f . Applicative f
-        => AstActions f iattr oattr itext otext
+        => AstActions f itext otext
         -> FilePath
-        ->    Node iattr (Lexeme itext)
-        -> f (Node oattr (Lexeme otext))
-    mapFileAst actions@AstActions{..} currentFile = doNode currentFile <*> \case
-        Attr attr node ->
-            Attr <$> doAttr currentFile attr <*> recurse node
+        ->    Node (Lexeme itext)
+        -> f (Node (Lexeme otext))
+    mapFileAst actions@AstActions{..} currentFile = doNode currentFile <*> \node -> case unFix node of
         PreprocInclude path ->
-            PreprocInclude <$> recurse path
+            Fix <$> (PreprocInclude <$> recurse path)
         PreprocDefine name ->
-            PreprocDefine <$> recurse name
+            Fix <$> (PreprocDefine <$> recurse name)
         PreprocDefineConst name value ->
-            PreprocDefineConst <$> recurse name <*> recurse value
+            Fix <$> (PreprocDefineConst <$> recurse name <*> recurse value)
         PreprocDefineMacro name params body ->
-            PreprocDefineMacro <$> recurse name <*> recurse params <*> recurse body
+            Fix <$> (PreprocDefineMacro <$> recurse name <*> recurse params <*> recurse body)
         PreprocIf cond thenDecls elseBranch ->
-            PreprocIf <$> recurse cond <*> recurse thenDecls <*> recurse elseBranch
+            Fix <$> (PreprocIf <$> recurse cond <*> recurse thenDecls <*> recurse elseBranch)
         PreprocIfdef name thenDecls elseBranch ->
-            PreprocIfdef <$> recurse name <*> recurse thenDecls <*> recurse elseBranch
+            Fix <$> (PreprocIfdef <$> recurse name <*> recurse thenDecls <*> recurse elseBranch)
         PreprocIfndef name thenDecls elseBranch ->
-            PreprocIfndef <$> recurse name <*> recurse thenDecls <*> recurse elseBranch
+            Fix <$> (PreprocIfndef <$> recurse name <*> recurse thenDecls <*> recurse elseBranch)
         PreprocElse decls ->
-            PreprocElse <$> recurse decls
+            Fix <$> (PreprocElse <$> recurse decls)
         PreprocElif cond decls elseBranch ->
-            PreprocElif <$> recurse cond <*> recurse decls <*> recurse elseBranch
+            Fix <$> (PreprocElif <$> recurse cond <*> recurse decls <*> recurse elseBranch)
         PreprocUndef name ->
-            PreprocUndef <$> recurse name
+            Fix <$> (PreprocUndef <$> recurse name)
         PreprocDefined name ->
-            PreprocDefined <$> recurse name
+            Fix <$> (PreprocDefined <$> recurse name)
         PreprocScopedDefine define stmts undef ->
-            PreprocScopedDefine <$> recurse define <*> recurse stmts <*> recurse undef
+            Fix <$> (PreprocScopedDefine <$> recurse define <*> recurse stmts <*> recurse undef)
         MacroBodyStmt stmts ->
-            MacroBodyStmt <$> recurse stmts
+            Fix <$> (MacroBodyStmt <$> recurse stmts)
         MacroBodyFunCall expr ->
-            MacroBodyFunCall <$> recurse expr
+            Fix <$> (MacroBodyFunCall <$> recurse expr)
         MacroParam name ->
-            MacroParam <$> recurse name
+            Fix <$> (MacroParam <$> recurse name)
         StaticAssert cond msg ->
-            StaticAssert <$> recurse cond <*> recurse msg
+            Fix <$> (StaticAssert <$> recurse cond <*> recurse msg)
         LicenseDecl license copyrights ->
-            LicenseDecl <$> recurse license <*> recurse copyrights
+            Fix <$> (LicenseDecl <$> recurse license <*> recurse copyrights)
         CopyrightDecl from to owner ->
-            CopyrightDecl <$> recurse from <*> recurse to <*> recurse owner
+            Fix <$> (CopyrightDecl <$> recurse from <*> recurse to <*> recurse owner)
         Comment doc start contents end ->
-            Comment doc <$> recurse start <*> recurse contents <*> recurse end
+            Fix <$> (Comment doc <$> recurse start <*> recurse contents <*> recurse end)
         CommentBlock comment ->
-            CommentBlock <$> recurse comment
-        Commented comment node ->
-            Commented <$> recurse comment <*> recurse node
+            Fix <$> (CommentBlock <$> recurse comment)
+        Commented comment subject ->
+            Fix <$> (Commented <$> recurse comment <*> recurse subject)
         ExternC decls ->
-            ExternC <$> recurse decls
+            Fix <$> (ExternC <$> recurse decls)
         CompoundStmt stmts ->
-            CompoundStmt <$> recurse stmts
+            Fix <$> (CompoundStmt <$> recurse stmts)
         Break ->
-            pure Break
+            Fix <$> (pure Break)
         Goto label ->
-            Goto <$> recurse label
+            Fix <$> (Goto <$> recurse label)
         Continue ->
-            pure Continue
+            Fix <$> (pure Continue)
         Return value ->
-            Return <$> recurse value
+            Fix <$> (Return <$> recurse value)
         SwitchStmt value cases ->
-            SwitchStmt <$> recurse value <*> recurse cases
+            Fix <$> (SwitchStmt <$> recurse value <*> recurse cases)
         IfStmt cond thenStmts elseStmt ->
-            IfStmt <$> recurse cond <*> recurse thenStmts <*> recurse elseStmt
+            Fix <$> (IfStmt <$> recurse cond <*> recurse thenStmts <*> recurse elseStmt)
         ForStmt initStmt cond next stmts ->
-            ForStmt <$> recurse initStmt <*> recurse cond <*> recurse next <*> recurse stmts
+            Fix <$> (ForStmt <$> recurse initStmt <*> recurse cond <*> recurse next <*> recurse stmts)
         WhileStmt cond stmts ->
-            WhileStmt <$> recurse cond <*> recurse stmts
+            Fix <$> (WhileStmt <$> recurse cond <*> recurse stmts)
         DoWhileStmt stmts cond ->
-            DoWhileStmt <$> recurse stmts <*> recurse cond
+            Fix <$> (DoWhileStmt <$> recurse stmts <*> recurse cond)
         Case value stmt ->
-            Case <$> recurse value <*> recurse stmt
+            Fix <$> (Case <$> recurse value <*> recurse stmt)
         Default stmt ->
-            Default <$> recurse stmt
+            Fix <$> (Default <$> recurse stmt)
         Label label stmt ->
-            Label <$> recurse label <*> recurse stmt
+            Fix <$> (Label <$> recurse label <*> recurse stmt)
         VLA ty name size ->
-            VLA <$> recurse ty <*> recurse name <*> recurse size
+            Fix <$> (VLA <$> recurse ty <*> recurse name <*> recurse size)
         VarDecl ty decl ->
-            VarDecl <$> recurse ty <*> recurse decl
+            Fix <$> (VarDecl <$> recurse ty <*> recurse decl)
         Declarator spec value ->
-            Declarator <$> recurse spec <*> recurse value
+            Fix <$> (Declarator <$> recurse spec <*> recurse value)
         DeclSpecVar name ->
-            DeclSpecVar <$> recurse name
+            Fix <$> (DeclSpecVar <$> recurse name)
         DeclSpecArray spec size ->
-            DeclSpecArray <$> recurse spec <*> recurse size
+            Fix <$> (DeclSpecArray <$> recurse spec <*> recurse size)
         InitialiserList values ->
-            InitialiserList <$> recurse values
+            Fix <$> (InitialiserList <$> recurse values)
         UnaryExpr op expr ->
-            UnaryExpr op <$> recurse expr
+            Fix <$> (UnaryExpr op <$> recurse expr)
         BinaryExpr lhs op rhs ->
-            BinaryExpr <$> recurse lhs <*> pure op <*> recurse rhs
+            Fix <$> (BinaryExpr <$> recurse lhs <*> pure op <*> recurse rhs)
         TernaryExpr cond thenExpr elseExpr ->
-            TernaryExpr <$> recurse cond <*> recurse thenExpr <*> recurse elseExpr
+            Fix <$> (TernaryExpr <$> recurse cond <*> recurse thenExpr <*> recurse elseExpr)
         AssignExpr lhs op rhs ->
-            AssignExpr <$> recurse lhs <*> pure op <*> recurse rhs
+            Fix <$> (AssignExpr <$> recurse lhs <*> pure op <*> recurse rhs)
         ParenExpr expr ->
-            ParenExpr <$> recurse expr
+            Fix <$> (ParenExpr <$> recurse expr)
         CastExpr ty expr ->
-            CastExpr <$> recurse ty <*> recurse expr
+            Fix <$> (CastExpr <$> recurse ty <*> recurse expr)
         CompoundExpr ty expr ->
-            CompoundExpr <$> recurse ty <*> recurse expr
+            Fix <$> (CompoundExpr <$> recurse ty <*> recurse expr)
         SizeofExpr expr ->
-            SizeofExpr <$> recurse expr
+            Fix <$> (SizeofExpr <$> recurse expr)
         SizeofType ty ->
-            SizeofType <$> recurse ty
+            Fix <$> (SizeofType <$> recurse ty)
         LiteralExpr ty value ->
-            LiteralExpr ty <$> recurse value
+            Fix <$> (LiteralExpr ty <$> recurse value)
         VarExpr name ->
-            VarExpr <$> recurse name
+            Fix <$> (VarExpr <$> recurse name)
         MemberAccess name field ->
-            MemberAccess <$> recurse name <*> recurse field
+            Fix <$> (MemberAccess <$> recurse name <*> recurse field)
         PointerAccess name field ->
-            PointerAccess <$> recurse name <*> recurse field
+            Fix <$> (PointerAccess <$> recurse name <*> recurse field)
         ArrayAccess arr idx ->
-            ArrayAccess <$> recurse arr <*> recurse idx
+            Fix <$> (ArrayAccess <$> recurse arr <*> recurse idx)
         FunctionCall callee args ->
-            FunctionCall <$> recurse callee <*> recurse args
+            Fix <$> (FunctionCall <$> recurse callee <*> recurse args)
         CommentExpr comment expr ->
-            CommentExpr <$> recurse comment <*> recurse expr
-        EnumClass name members ->
-            EnumClass <$> recurse name <*> recurse members
+            Fix <$> (CommentExpr <$> recurse comment <*> recurse expr)
         EnumConsts name members ->
-            EnumConsts <$> recurse name <*> recurse members
+            Fix <$> (EnumConsts <$> recurse name <*> recurse members)
         EnumDecl name members tyName ->
-            EnumDecl <$> recurse name <*> recurse members <*> recurse tyName
+            Fix <$> (EnumDecl <$> recurse name <*> recurse members <*> recurse tyName)
         Enumerator name value ->
-            Enumerator <$> recurse name <*> recurse value
+            Fix <$> (Enumerator <$> recurse name <*> recurse value)
         Typedef ty name ->
-            Typedef <$> recurse ty <*> recurse name
+            Fix <$> (Typedef <$> recurse ty <*> recurse name)
         TypedefFunction ty ->
-            TypedefFunction <$> recurse ty
-        Namespace scope name members ->
-            Namespace scope <$> recurse name <*> recurse members
-        Class scope name tyvars members ->
-            Class scope <$> recurse name <*> recurse tyvars <*> recurse members
-        ClassForward name tyvars ->
-            ClassForward <$> recurse name <*> recurse tyvars
+            Fix <$> (TypedefFunction <$> recurse ty)
         Struct name members ->
-            Struct <$> recurse name <*> recurse members
+            Fix <$> (Struct <$> recurse name <*> recurse members)
         Union name members ->
-            Union <$> recurse name <*> recurse members
+            Fix <$> (Union <$> recurse name <*> recurse members)
         MemberDecl ty decl width ->
-            MemberDecl <$> recurse ty <*> recurse decl <*> recurse width
+            Fix <$> (MemberDecl <$> recurse ty <*> recurse decl <*> recurse width)
         TyConst ty ->
-            TyConst <$> recurse ty
+            Fix <$> (TyConst <$> recurse ty)
         TyPointer ty ->
-            TyPointer <$> recurse ty
+            Fix <$> (TyPointer <$> recurse ty)
         TyStruct name ->
-            TyStruct <$> recurse name
+            Fix <$> (TyStruct <$> recurse name)
         TyFunc name ->
-            TyFunc <$> recurse name
-        TyVar name ->
-            TyVar <$> recurse name
+            Fix <$> (TyFunc <$> recurse name)
         TyStd name ->
-            TyStd <$> recurse name
+            Fix <$> (TyStd <$> recurse name)
         TyUserDefined name ->
-            TyUserDefined <$> recurse name
-        FunctionDecl scope proto errors ->
-            FunctionDecl scope <$> recurse proto <*> recurse errors
+            Fix <$> (TyUserDefined <$> recurse name)
+        FunctionDecl scope proto ->
+            Fix <$> (FunctionDecl scope <$> recurse proto)
         FunctionDefn scope proto body ->
-            FunctionDefn scope <$> recurse proto <*> recurse body
+            Fix <$> (FunctionDefn scope <$> recurse proto <*> recurse body)
         FunctionPrototype ty name params ->
-            FunctionPrototype <$> recurse ty <*> recurse name <*> recurse params
+            Fix <$> (FunctionPrototype <$> recurse ty <*> recurse name <*> recurse params)
         FunctionParam ty decl ->
-            FunctionParam <$> recurse ty <*> recurse decl
-        Event name params ->
-            Event <$> recurse name <*> recurse params
-        EventParams params ->
-            EventParams <$> recurse params
-        Property ty decl accessors ->
-            Property <$> recurse ty <*> recurse decl <*> recurse accessors
-        Accessor name params errors ->
-            Accessor <$> recurse name <*> recurse params <*> recurse errors
-        ErrorDecl name errors ->
-            ErrorDecl <$> recurse name <*> recurse errors
-        ErrorList errors ->
-            ErrorList <$> recurse errors
-        ErrorFor name ->
-            ErrorFor <$> recurse name
+            Fix <$> (FunctionParam <$> recurse ty <*> recurse decl)
         Ellipsis ->
-            pure Ellipsis
+            Fix <$> (pure Ellipsis)
         ConstDecl ty name ->
-            ConstDecl <$> recurse ty <*> recurse name
+            Fix <$> (ConstDecl <$> recurse ty <*> recurse name)
         ConstDefn scope ty name value ->
-            ConstDefn scope <$> recurse ty <*> recurse name <*> recurse value
+            Fix <$> (ConstDefn scope <$> recurse ty <*> recurse name <*> recurse value)
 
       where
-        recurse :: TraverseAst iattr oattr itext otext a => a -> f (Mapped iattr oattr itext otext a)
+        recurse :: TraverseAst itext otext a => a -> f (Mapped itext otext a)
         recurse = mapFileAst actions currentFile
 
-instance TraverseAst iattr oattr itext otext [Node iattr (Lexeme itext)] where
-    type Mapped iattr oattr itext otext [Node iattr (Lexeme itext)]
-                                      = [Node oattr (Lexeme otext)]
+instance TraverseAst itext otext [Node (Lexeme itext)] where
+    type Mapped itext otext [Node (Lexeme itext)]
+                          = [Node (Lexeme otext)]
     mapFileAst actions@AstActions{..} currentFile = doNodes currentFile <*>
         traverse (mapFileAst actions currentFile)
 
-instance TraverseAst iattr oattr itext otext (FilePath, [Node iattr (Lexeme itext)]) where
-    type Mapped iattr oattr itext otext (FilePath, [Node iattr (Lexeme itext)])
-                                      = (FilePath, [Node oattr (Lexeme otext)])
+instance TraverseAst itext otext (FilePath, [Node (Lexeme itext)]) where
+    type Mapped itext otext (FilePath, [Node (Lexeme itext)])
+                          = (FilePath, [Node (Lexeme otext)])
     mapFileAst actions@AstActions{..} _ tu@(currentFile, _) = doFile <*>
         traverse (mapFileAst actions currentFile) $ tu
 
-instance TraverseAst iattr oattr itext otext [(FilePath, [Node iattr (Lexeme itext)])] where
-    type Mapped iattr oattr itext otext [(FilePath, [Node iattr (Lexeme itext)])]
-                                      = [(FilePath, [Node oattr (Lexeme otext)])]
+instance TraverseAst itext otext [(FilePath, [Node (Lexeme itext)])] where
+    type Mapped itext otext [(FilePath, [Node (Lexeme itext)])]
+                          = [(FilePath, [Node (Lexeme otext)])]
     mapFileAst actions@AstActions{..} currentFile = doFiles <*>
         traverse (mapFileAst actions currentFile)

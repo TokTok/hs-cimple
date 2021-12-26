@@ -13,7 +13,7 @@ import           Language.Cimple.Parser      as X
 import           Language.Cimple.Tokens      as X
 import           Language.Cimple.TraverseAst as X
 
-type AstActions a = X.IdentityActions (State a) () Text
+type AstActions a = X.IdentityActions (State a) Text
 
 defaultActions :: AstActions state
 defaultActions = X.identityActions

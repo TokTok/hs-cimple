@@ -6,9 +6,10 @@ module Language.Cimple.SemCheck.Includes
 
 import           Control.Monad.State.Lazy        (State)
 import qualified Control.Monad.State.Lazy        as State
+import           Data.Fix                        (Fix (..))
 import           Data.Text                       (Text)
 import qualified Data.Text                       as Text
-import           Language.Cimple.AST             (Node (..))
+import           Language.Cimple.AST             (NodeF (..))
 import           Language.Cimple.Lexer           (Lexeme (..))
 import           Language.Cimple.Tokens          (LexemeClass (..))
 import           Language.Cimple.TranslationUnit (TranslationUnit)
@@ -36,14 +37,14 @@ relativeTo dir file = go (splitPath dir) (splitPath file)
     go d f         = joinPath (d ++ f)
 
 
-normaliseIncludes' :: FilePath -> IdentityActions (State [FilePath]) () Text
+normaliseIncludes' :: FilePath -> IdentityActions (State [FilePath]) Text
 normaliseIncludes' dir = identityActions
     { doNode = \_ node act ->
         case node of
-            PreprocInclude (L spos LitString include) -> do
+            Fix (PreprocInclude (L spos LitString include)) -> do
                 let includePath = relativeTo dir $ tread include
                 State.modify (includePath :)
-                return $ PreprocInclude (L spos LitString (tshow includePath))
+                return $ Fix $ PreprocInclude (L spos LitString (tshow includePath))
 
             _ -> act
     }

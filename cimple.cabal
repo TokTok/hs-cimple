@@ -1,12 +1,12 @@
 name:                 cimple
-version:              0.0.5
+version:              0.0.6
 synopsis:             Simple C-like programming language
 homepage:             https://toktok.github.io/
 license:              GPL-3
 license-file:         LICENSE
 author:               Iphigenia Df <iphydf@gmail.com>
 maintainer:           Iphigenia Df <iphydf@gmail.com>
-copyright:            Copyright (c) 2016-2020, Iphigenia Df
+copyright:            Copyright (c) 2016-2022, Iphigenia Df
 category:             Data
 stability:            Experimental
 cabal-version:        >= 1.10
@@ -33,6 +33,7 @@ library
     , Language.Cimple.Program
   other-modules:
       Language.Cimple.AST
+    , Language.Cimple.Flatten
     , Language.Cimple.Graph
     , Language.Cimple.Lexer
     , Language.Cimple.Parser
@@ -48,10 +49,13 @@ library
     , array
     , bytestring
     , containers
+    , data-fix
     , filepath
     , groom
     , mtl
+    , recursion-schemes
     , text
+    , transformers-compat
 
 executable cimplefmt
   default-language: Haskell2010
@@ -121,5 +125,7 @@ test-suite testsuite
       base < 5
     , ansi-wl-pprint
     , cimple
+    , data-fix
     , hspec
     , text
+    , transformers-compat

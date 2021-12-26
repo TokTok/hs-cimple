@@ -1,125 +1,121 @@
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE DeriveTraversable #-}
-{-# LANGUAGE StrictData        #-}
+{-# LANGUAGE DeriveFunctor      #-}
+{-# LANGUAGE DeriveGeneric      #-}
+{-# LANGUAGE DeriveTraversable  #-}
+{-# LANGUAGE DerivingVia        #-}
+{-# LANGUAGE FlexibleInstances  #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE StrictData         #-}
 module Language.Cimple.AST
     ( AssignOp (..)
     , BinaryOp (..)
     , UnaryOp (..)
     , LiteralType (..)
-    , Node (..)
+    , Node, NodeF (..)
     , Scope (..)
     , CommentStyle (..)
     ) where
 
-import           Data.Aeson   (FromJSON, ToJSON)
-import           GHC.Generics (Generic)
+import           Data.Aeson                   (FromJSON, ToJSON)
+import           Data.Fix                     (Fix)
+import           Data.Functor.Classes         (Eq1, Read1, Show1)
+import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
+import           GHC.Generics                 (Generic, Generic1)
 
-data Node attr lexeme
-    = Attr attr (Node attr lexeme)
+data NodeF lexeme a
     -- Preprocessor
-    | PreprocInclude lexeme
+    = PreprocInclude lexeme
     | PreprocDefine lexeme
-    | PreprocDefineConst lexeme (Node attr lexeme)
-    | PreprocDefineMacro lexeme [Node attr lexeme] (Node attr lexeme)
-    | PreprocIf (Node attr lexeme) [Node attr lexeme] (Node attr lexeme)
-    | PreprocIfdef lexeme [Node attr lexeme] (Node attr lexeme)
-    | PreprocIfndef lexeme [Node attr lexeme] (Node attr lexeme)
-    | PreprocElse [Node attr lexeme]
-    | PreprocElif (Node attr lexeme) [Node attr lexeme] (Node attr lexeme)
+    | PreprocDefineConst lexeme a
+    | PreprocDefineMacro lexeme [a] a
+    | PreprocIf a [a] a
+    | PreprocIfdef lexeme [a] a
+    | PreprocIfndef lexeme [a] a
+    | PreprocElse [a]
+    | PreprocElif a [a] a
     | PreprocUndef lexeme
     | PreprocDefined lexeme
-    | PreprocScopedDefine (Node attr lexeme) [Node attr lexeme] (Node attr lexeme)
-    | MacroBodyStmt (Node attr lexeme)
-    | MacroBodyFunCall (Node attr lexeme)
+    | PreprocScopedDefine a [a] a
+    | MacroBodyStmt a
+    | MacroBodyFunCall a
     | MacroParam lexeme
-    | StaticAssert (Node attr lexeme) lexeme
+    | StaticAssert a lexeme
     -- Comments
-    | LicenseDecl lexeme [Node attr lexeme]
+    | LicenseDecl lexeme [a]
     | CopyrightDecl lexeme (Maybe lexeme) [lexeme]
     | Comment CommentStyle lexeme [lexeme] lexeme
     | CommentBlock lexeme
-    | Commented (Node attr lexeme) (Node attr lexeme)
+    | Commented a a
     -- Namespace-like blocks
-    | ExternC [Node attr lexeme]
-    | Class Scope lexeme [Node attr lexeme] [Node attr lexeme]
-    | Namespace Scope lexeme [Node attr lexeme]
+    | ExternC [a]
     -- Statements
-    | CompoundStmt [Node attr lexeme]
+    | CompoundStmt [a]
     | Break
     | Goto lexeme
     | Continue
-    | Return (Maybe (Node attr lexeme))
-    | SwitchStmt (Node attr lexeme) [Node attr lexeme]
-    | IfStmt (Node attr lexeme) (Node attr lexeme) (Maybe (Node attr lexeme))
-    | ForStmt (Node attr lexeme) (Node attr lexeme) (Node attr lexeme) (Node attr lexeme)
-    | WhileStmt (Node attr lexeme) (Node attr lexeme)
-    | DoWhileStmt (Node attr lexeme) (Node attr lexeme)
-    | Case (Node attr lexeme) (Node attr lexeme)
-    | Default (Node attr lexeme)
-    | Label lexeme (Node attr lexeme)
+    | Return (Maybe a)
+    | SwitchStmt a [a]
+    | IfStmt a a (Maybe a)
+    | ForStmt a a a a
+    | WhileStmt a a
+    | DoWhileStmt a a
+    | Case a a
+    | Default a
+    | Label lexeme a
     -- Variable declarations
-    | VLA (Node attr lexeme) lexeme (Node attr lexeme)
-    | VarDecl (Node attr lexeme) (Node attr lexeme)
-    | Declarator (Node attr lexeme) (Maybe (Node attr lexeme))
+    | VLA a lexeme a
+    | VarDecl a a
+    | Declarator a (Maybe a)
     | DeclSpecVar lexeme
-    | DeclSpecArray (Node attr lexeme) (Maybe (Node attr lexeme))
+    | DeclSpecArray a (Maybe a)
     -- Expressions
-    | InitialiserList [Node attr lexeme]
-    | UnaryExpr UnaryOp (Node attr lexeme)
-    | BinaryExpr (Node attr lexeme) BinaryOp (Node attr lexeme)
-    | TernaryExpr (Node attr lexeme) (Node attr lexeme) (Node attr lexeme)
-    | AssignExpr (Node attr lexeme) AssignOp (Node attr lexeme)
-    | ParenExpr (Node attr lexeme)
-    | CastExpr (Node attr lexeme) (Node attr lexeme)
-    | CompoundExpr (Node attr lexeme) (Node attr lexeme)
-    | SizeofExpr (Node attr lexeme)
-    | SizeofType (Node attr lexeme)
+    | InitialiserList [a]
+    | UnaryExpr UnaryOp a
+    | BinaryExpr a BinaryOp a
+    | TernaryExpr a a a
+    | AssignExpr a AssignOp a
+    | ParenExpr a
+    | CastExpr a a
+    | CompoundExpr a a
+    | SizeofExpr a
+    | SizeofType a
     | LiteralExpr LiteralType lexeme
     | VarExpr lexeme
-    | MemberAccess (Node attr lexeme) lexeme
-    | PointerAccess (Node attr lexeme) lexeme
-    | ArrayAccess (Node attr lexeme) (Node attr lexeme)
-    | FunctionCall (Node attr lexeme) [Node attr lexeme]
-    | CommentExpr (Node attr lexeme) (Node attr lexeme)
+    | MemberAccess a lexeme
+    | PointerAccess a lexeme
+    | ArrayAccess a a
+    | FunctionCall a [a]
+    | CommentExpr a a
     -- Type definitions
-    | EnumClass lexeme [Node attr lexeme]
-    | EnumConsts (Maybe lexeme) [Node attr lexeme]
-    | EnumDecl lexeme [Node attr lexeme] lexeme
-    | Enumerator lexeme (Maybe (Node attr lexeme))
-    | ClassForward lexeme [Node attr lexeme]
-    | Typedef (Node attr lexeme) lexeme
-    | TypedefFunction (Node attr lexeme)
-    | Struct lexeme [Node attr lexeme]
-    | Union lexeme [Node attr lexeme]
-    | MemberDecl (Node attr lexeme) (Node attr lexeme) (Maybe lexeme)
-    | TyConst (Node attr lexeme)
-    | TyPointer (Node attr lexeme)
+    | EnumConsts (Maybe lexeme) [a]
+    | EnumDecl lexeme [a] lexeme
+    | Enumerator lexeme (Maybe a)
+    | Typedef a lexeme
+    | TypedefFunction a
+    | Struct lexeme [a]
+    | Union lexeme [a]
+    | MemberDecl a a (Maybe lexeme)
+    | TyConst a
+    | TyPointer a
     | TyStruct lexeme
     | TyFunc lexeme
     | TyStd lexeme
-    | TyVar lexeme
     | TyUserDefined lexeme
     -- Functions
-    | FunctionDecl Scope (Node attr lexeme) (Maybe (Node attr lexeme))
-    | FunctionDefn Scope (Node attr lexeme) (Node attr lexeme)
-    | FunctionPrototype (Node attr lexeme) lexeme [Node attr lexeme]
-    | FunctionParam (Node attr lexeme) (Node attr lexeme)
-    | Event lexeme (Node attr lexeme)
-    | EventParams [Node attr lexeme]
-    | Property (Node attr lexeme) (Node attr lexeme) [Node attr lexeme]
-    | Accessor lexeme [Node attr lexeme] (Maybe (Node attr lexeme))
-    | ErrorDecl lexeme [Node attr lexeme]
-    | ErrorList [Node attr lexeme]
-    | ErrorFor lexeme
+    | FunctionDecl Scope a
+    | FunctionDefn Scope a a
+    | FunctionPrototype a lexeme [a]
+    | FunctionParam a a
     | Ellipsis
     -- Constants
-    | ConstDecl (Node attr lexeme) lexeme
-    | ConstDefn Scope (Node attr lexeme) lexeme (Node attr lexeme)
-    deriving (Show, Eq, Generic, Functor, Foldable, Traversable)
+    | ConstDecl a lexeme
+    | ConstDefn Scope a lexeme a
+    deriving (Show, Read, Eq, Generic, Generic1, Functor, Foldable, Traversable)
+    deriving (Show1, Read1, Eq1) via FunctorClassesDefault (NodeF lexeme)
 
-instance (FromJSON attr, FromJSON lexeme) => FromJSON (Node attr lexeme)
-instance (ToJSON attr, ToJSON lexeme) => ToJSON (Node attr lexeme)
+type Node lexeme = Fix (NodeF lexeme)
+
+instance (FromJSON lexeme, FromJSON a) => FromJSON (NodeF lexeme a)
+instance (ToJSON lexeme, ToJSON a) => ToJSON (NodeF lexeme a)
 
 data AssignOp
     = AopEq
@@ -133,7 +129,7 @@ data AssignOp
     | AopMod
     | AopLsh
     | AopRsh
-    deriving (Show, Eq, Generic)
+    deriving (Show, Read, Eq, Generic)
 
 instance FromJSON AssignOp
 instance ToJSON AssignOp
@@ -157,7 +153,7 @@ data BinaryOp
     | BopGt
     | BopGe
     | BopRsh
-    deriving (Show, Eq, Generic)
+    deriving (Show, Read, Eq, Generic)
 
 instance FromJSON BinaryOp
 instance ToJSON BinaryOp
@@ -170,7 +166,7 @@ data UnaryOp
     | UopDeref
     | UopIncr
     | UopDecr
-    deriving (Show, Eq, Generic)
+    deriving (Show, Read, Eq, Generic)
 
 instance FromJSON UnaryOp
 instance ToJSON UnaryOp
@@ -181,7 +177,7 @@ data LiteralType
     | Bool
     | String
     | ConstId
-    deriving (Show, Eq, Generic)
+    deriving (Show, Read, Eq, Generic)
 
 instance FromJSON LiteralType
 instance ToJSON LiteralType
@@ -189,7 +185,7 @@ instance ToJSON LiteralType
 data Scope
     = Global
     | Static
-    deriving (Show, Eq, Generic)
+    deriving (Show, Read, Eq, Generic)
 
 instance FromJSON Scope
 instance ToJSON Scope
@@ -198,7 +194,7 @@ data CommentStyle
     = Regular
     | Doxygen
     | Block
-    deriving (Show, Eq, Generic)
+    deriving (Show, Read, Eq, Generic)
 
 instance FromJSON CommentStyle
 instance ToJSON CommentStyle

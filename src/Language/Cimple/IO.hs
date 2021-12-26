@@ -14,7 +14,7 @@ import qualified Data.Map.Strict                 as Map
 import           Data.Text                       (Text)
 import qualified Data.Text                       as Text
 import qualified Data.Text.Encoding              as Text
-import           Language.Cimple.AST             (Node (..))
+import           Language.Cimple.AST             (Node)
 import           Language.Cimple.Lexer           (Lexeme, runAlex)
 import qualified Language.Cimple.Parser          as Parser
 import           Language.Cimple.Program         (Program)
@@ -24,14 +24,14 @@ import           Language.Cimple.TraverseAst     (TextActions, textActions,
                                                   traverseAst)
 import qualified Language.Cimple.TreeParser      as TreeParser
 
-type StringNode = Node () (Lexeme String)
-type TextNode = Node () (Lexeme Text)
+type StringNode = Node (Lexeme String)
+type TextNode = Node (Lexeme Text)
 
 toTextAst :: [StringNode] -> [TextNode]
 toTextAst stringAst =
     evalState (traverseAst cacheActions stringAst) Map.empty
   where
-    cacheActions :: TextActions (State (Map String Text)) () String Text
+    cacheActions :: TextActions (State (Map String Text)) String Text
     cacheActions = textActions $ \s -> do
         m <- get
         case Map.lookup s m of
