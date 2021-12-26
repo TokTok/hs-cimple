@@ -8,7 +8,7 @@ import           Test.Hspec         (Spec, describe, it, shouldBe)
 import           Language.Cimple    (AlexPosn (..), CommentStyle (..),
                                      Lexeme (..), LexemeClass (..),
                                      LiteralType (..), Node (..), Scope (..),
-                                     TextActions, mapAst, textActions)
+                                     TextActions, textActions, traverseAst)
 import           Language.Cimple.IO (parseText)
 
 
@@ -21,7 +21,7 @@ spec = do
                 actions = textActions (Just . Text.unpack)
             mapM (mapM (mapM (Just . Text.unpack))) ast
                 `shouldBe`
-                mapAst actions ast
+                traverseAst actions ast
 
     describe "C parsing" $ do
         it "should parse a simple function" $ do

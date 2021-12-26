@@ -20,8 +20,8 @@ import qualified Language.Cimple.Parser          as Parser
 import           Language.Cimple.Program         (Program)
 import qualified Language.Cimple.Program         as Program
 import           Language.Cimple.TranslationUnit (TranslationUnit)
-import           Language.Cimple.TraverseAst     (TextActions, mapAst,
-                                                  textActions)
+import           Language.Cimple.TraverseAst     (TextActions, textActions,
+                                                  traverseAst)
 import qualified Language.Cimple.TreeParser      as TreeParser
 
 type StringNode = Node () (Lexeme String)
@@ -29,7 +29,7 @@ type TextNode = Node () (Lexeme Text)
 
 toTextAst :: [StringNode] -> [TextNode]
 toTextAst stringAst =
-    evalState (mapAst cacheActions stringAst) Map.empty
+    evalState (traverseAst cacheActions stringAst) Map.empty
   where
     cacheActions :: TextActions (State (Map String Text)) () String Text
     cacheActions = textActions $ \s -> do

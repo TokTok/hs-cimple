@@ -6,8 +6,9 @@
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StrictData            #-}
+{-# LANGUAGE TypeFamilies          #-}
 module Language.Cimple.TraverseAst
-    ( mapAst, traverseAst
+    ( traverseAst
 
     , doFiles, doFile
     , doNodes, doNode
@@ -24,18 +25,20 @@ module Language.Cimple.TraverseAst
 import           Language.Cimple.AST   (Node (..))
 import           Language.Cimple.Lexer (Lexeme (..))
 
-class TraverseAst iattr oattr itext otext a b where
-    mapFileAst :: Applicative f => AstActions f iattr oattr itext otext -> FilePath -> a -> f b
-
-mapAst
-    :: (TraverseAst iattr oattr itext otext a b, Applicative f)
-    => AstActions f iattr oattr itext otext -> a -> f b
-mapAst = flip mapFileAst "<stdin>"
+class TraverseAst iattr oattr itext otext a where
+    type Mapped iattr oattr itext otext a
+    mapFileAst
+        :: Applicative f
+        => AstActions f iattr oattr itext otext
+        -> FilePath
+        -> a
+        -> f (Mapped iattr oattr itext otext a)
 
 traverseAst
-    :: (TraverseAst attr attr text text a a, Applicative f)
-    => AstActions f attr attr text text -> a -> f a
-traverseAst = mapAst
+    :: (TraverseAst iattr oattr itext otext    a, Applicative f)
+    => AstActions f iattr oattr itext otext -> a
+    -> f    (Mapped iattr oattr itext otext    a)
+traverseAst = flip mapFileAst "<stdin>"
 
 data AstActions f iattr oattr itext otext = AstActions
     { doFiles     :: [(FilePath, [Node iattr (Lexeme itext)])] -> f [(FilePath, [Node oattr (Lexeme otext)])] -> f [(FilePath, [Node oattr (Lexeme otext)])]
@@ -48,8 +51,10 @@ data AstActions f iattr oattr itext otext = AstActions
     , doAttr      :: FilePath ->       iattr                                                                  -> f                   oattr
     }
 
-instance TraverseAst iattr oattr itext otext        a         b
-      => TraverseAst iattr oattr itext otext (Maybe a) (Maybe b) where
+instance TraverseAst iattr oattr itext otext        a
+      => TraverseAst iattr oattr itext otext (Maybe a) where
+    type        Mapped iattr oattr itext otext (Maybe a)
+       = Maybe (Mapped iattr oattr itext otext        a)
     mapFileAst _       _           Nothing  = pure Nothing
     mapFileAst actions currentFile (Just x) = Just <$> mapFileAst actions currentFile x
 
@@ -82,34 +87,32 @@ identityActions :: Applicative f => AstActions f attr attr text text
 identityActions = astActions pure pure
 
 
-instance TraverseAst iattr oattr itext otext itext otext where
-    mapFileAst AstActions{..} = doText
-
-instance TraverseAst iattr oattr itext otext iattr oattr where
-    mapFileAst AstActions{..} = doAttr
-
-instance TraverseAst iattr oattr itext otext (Lexeme itext)
-                                             (Lexeme otext) where
+instance TraverseAst iattr oattr itext otext (Lexeme itext) where
+    type Mapped iattr oattr itext otext (Lexeme itext)
+                                      =  Lexeme otext
     mapFileAst :: forall f . Applicative f
                => AstActions f iattr oattr itext otext -> FilePath -> Lexeme itext -> f (Lexeme otext)
-    mapFileAst actions@AstActions{..} currentFile = doLexeme currentFile <*>
-        \(L p c s) -> L p c <$> recurse s
-      where
-        recurse :: TraverseAst iattr oattr itext otext a b => a -> f b
-        recurse = mapFileAst actions currentFile
+    mapFileAst AstActions{..} currentFile = doLexeme currentFile <*>
+        \(L p c s) -> L p c <$> doText currentFile s
 
-instance TraverseAst iattr oattr itext otext [Lexeme itext]
-                                             [Lexeme otext] where
+instance TraverseAst iattr oattr itext otext [Lexeme itext] where
+    type Mapped iattr oattr itext otext [Lexeme itext]
+                                      = [Lexeme otext]
     mapFileAst actions@AstActions{..} currentFile = doLexemes currentFile <*>
         traverse (mapFileAst actions currentFile)
 
-instance TraverseAst iattr oattr itext otext (Node iattr (Lexeme itext))
-                                             (Node oattr (Lexeme otext)) where
-    mapFileAst :: forall f . Applicative f
-               => AstActions f iattr oattr itext otext -> FilePath -> Node iattr (Lexeme itext) -> f (Node oattr (Lexeme otext))
+instance TraverseAst iattr oattr itext otext (Node iattr (Lexeme itext)) where
+    type Mapped iattr oattr itext otext (Node iattr (Lexeme itext))
+                                      =  Node oattr (Lexeme otext)
+    mapFileAst
+        :: forall f . Applicative f
+        => AstActions f iattr oattr itext otext
+        -> FilePath
+        ->    Node iattr (Lexeme itext)
+        -> f (Node oattr (Lexeme otext))
     mapFileAst actions@AstActions{..} currentFile = doNode currentFile <*> \case
         Attr attr node ->
-            Attr <$> recurse attr <*> recurse node
+            Attr <$> doAttr currentFile attr <*> recurse node
         PreprocInclude path ->
             PreprocInclude <$> recurse path
         PreprocDefine name ->
@@ -292,20 +295,23 @@ instance TraverseAst iattr oattr itext otext (Node iattr (Lexeme itext))
             ConstDefn scope <$> recurse ty <*> recurse name <*> recurse value
 
       where
-        recurse :: TraverseAst iattr oattr itext otext a b => a -> f b
+        recurse :: TraverseAst iattr oattr itext otext a => a -> f (Mapped iattr oattr itext otext a)
         recurse = mapFileAst actions currentFile
 
-instance TraverseAst iattr oattr itext otext [Node iattr (Lexeme itext)]
-                                             [Node oattr (Lexeme otext)] where
+instance TraverseAst iattr oattr itext otext [Node iattr (Lexeme itext)] where
+    type Mapped iattr oattr itext otext [Node iattr (Lexeme itext)]
+                                      = [Node oattr (Lexeme otext)]
     mapFileAst actions@AstActions{..} currentFile = doNodes currentFile <*>
         traverse (mapFileAst actions currentFile)
 
-instance TraverseAst iattr oattr itext otext (FilePath, [Node iattr (Lexeme itext)])
-                                             (FilePath, [Node oattr (Lexeme otext)]) where
+instance TraverseAst iattr oattr itext otext (FilePath, [Node iattr (Lexeme itext)]) where
+    type Mapped iattr oattr itext otext (FilePath, [Node iattr (Lexeme itext)])
+                                      = (FilePath, [Node oattr (Lexeme otext)])
     mapFileAst actions@AstActions{..} _ tu@(currentFile, _) = doFile <*>
         traverse (mapFileAst actions currentFile) $ tu
 
-instance TraverseAst iattr oattr itext otext [(FilePath, [Node iattr (Lexeme itext)])]
-                                             [(FilePath, [Node oattr (Lexeme otext)])] where
+instance TraverseAst iattr oattr itext otext [(FilePath, [Node iattr (Lexeme itext)])] where
+    type Mapped iattr oattr itext otext [(FilePath, [Node iattr (Lexeme itext)])]
+                                      = [(FilePath, [Node oattr (Lexeme otext)])]
     mapFileAst actions@AstActions{..} currentFile = doFiles <*>
         traverse (mapFileAst actions currentFile)
