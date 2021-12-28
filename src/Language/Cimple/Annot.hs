@@ -31,4 +31,3 @@ addAnnot = hoistFix $ Compose . Annot ()
 
 removeAnnot :: AnnotNode lexeme -> Node lexeme
 removeAnnot = hoistFix $ unAnnot . getCompose
-
