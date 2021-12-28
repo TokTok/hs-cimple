@@ -15,7 +15,8 @@ module Language.Cimple.AST
     , CommentStyle (..)
     ) where
 
-import           Data.Aeson                   (FromJSON, ToJSON)
+import           Data.Aeson                   (FromJSON, FromJSON1, ToJSON,
+                                               ToJSON1)
 import           Data.Fix                     (Fix)
 import           Data.Functor.Classes         (Eq1, Read1, Show1)
 import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
@@ -114,8 +115,8 @@ data NodeF lexeme a
 
 type Node lexeme = Fix (NodeF lexeme)
 
-instance (FromJSON lexeme, FromJSON a) => FromJSON (NodeF lexeme a)
-instance (ToJSON lexeme, ToJSON a) => ToJSON (NodeF lexeme a)
+instance FromJSON lexeme => FromJSON1 (NodeF lexeme)
+instance ToJSON lexeme => ToJSON1 (NodeF lexeme)
 
 data AssignOp
     = AopEq

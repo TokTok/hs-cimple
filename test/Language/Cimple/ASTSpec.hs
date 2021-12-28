@@ -1,37 +1,18 @@
-{-# LANGUAGE DeriveFunctor     #-}
-{-# LANGUAGE DeriveGeneric     #-}
-{-# LANGUAGE DerivingVia       #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators     #-}
 {-# LANGUAGE ViewPatterns      #-}
 module Language.Cimple.ASTSpec where
 
-import           Data.Fix                     (Fix (..), hoistFix)
-import           Data.Functor.Classes         (Eq1, Read1, Show1)
-import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
-import           Data.Functor.Compose         (Compose (..))
-import           GHC.Generics                 (Generic, Generic1)
-import           Test.Hspec                   (Spec, describe, it, shouldBe,
-                                               shouldSatisfy)
+import           Data.Fix             (Fix (..))
+import           Data.Functor.Compose (Compose (..))
+import           Test.Hspec           (Spec, describe, it, shouldBe,
+                                       shouldSatisfy)
 
-import           Language.Cimple              (AlexPosn (..), Lexeme (..),
-                                               LexemeClass (..),
-                                               LiteralType (..), Node,
-                                               NodeF (..), Scope (..))
-import           Language.Cimple.IO           (parseText)
-
-data AnnotF attr a = Annot { attr :: attr, unAnnot :: a }
-    deriving (Functor, Generic, Generic1)
-    deriving (Show1, Read1, Eq1) via FunctorClassesDefault (AnnotF attr)
-
-type AnnotNode lexeme = Fix (AnnotF () `Compose` NodeF lexeme)
-
-addAnnot :: Node lexeme -> AnnotNode lexeme
-addAnnot = hoistFix $ Compose . Annot ()
-
-removeAnnot :: AnnotNode lexeme -> Node lexeme
-removeAnnot = hoistFix $ unAnnot . getCompose
+import           Language.Cimple      (AlexPosn (..), AnnotF (..), Lexeme (..),
+                                       LexemeClass (..), LiteralType (..),
+                                       NodeF (..), Scope (..), addAnnot,
+                                       removeAnnot)
+import           Language.Cimple.IO   (parseText)
 
 
 spec :: Spec
