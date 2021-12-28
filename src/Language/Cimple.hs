@@ -7,8 +7,8 @@ module Language.Cimple
 import           Control.Monad.State.Lazy    (State)
 import           Data.Text                   (Text)
 
-import           Language.Cimple.AST         as X
 import           Language.Cimple.Annot       as X
+import           Language.Cimple.AST         as X
 import           Language.Cimple.Lexer       as X
 import           Language.Cimple.Parser      as X
 import           Language.Cimple.Tokens      as X
