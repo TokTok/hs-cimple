@@ -32,7 +32,8 @@ library
     , Language.Cimple.Pretty
     , Language.Cimple.Program
   other-modules:
-      Language.Cimple.AST
+      Language.Cimple.Annot
+    , Language.Cimple.AST
     , Language.Cimple.Flatten
     , Language.Cimple.Graph
     , Language.Cimple.Lexer
