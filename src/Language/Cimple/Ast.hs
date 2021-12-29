@@ -5,7 +5,7 @@
 {-# LANGUAGE FlexibleInstances  #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE StrictData         #-}
-module Language.Cimple.AST
+module Language.Cimple.Ast
     ( AssignOp (..)
     , BinaryOp (..)
     , UnaryOp (..)

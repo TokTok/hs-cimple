@@ -18,7 +18,7 @@ import           Data.Functor.Classes         (Eq1, Read1, Show1)
 import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
 import           Data.Functor.Compose         (Compose (..))
 import           GHC.Generics                 (Generic, Generic1)
-import           Language.Cimple.AST          (Node, NodeF)
+import           Language.Cimple.Ast          (Node, NodeF)
 
 data AnnotF attr a = Annot { attr :: attr, unAnnot :: a }
     deriving (Functor, Generic, Generic1)

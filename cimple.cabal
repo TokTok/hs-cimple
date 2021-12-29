@@ -1,5 +1,5 @@
 name:                 cimple
-version:              0.0.7
+version:              0.0.8
 synopsis:             Simple C-like programming language
 homepage:             https://toktok.github.io/
 license:              GPL-3
@@ -33,7 +33,7 @@ library
     , Language.Cimple.Program
   other-modules:
       Language.Cimple.Annot
-    , Language.Cimple.AST
+    , Language.Cimple.Ast
     , Language.Cimple.Flatten
     , Language.Cimple.Graph
     , Language.Cimple.Lexer
@@ -115,7 +115,8 @@ test-suite testsuite
   hs-source-dirs: test
   main-is: testsuite.hs
   other-modules:
-      Language.CimpleSpec
+      Language.Cimple.AstSpec
+    , Language.Cimple.ParserSpec
     , Language.Cimple.PrettySpec
   ghc-options:
       -Wall

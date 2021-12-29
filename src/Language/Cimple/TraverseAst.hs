@@ -21,7 +21,7 @@ module Language.Cimple.TraverseAst
     ) where
 
 import           Data.Fix              (Fix (..))
-import           Language.Cimple.AST   (Node, NodeF (..))
+import           Language.Cimple.Ast   (Node, NodeF (..))
 import           Language.Cimple.Lexer (Lexeme (..))
 
 class TraverseAst itext otext a where

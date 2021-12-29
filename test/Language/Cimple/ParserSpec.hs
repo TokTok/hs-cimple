@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Language.CimpleSpec where
+module Language.Cimple.ParserSpec where
 
 import           Data.Fix           (Fix (..))
 import           Test.Hspec         (Spec, describe, it, shouldBe)

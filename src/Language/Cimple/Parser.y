@@ -4,7 +4,7 @@ module Language.Cimple.Parser
     ) where
 
 import           Data.Fix               (Fix (..))
-import           Language.Cimple.AST    (AssignOp (..), BinaryOp (..),
+import           Language.Cimple.Ast    (AssignOp (..), BinaryOp (..),
                                          CommentStyle (..), LiteralType (..),
                                          Node, NodeF (..), Scope (..),
                                          UnaryOp (..))

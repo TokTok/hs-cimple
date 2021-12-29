@@ -13,7 +13,7 @@ import qualified Control.Monad.State.Lazy as State
 import           Data.Fix                 (foldFix)
 import           Data.Text                (Text)
 import qualified Data.Text                as Text
-import           Language.Cimple.AST      (Node)
+import           Language.Cimple.Ast      (Node)
 import qualified Language.Cimple.Flatten  as Flatten
 import           Language.Cimple.Lexer    (Lexeme (..), lexemeLine)
 

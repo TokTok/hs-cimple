@@ -9,7 +9,7 @@ import qualified Control.Monad.State.Lazy        as State
 import           Data.Fix                        (Fix (..))
 import           Data.Text                       (Text)
 import qualified Data.Text                       as Text
-import           Language.Cimple.AST             (NodeF (..))
+import           Language.Cimple.Ast             (NodeF (..))
 import           Language.Cimple.Lexer           (Lexeme (..))
 import           Language.Cimple.Tokens          (LexemeClass (..))
 import           Language.Cimple.TranslationUnit (TranslationUnit)

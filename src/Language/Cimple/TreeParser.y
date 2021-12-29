@@ -8,7 +8,7 @@ module Language.Cimple.TreeParser
 
 import           Data.Fix              (Fix (..))
 import           Data.Text             (Text)
-import           Language.Cimple.AST   (CommentStyle (..), Node, NodeF (..))
+import           Language.Cimple.Ast   (CommentStyle (..), Node, NodeF (..))
 import           Language.Cimple.Lexer (Lexeme)
 }
 

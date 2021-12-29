@@ -8,7 +8,7 @@ module Language.Cimple.Flatten (lexemes) where
 
 import           Data.Maybe          (maybeToList)
 import           GHC.Generics
-import           Language.Cimple.AST (AssignOp, BinaryOp, CommentStyle,
+import           Language.Cimple.Ast (AssignOp, BinaryOp, CommentStyle,
                                       LiteralType, NodeF (..), Scope, UnaryOp)
 
 class Concats t a where

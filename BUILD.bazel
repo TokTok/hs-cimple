@@ -5,7 +5,10 @@ load("//third_party/haskell/happy:build_defs.bzl", "happy_parser")
 load("//third_party/haskell/hspec-discover:build_defs.bzl", "hspec_test")
 load("//tools/project:build_defs.bzl", "project")
 
-project(custom_github = True)
+project(
+    custom_cirrus = True,
+    custom_github = True,
+)
 
 alex_lexer(
     name = "Lexer",
@@ -36,7 +39,7 @@ happy_parser(
 haskell_library(
     name = "parser",
     srcs = [
-        "src/Language/Cimple/AST.hs",
+        "src/Language/Cimple/Ast.hs",
         "src/Language/Cimple/Parser.hs",
     ],
     src_strip_prefix = "src",
@@ -78,12 +81,12 @@ haskell_library(
     srcs = glob(
         ["src/**/*.*hs"],
         exclude = [
-            "src/Language/Cimple/AST.hs",
+            "src/Language/Cimple/Ast.hs",
             "src/Language/Cimple/Tokens.hs",
         ],
     ),
     src_strip_prefix = "src",
-    version = "0.0.7",
+    version = "0.0.8",
     visibility = ["//visibility:public"],
     deps = [
         ":lexer",

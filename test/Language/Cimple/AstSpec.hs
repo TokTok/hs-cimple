@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE ViewPatterns      #-}
-module Language.Cimple.ASTSpec where
+module Language.Cimple.AstSpec where
 
 import           Data.Fix             (Fix (..))
 import           Data.Functor.Compose (Compose (..))
