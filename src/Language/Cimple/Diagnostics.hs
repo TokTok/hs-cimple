@@ -3,19 +3,22 @@
 {-# LANGUAGE StrictData        #-}
 module Language.Cimple.Diagnostics
   ( Diagnostics
+  , Diagnostics'
   , HasDiagnostics (..)
   , warn
+  , warn'
   , sloc
   ) where
 
-import           Control.Monad.State.Lazy (State)
-import qualified Control.Monad.State.Lazy as State
-import           Data.Fix                 (foldFix)
-import           Data.Text                (Text)
-import qualified Data.Text                as Text
-import           Language.Cimple.Ast      (Node)
-import qualified Language.Cimple.Flatten  as Flatten
-import           Language.Cimple.Lexer    (Lexeme (..), lexemeLine)
+import           Control.Monad.State.Lazy   (State)
+import qualified Control.Monad.State.Lazy   as State
+import qualified Control.Monad.State.Strict as SState
+import           Data.Fix                   (foldFix)
+import           Data.Text                  (Text)
+import qualified Data.Text                  as Text
+import           Language.Cimple.Ast        (Node)
+import qualified Language.Cimple.Flatten    as Flatten
+import           Language.Cimple.Lexer      (Lexeme (..), lexemeLine)
 
 type DiagnosticsT diags a = State diags a
 type Diagnostics a = DiagnosticsT [Text] a
@@ -24,6 +27,14 @@ warn
     :: (HasLocation at, HasDiagnostics diags)
     => FilePath -> at -> Text -> DiagnosticsT diags ()
 warn file l w = State.modify (addDiagnostic $ sloc file l <> ": " <> w)
+
+type DiagnosticsT' diags a = SState.State diags a
+type Diagnostics' a = DiagnosticsT' [Text] a
+
+warn'
+    :: (HasLocation at, HasDiagnostics diags)
+    => FilePath -> at -> Text -> DiagnosticsT' diags ()
+warn' file l w = SState.modify (addDiagnostic $ sloc file l <> ": " <> w)
 
 
 class HasDiagnostics a where
