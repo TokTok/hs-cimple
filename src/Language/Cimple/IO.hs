@@ -7,7 +7,7 @@ module Language.Cimple.IO
     ) where
 
 import           Control.Monad                   ((>=>))
-import           Control.Monad.State.Lazy        (State, evalState, get, put)
+import           Control.Monad.State.Strict      (State, evalState, get, put)
 import qualified Data.ByteString                 as BS
 import           Data.Map.Strict                 (Map)
 import qualified Data.Map.Strict                 as Map

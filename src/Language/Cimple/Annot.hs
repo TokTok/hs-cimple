@@ -1,11 +1,8 @@
-{-# LANGUAGE DeriveFunctor      #-}
-{-# LANGUAGE DeriveGeneric      #-}
-{-# LANGUAGE DeriveTraversable  #-}
-{-# LANGUAGE DerivingVia        #-}
-{-# LANGUAGE FlexibleInstances  #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE StrictData         #-}
-{-# LANGUAGE TypeOperators      #-}
+{-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DerivingVia   #-}
+{-# LANGUAGE StrictData    #-}
+{-# LANGUAGE TypeOperators #-}
 module Language.Cimple.Annot
     ( AnnotF (..)
     , AnnotNode

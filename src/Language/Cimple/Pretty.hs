@@ -366,7 +366,7 @@ ppNode = foldFix go
         ppSemiSep decls <>
         fst elseBranch <$>
         text "#endif"
-    PreprocElse [] -> bare $ empty
+    PreprocElse [] -> bare empty
     PreprocElse decls -> bare $
         linebreak <>
         text "#else" <$>

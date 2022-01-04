@@ -1,8 +1,6 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE InstanceSigs          #-}
-{-# LANGUAGE LambdaCase            #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE NamedFieldPuns        #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE StrictData            #-}
@@ -150,11 +148,11 @@ instance TraverseAst itext otext (Node (Lexeme itext)) where
         CompoundStmt stmts ->
             Fix <$> (CompoundStmt <$> recurse stmts)
         Break ->
-            Fix <$> (pure Break)
+            pure $ Fix Break
         Goto label ->
             Fix <$> (Goto <$> recurse label)
         Continue ->
-            Fix <$> (pure Continue)
+            pure $ Fix Continue
         Return value ->
             Fix <$> (Return <$> recurse value)
         SwitchStmt value cases ->
@@ -254,7 +252,7 @@ instance TraverseAst itext otext (Node (Lexeme itext)) where
         FunctionParam ty decl ->
             Fix <$> (FunctionParam <$> recurse ty <*> recurse decl)
         Ellipsis ->
-            Fix <$> (pure Ellipsis)
+            pure $ Fix Ellipsis
         ConstDecl ty name ->
             Fix <$> (ConstDecl <$> recurse ty <*> recurse name)
         ConstDefn scope ty name value ->
