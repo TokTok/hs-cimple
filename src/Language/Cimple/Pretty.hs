@@ -308,12 +308,9 @@ ppNode = foldFix go
     CommentExpr   c e -> semi $ fst c <+> fst e
     Ellipsis          -> semi $ text "..."
 
-    Declarator dspec Nothing -> dspec
-    Declarator dspec (Just initr) -> bare $ fst dspec <+> char '=' <+> fst initr
-
-    DeclSpecVar var -> bare $ ppLexeme var
-    DeclSpecArray dspec Nothing     -> bare $ fst dspec <> text "[]"
-    DeclSpecArray dspec (Just dim)  -> bare $ fst dspec <> char '[' <> fst dim <> char ']'
+    VarDecl ty name arrs      -> bare $ fst ty <+> ppLexeme name <> ppSep empty arrs
+    DeclSpecArray Nothing     -> bare $ text "[]"
+    DeclSpecArray (Just dim)  -> bare $ char '[' <> fst dim <> char ']'
 
     TyPointer     ty -> bare $ fst ty <> char '*'
     TyConst       ty -> bare $ fst ty <+> text "const"
@@ -377,7 +374,6 @@ ppNode = foldFix go
         fst elseBranch <$>
         text "#endif"
 
-    FunctionParam ty dspec -> bare $ fst ty <+> fst dspec
     FunctionPrototype ty name params -> bare $
         ppFunctionPrototype ty name params
     FunctionDecl scope proto -> semi $
@@ -385,10 +381,10 @@ ppNode = foldFix go
     FunctionDefn scope proto body -> bare $
         ppScope scope <> fst proto <+> fst body
 
-    MemberDecl ty dspec Nothing -> semi $
-        fst ty <+> fst dspec
-    MemberDecl ty dspec (Just size) -> semi $
-        fst ty <+> fst dspec <+> char ':' <+> ppLexeme size
+    MemberDecl decl Nothing -> semi $
+        fst decl
+    MemberDecl decl (Just size) -> semi $
+        fst decl <+> char ':' <+> ppLexeme size
 
     Struct name members -> semi $
         nest 2 (
@@ -432,22 +428,23 @@ ppNode = foldFix go
         ) <$> text "} " <> ppLexeme ty
 
     -- Statements
-    VarDecl ty declr   -> semi $ fst ty <+> fst declr
-    Return Nothing     -> semi $ text "return"
-    Return (Just e)    -> semi $ text "return" <+> fst e
-    Continue           -> semi $ text "continue"
-    Break              -> semi $ text "break"
-    IfStmt cond t e    -> bare $ ppIfStmt cond t e
-    ForStmt i c n body -> bare $ ppForStmt i c n body
-    Default s          -> cp s $ text "default:" <+> fst s
-    Label l s          -> bare $ ppLexeme l <> char ':' <$> fst s
-    Goto l             -> semi $ text "goto " <> ppLexeme l
-    Case e s           -> cp s $ text "case " <> fst e <> char ':' <+> fst s
-    WhileStmt c body   -> bare $ ppWhileStmt c body
-    DoWhileStmt body c -> semi $ ppDoWhileStmt body c
-    SwitchStmt c body  -> bare $ ppSwitchStmt c body
-    CompoundStmt body  -> bare $ ppCompoundStmt body
-    VLA ty n sz        -> semi $ ppVLA ty n sz
+    VarDeclStmt decl Nothing      -> semi $ fst decl
+    VarDeclStmt decl (Just initr) -> semi $ fst decl <+> char '=' <+> fst initr
+    Return Nothing                -> semi $ text "return"
+    Return (Just e)               -> semi $ text "return" <+> fst e
+    Continue                      -> semi $ text "continue"
+    Break                         -> semi $ text "break"
+    IfStmt cond t e               -> bare $ ppIfStmt cond t e
+    ForStmt i c n body            -> bare $ ppForStmt i c n body
+    Default s                     -> cp s $ text "default:" <+> fst s
+    Label l s                     -> bare $ ppLexeme l <> char ':' <$> fst s
+    Goto l                        -> semi $ text "goto " <> ppLexeme l
+    Case e s                      -> cp s $ text "case " <> fst e <> char ':' <+> fst s
+    WhileStmt c body              -> bare $ ppWhileStmt c body
+    DoWhileStmt body c            -> semi $ ppDoWhileStmt body c
+    SwitchStmt c body             -> bare $ ppSwitchStmt c body
+    CompoundStmt body             -> bare $ ppCompoundStmt body
+    VLA ty n sz                   -> semi $ ppVLA ty n sz
 
 
 ppTranslationUnit :: [Node (Lexeme Text)] -> Doc

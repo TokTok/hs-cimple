@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveTraversable #-}
 {-# LANGUAGE DerivingVia       #-}
 {-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE Strict            #-}
 {-# LANGUAGE StrictData        #-}
 module Language.Cimple.Ast
     ( AssignOp (..)
@@ -63,10 +64,9 @@ data NodeF lexeme a
     | Label lexeme a
     -- Variable declarations
     | VLA a lexeme a
-    | VarDecl a a
-    | Declarator a (Maybe a)
-    | DeclSpecVar lexeme
-    | DeclSpecArray a (Maybe a)
+    | VarDeclStmt a (Maybe a)
+    | VarDecl a lexeme [a]
+    | DeclSpecArray (Maybe a)
     -- Expressions
     | InitialiserList [a]
     | UnaryExpr UnaryOp a
@@ -93,7 +93,7 @@ data NodeF lexeme a
     | TypedefFunction a
     | Struct lexeme [a]
     | Union lexeme [a]
-    | MemberDecl a a (Maybe lexeme)
+    | MemberDecl a (Maybe lexeme)
     | TyConst a
     | TyPointer a
     | TyStruct lexeme
@@ -104,7 +104,6 @@ data NodeF lexeme a
     | FunctionDecl Scope a
     | FunctionDefn Scope a a
     | FunctionPrototype a lexeme [a]
-    | FunctionParam a a
     | Ellipsis
     -- Constants
     | ConstDecl a lexeme

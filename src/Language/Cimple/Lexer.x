@@ -3,6 +3,7 @@
 {-# LANGUAGE DeriveGeneric      #-}
 {-# LANGUAGE DeriveTraversable  #-}
 {-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE StrictData         #-}
 module Language.Cimple.Lexer
     ( Alex
     , AlexPosn (..)

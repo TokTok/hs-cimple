@@ -72,9 +72,8 @@ import           Language.Cimple.Lexer (Lexeme)
     label		{ Fix (Label{}) }
     -- Variable declarations
     vLA			{ Fix (VLA{}) }
+    varDeclStmt		{ Fix (VarDecl{}) }
     varDecl		{ Fix (VarDecl{}) }
-    declarator		{ Fix (Declarator{}) }
-    declSpecVar		{ Fix (DeclSpecVar{}) }
     declSpecArray	{ Fix (DeclSpecArray{}) }
     -- Expressions
     initialiserList	{ Fix (InitialiserList{}) }
@@ -113,7 +112,6 @@ import           Language.Cimple.Lexer (Lexeme)
     functionDecl	{ Fix (FunctionDecl{}) }
     functionDefn	{ Fix (FunctionDefn{}) }
     functionPrototype	{ Fix (FunctionPrototype{}) }
-    functionParam	{ Fix (FunctionParam{}) }
     ellipsis		{ Fix (Ellipsis) }
     -- Constants
     constDecl		{ Fix (ConstDecl{}) }

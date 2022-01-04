@@ -247,12 +247,15 @@ PreprocIfdef(decls)
 |	'#ifndef' ID_CONST decls PreprocElse(decls) '#endif'	{ Fix $ PreprocIfndef $2 (reverse $3) $4 }
 
 PreprocIf(decls)
-:	'#if' PreprocConstExpr '\n' decls PreprocElse(decls) '#endif'	{ Fix $ PreprocIf $2 (reverse $4) $5 }
+:	'#if' PreprocConstExpr '\n' decls PreprocElif(decls) '#endif'	{ Fix $ PreprocIf $2 (reverse $4) $5 }
+
+PreprocElif(decls)
+:	PreprocElse(decls)					{ $1 }
+|	'#elif' PreprocConstExpr '\n' decls PreprocElif(decls)	{ Fix $ PreprocElif $2 (reverse $4) $5 }
 
 PreprocElse(decls)
 :								{ Fix $ PreprocElse [] }
 |	'#else' decls						{ Fix $ PreprocElse (reverse $2) }
-|	'#elif' PreprocConstExpr '\n' decls PreprocElse(decls)	{ Fix $ PreprocElif $2 (reverse $4) $5 }
 
 PreprocInclude :: { StringNode }
 PreprocInclude
@@ -287,7 +290,7 @@ MacroParams
 
 MacroParam :: { StringNode }
 MacroParam
-:	IdVar							{ Fix $ MacroParam $1 }
+:	ID_VAR							{ Fix $ MacroParam $1 }
 
 MacroBody :: { StringNode }
 MacroBody
@@ -345,7 +348,7 @@ ForStmt
 ForInit :: { StringNode }
 ForInit
 :	AssignExpr ';'						{ $1 }
-|	VarDecl							{ $1 }
+|	VarDeclStmt						{ $1 }
 
 ForNext :: { StringNode }
 ForNext
@@ -378,33 +381,32 @@ SwitchCaseBody
 
 DeclStmt :: { StringNode }
 DeclStmt
-:	VarDecl							{ $1 }
-|	VLA '(' QualType ',' IdVar ',' Expr ')' ';'		{ Fix $ VLA $3 $5 $7 }
+:	VarDeclStmt						{ $1 }
+|	VLA '(' QualType ',' ID_VAR ',' Expr ')' ';'		{ Fix $ VLA $3 $5 $7 }
+
+VarDeclStmt :: { StringNode }
+VarDeclStmt
+:	VarDecl '=' InitialiserExpr ';'				{ Fix $ VarDeclStmt $1 (Just $3) }
+|	VarDecl ';'						{ Fix $ VarDeclStmt $1 Nothing }
 
 VarDecl :: { StringNode }
 VarDecl
-:	QualType Declarator ';'					{ Fix $ VarDecl $1 $2 }
+:	QualType ID_VAR DeclSpecArrays				{ Fix $ VarDecl $1 $2 $3 }
 
-Declarator :: { StringNode }
-Declarator
-:	DeclSpec '=' InitialiserExpr				{ Fix $ Declarator $1 (Just $3) }
-|	DeclSpec						{ Fix $ Declarator $1 Nothing }
+DeclSpecArrays :: { [StringNode] }
+DeclSpecArrays
+:								{ [] }
+|	DeclSpecArrays DeclSpecArray				{ $2 : $1 }
+
+DeclSpecArray :: { StringNode }
+DeclSpecArray
+:	'[' ']'							{ Fix $ DeclSpecArray Nothing }
+|	'[' Expr ']'						{ Fix $ DeclSpecArray (Just $2) }
 
 InitialiserExpr :: { StringNode }
 InitialiserExpr
 :	InitialiserList						{ Fix $ InitialiserList $1 }
 |	Expr							{ $1 }
-
-DeclSpec :: { StringNode }
-DeclSpec
-:	IdVar							{ Fix $ DeclSpecVar $1 }
-|	DeclSpec '[' ']'					{ Fix $ DeclSpecArray $1 Nothing }
-|	DeclSpec '[' Expr ']'					{ Fix $ DeclSpecArray $1 (Just $3) }
-
-IdVar :: { Lexeme String }
-IdVar
-:	ID_VAR							{ $1 }
-|	default							{ $1 }
 
 InitialiserList :: { [StringNode] }
 InitialiserList
@@ -479,10 +481,10 @@ StringLiteralExpr
 
 LhsExpr :: { StringNode }
 LhsExpr
-:	IdVar							{ Fix $ VarExpr $1 }
+:	ID_VAR							{ Fix $ VarExpr $1 }
 |	'*' LhsExpr %prec DEREF					{ Fix $ UnaryExpr UopDeref $2 }
-|	LhsExpr '.' IdVar					{ Fix $ MemberAccess $1 $3 }
-|	LhsExpr '->' IdVar					{ Fix $ PointerAccess $1 $3 }
+|	LhsExpr '.' ID_VAR					{ Fix $ MemberAccess $1 $3 }
+|	LhsExpr '->' ID_VAR					{ Fix $ PointerAccess $1 $3 }
 |	LhsExpr '[' Expr ']'					{ Fix $ ArrayAccess $1 $3 }
 
 Expr :: { StringNode }
@@ -587,8 +589,8 @@ MemberDecls
 
 MemberDecl :: { StringNode }
 MemberDecl
-:	QualType DeclSpec ';'					{ Fix $ MemberDecl $1 $2 Nothing }
-|	QualType DeclSpec ':' LIT_INTEGER ';'			{ Fix $ MemberDecl $1 $2 (Just $4) }
+:	VarDecl ';'						{ Fix $ MemberDecl $1 Nothing }
+|	VarDecl ':' LIT_INTEGER ';'				{ Fix $ MemberDecl $1 (Just $3) }
 |	PreprocIfdef(MemberDeclList)				{ $1 }
 |	Comment							{ $1 }
 
@@ -628,8 +630,8 @@ FunctionDecl
 
 FunctionDeclarator :: { Scope -> StringNode }
 FunctionDeclarator
-:	FunctionPrototype(IdVar) ';'				{ \s -> Fix $ FunctionDecl s $1 }
-|	FunctionPrototype(IdVar) CompoundStmt			{ \s -> Fix $ FunctionDefn s $1 $2 }
+:	FunctionPrototype(ID_VAR) ';'				{ \s -> Fix $ FunctionDecl s $1 }
+|	FunctionPrototype(ID_VAR) CompoundStmt			{ \s -> Fix $ FunctionDefn s $1 $2 }
 
 FunctionPrototype(id)
 :	QualType id FunctionParamList				{ Fix $ FunctionPrototype $1 $2 $3 }
@@ -644,12 +646,8 @@ FunctionParamList
 
 FunctionParams :: { [StringNode] }
 FunctionParams
-:	FunctionParam						{ [$1] }
-|	FunctionParams ',' FunctionParam			{ $3 : $1 }
-
-FunctionParam :: { StringNode }
-FunctionParam
-:	QualType DeclSpec					{ Fix $ FunctionParam $1 $2 }
+:	VarDecl							{ [$1] }
+|	FunctionParams ',' VarDecl				{ $3 : $1 }
 
 ConstDecl :: { StringNode }
 ConstDecl

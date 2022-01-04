@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE Strict            #-}
 {-# LANGUAGE StrictData        #-}
 module Language.Cimple.Diagnostics
   ( Diagnostics

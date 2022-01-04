@@ -3,6 +3,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE Strict                #-}
 {-# LANGUAGE StrictData            #-}
 {-# LANGUAGE TypeFamilies          #-}
 module Language.Cimple.TraverseAst
@@ -173,14 +174,12 @@ instance TraverseAst itext otext (Node (Lexeme itext)) where
             Fix <$> (Label <$> recurse label <*> recurse stmt)
         VLA ty name size ->
             Fix <$> (VLA <$> recurse ty <*> recurse name <*> recurse size)
-        VarDecl ty decl ->
-            Fix <$> (VarDecl <$> recurse ty <*> recurse decl)
-        Declarator spec value ->
-            Fix <$> (Declarator <$> recurse spec <*> recurse value)
-        DeclSpecVar name ->
-            Fix <$> (DeclSpecVar <$> recurse name)
-        DeclSpecArray spec size ->
-            Fix <$> (DeclSpecArray <$> recurse spec <*> recurse size)
+        VarDeclStmt decl ini ->
+            Fix <$> (VarDeclStmt <$> recurse decl <*> recurse ini)
+        VarDecl ty name arrs ->
+            Fix <$> (VarDecl <$> recurse ty <*> recurse name <*> recurse arrs)
+        DeclSpecArray size ->
+            Fix <$> (DeclSpecArray <$> recurse size)
         InitialiserList values ->
             Fix <$> (InitialiserList <$> recurse values)
         UnaryExpr op expr ->
@@ -229,8 +228,8 @@ instance TraverseAst itext otext (Node (Lexeme itext)) where
             Fix <$> (Struct <$> recurse name <*> recurse members)
         Union name members ->
             Fix <$> (Union <$> recurse name <*> recurse members)
-        MemberDecl ty decl width ->
-            Fix <$> (MemberDecl <$> recurse ty <*> recurse decl <*> recurse width)
+        MemberDecl decl bits ->
+            Fix <$> (MemberDecl <$> recurse decl <*> recurse bits)
         TyConst ty ->
             Fix <$> (TyConst <$> recurse ty)
         TyPointer ty ->
@@ -249,8 +248,6 @@ instance TraverseAst itext otext (Node (Lexeme itext)) where
             Fix <$> (FunctionDefn scope <$> recurse proto <*> recurse body)
         FunctionPrototype ty name params ->
             Fix <$> (FunctionPrototype <$> recurse ty <*> recurse name <*> recurse params)
-        FunctionParam ty decl ->
-            Fix <$> (FunctionParam <$> recurse ty <*> recurse decl)
         Ellipsis ->
             pure $ Fix Ellipsis
         ConstDecl ty name ->

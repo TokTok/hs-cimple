@@ -2,6 +2,7 @@
 {-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE Strict                #-}
 {-# LANGUAGE StrictData            #-}
 {-# LANGUAGE TypeOperators         #-}
 module Language.Cimple.Flatten (lexemes) where
