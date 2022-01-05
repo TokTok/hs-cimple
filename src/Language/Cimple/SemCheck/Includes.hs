@@ -5,8 +5,8 @@ module Language.Cimple.SemCheck.Includes
   , normaliseIncludes
   ) where
 
-import           Control.Monad.State.Lazy        (State)
-import qualified Control.Monad.State.Lazy        as State
+import           Control.Monad.State.Strict      (State)
+import qualified Control.Monad.State.Strict      as State
 import           Data.Fix                        (Fix (..))
 import           Data.Text                       (Text)
 import qualified Data.Text                       as Text

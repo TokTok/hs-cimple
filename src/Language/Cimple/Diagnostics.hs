@@ -4,10 +4,8 @@
 {-# LANGUAGE StrictData        #-}
 module Language.Cimple.Diagnostics
   ( Diagnostics
-  , Diagnostics' -- deprecated
   , HasDiagnostics (..)
   , warn
-  , warn' -- deprecated
   , sloc
   ) where
 
@@ -22,13 +20,11 @@ import           Language.Cimple.Lexer      (Lexeme (..), lexemeLine)
 
 type DiagnosticsT diags a = State diags a
 type Diagnostics a = DiagnosticsT [Text] a
-type Diagnostics' a = Diagnostics a
 
-warn, warn'
+warn
     :: (HasLocation at, HasDiagnostics diags)
     => FilePath -> at -> Text -> DiagnosticsT diags ()
 warn file l w = State.modify (addDiagnostic $ sloc file l <> ": " <> w)
-warn' = warn
 
 
 class HasDiagnostics a where
