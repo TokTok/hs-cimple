@@ -1,6 +1,6 @@
 {-# LANGUAGE LambdaCase    #-}
 {-# LANGUAGE TupleSections #-}
-module Language.Cimple.Pretty (ppTranslationUnit) where
+module Language.Cimple.Pretty (ppTranslationUnit, showNode) where
 
 import           Data.Fix                     (foldFix)
 import qualified Data.List                    as List
@@ -449,3 +449,6 @@ ppNode = foldFix go
 
 ppTranslationUnit :: [Node (Lexeme Text)] -> Doc
 ppTranslationUnit decls = ppSemiSep (map ppNode decls) <> linebreak
+
+showNode  :: Node (Lexeme Text) -> Text
+showNode = Text.pack . show . fst . ppNode

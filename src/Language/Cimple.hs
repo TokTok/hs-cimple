@@ -1,10 +1,12 @@
 module Language.Cimple
     ( module X
-    , AstActions
+    , DefaultActions
     , defaultActions
+    , removeSloc
     ) where
 
 import           Control.Monad.State.Strict  (State)
+import qualified Control.Monad.State.Strict  as State
 import           Data.Text                   (Text)
 
 import           Language.Cimple.Annot       as X
@@ -14,7 +16,12 @@ import           Language.Cimple.Parser      as X
 import           Language.Cimple.Tokens      as X
 import           Language.Cimple.TraverseAst as X
 
-type AstActions a = X.IdentityActions (State a) Text
+type DefaultActions a = X.IdentityActions (State a) Text
 
-defaultActions :: AstActions state
+defaultActions :: DefaultActions state
 defaultActions = X.identityActions
+
+removeSloc :: Node (Lexeme Text) -> Node (Lexeme Text)
+removeSloc =
+    flip State.evalState () . traverseAst defaultActions
+        { doLexeme = \_ (L _ c t) _ -> pure $ L (AlexPn 0 0 0) c t }
