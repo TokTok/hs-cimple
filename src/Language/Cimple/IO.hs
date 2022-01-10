@@ -8,6 +8,7 @@ module Language.Cimple.IO
     ) where
 
 import           Control.Monad                   ((>=>))
+import qualified Control.Monad.Parallel          as P
 import           Control.Monad.State.Strict      (State, evalState, get, put)
 import qualified Data.ByteString                 as BS
 import           Data.Map.Strict                 (Map)
@@ -65,7 +66,7 @@ parseFile source =
 
 
 parseFiles' :: [FilePath] -> IO (Either String [TranslationUnit Text])
-parseFiles' sources = sequenceA <$> traverse parseFile sources
+parseFiles' sources = sequenceA <$> P.mapM parseFile sources
 
 
 parseFiles :: [FilePath] -> IO (Either String [TranslationUnit Text])
