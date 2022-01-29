@@ -11,8 +11,7 @@ branches:
     protection:
       required_status_checks:
         contexts:
-          - "bazel-release"
+          - "bazel-opt"
           - "build / cabal"
           - "build / stack"
           - "check-release"
-          - "code-review/reviewable"
