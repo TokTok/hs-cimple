@@ -14,4 +14,4 @@ branches:
           - "bazel-opt"
           - "build / cabal"
           - "build / stack"
-          - "check-release"
+          - "checks / check-release"
