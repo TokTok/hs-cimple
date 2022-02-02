@@ -374,6 +374,10 @@ ppNode = foldFix go
         fst elseBranch <$>
         text "#endif"
 
+    CallbackDecl ty name -> semi $
+        ppLexeme ty <+> ppLexeme name
+    CallbackPtr ty name -> semi $
+        ppLexeme ty <+> char '*' <> ppLexeme name
     FunctionPrototype ty name params -> bare $
         ppFunctionPrototype ty name params
     FunctionDecl scope proto -> semi $
@@ -438,6 +442,8 @@ ppNode = foldFix go
     ForStmt i c n body            -> bare $ ppForStmt i c n body
     Default s                     -> cp s $ text "default:" <+> fst s
     Label l s                     -> bare $ ppLexeme l <> char ':' <$> fst s
+    NewExpr ty                    -> bare $ text "new(" <> ppLexeme ty <> char ')'
+    Delete e                      -> semi $ text "delete(" <> fst e <> char ')'
     Goto l                        -> semi $ text "goto " <> ppLexeme l
     Case e s                      -> cp s $ text "case " <> fst e <> char ':' <+> fst s
     WhileStmt c body              -> bare $ ppWhileStmt c body

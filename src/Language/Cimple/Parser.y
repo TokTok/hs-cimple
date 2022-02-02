@@ -34,6 +34,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     const			{ L _ KwConst			_ }
     continue			{ L _ KwContinue		_ }
     default			{ L _ KwDefault			_ }
+    delete			{ L _ KwDelete			_ }
     do				{ L _ KwDo			_ }
     else			{ L _ KwElse			_ }
     enum			{ L _ KwEnum			_ }
@@ -41,6 +42,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     for				{ L _ KwFor			_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
+    new				{ L _ KwNew			_ }
     return			{ L _ KwReturn			_ }
     sizeof			{ L _ KwSizeof			_ }
     static			{ L _ KwStatic			_ }
@@ -333,6 +335,7 @@ Stmt
 |	return ';'						{ Fix $ Return Nothing }
 |	return Expr ';'						{ Fix $ Return (Just $2) }
 |	switch '(' Expr ')' '{' SwitchCases '}'			{ Fix $ SwitchStmt $3 (reverse $6) }
+|	delete '(' Expr ')' ';'					{ Fix $ Delete $3 }
 |	Comment							{ $1 }
 
 IfStmt :: { StringNode }
@@ -526,6 +529,7 @@ ExprStmt
 FunctionCall :: { StringNode }
 FunctionCall
 :	Expr ArgList						{ Fix $ FunctionCall $1 $2 }
+|	new '(' ID_SUE_TYPE ')'					{ Fix $ NewExpr $3 }
 
 ArgList :: { [StringNode] }
 ArgList
@@ -591,6 +595,7 @@ MemberDecl :: { StringNode }
 MemberDecl
 :	VarDecl ';'						{ Fix $ MemberDecl $1 Nothing }
 |	VarDecl ':' LIT_INTEGER ';'				{ Fix $ MemberDecl $1 (Just $3) }
+|	CallbackPtr ';'						{ Fix $ MemberDecl $1 Nothing }
 |	PreprocIfdef(MemberDeclList)				{ $1 }
 |	Comment							{ $1 }
 
@@ -619,7 +624,6 @@ LeafType :: { StringNode }
 LeafType
 :	struct ID_SUE_TYPE					{ Fix $ TyStruct $2 }
 |	void							{ Fix $ TyStd $1 }
-|	ID_FUNC_TYPE						{ Fix $ TyFunc $1 }
 |	ID_STD_TYPE						{ Fix $ TyStd $1 }
 |	ID_SUE_TYPE						{ Fix $ TyUserDefined $1 }
 
@@ -632,6 +636,15 @@ FunctionDeclarator :: { Scope -> StringNode }
 FunctionDeclarator
 :	FunctionPrototype(ID_VAR) ';'				{ \s -> Fix $ FunctionDecl s $1 }
 |	FunctionPrototype(ID_VAR) CompoundStmt			{ \s -> Fix $ FunctionDefn s $1 $2 }
+|	CallbackDecl						{ \s -> Fix $ FunctionDecl s $1 }
+
+CallbackDecl :: { StringNode }
+CallbackDecl
+:	ID_FUNC_TYPE ID_VAR					{ Fix $ CallbackDecl $1 $2 }
+
+CallbackPtr :: { StringNode }
+CallbackPtr
+:	ID_FUNC_TYPE '*' ID_VAR					{ Fix $ CallbackPtr $1 $3 }
 
 FunctionPrototype(id)
 :	QualType id FunctionParamList				{ Fix $ FunctionPrototype $1 $2 $3 }
@@ -646,8 +659,13 @@ FunctionParamList
 
 FunctionParams :: { [StringNode] }
 FunctionParams
-:	VarDecl							{ [$1] }
-|	FunctionParams ',' VarDecl				{ $3 : $1 }
+:	FunctionParam						{ [$1] }
+|	FunctionParams ',' FunctionParam			{ $3 : $1 }
+
+FunctionParam :: { StringNode }
+FunctionParam
+:	VarDecl							{ $1 }
+|	CallbackDecl						{ $1 }
 
 ConstDecl :: { StringNode }
 ConstDecl

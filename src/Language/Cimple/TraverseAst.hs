@@ -172,6 +172,10 @@ instance TraverseAst itext otext (Node (Lexeme itext)) where
             Fix <$> (Default <$> recurse stmt)
         Label label stmt ->
             Fix <$> (Label <$> recurse label <*> recurse stmt)
+        NewExpr ty ->
+            Fix <$> (NewExpr <$> recurse ty)
+        Delete expr ->
+            Fix <$> (Delete <$> recurse expr)
         VLA ty name size ->
             Fix <$> (VLA <$> recurse ty <*> recurse name <*> recurse size)
         VarDeclStmt decl ini ->
@@ -248,6 +252,10 @@ instance TraverseAst itext otext (Node (Lexeme itext)) where
             Fix <$> (FunctionDefn scope <$> recurse proto <*> recurse body)
         FunctionPrototype ty name params ->
             Fix <$> (FunctionPrototype <$> recurse ty <*> recurse name <*> recurse params)
+        CallbackDecl ty name ->
+            Fix <$> (CallbackDecl <$> recurse ty <*> recurse name)
+        CallbackPtr ty name ->
+            Fix <$> (CallbackPtr <$> recurse ty <*> recurse name)
         Ellipsis ->
             pure $ Fix Ellipsis
         ConstDecl ty name ->

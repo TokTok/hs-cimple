@@ -62,6 +62,9 @@ data NodeF lexeme a
     | Case a a
     | Default a
     | Label lexeme a
+    -- new/delete
+    | NewExpr lexeme
+    | Delete a
     -- Variable declarations
     | VLA a lexeme a
     | VarDeclStmt a (Maybe a)
@@ -104,6 +107,8 @@ data NodeF lexeme a
     | FunctionDecl Scope a
     | FunctionDefn Scope a a
     | FunctionPrototype a lexeme [a]
+    | CallbackDecl lexeme lexeme
+    | CallbackPtr lexeme lexeme
     | Ellipsis
     -- Constants
     | ConstDecl a lexeme

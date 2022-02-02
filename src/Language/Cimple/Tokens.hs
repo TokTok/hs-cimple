@@ -18,6 +18,7 @@ data LexemeClass
     | KwConst
     | KwContinue
     | KwDefault
+    | KwDelete
     | KwDo
     | KwElse
     | KwEnum
@@ -25,6 +26,7 @@ data LexemeClass
     | KwFor
     | KwGoto
     | KwIf
+    | KwNew
     | KwReturn
     | KwSizeof
     | KwStatic
