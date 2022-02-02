@@ -106,6 +106,7 @@ data NodeF lexeme a
     | FunctionDecl Scope a
     | FunctionDefn Scope a a
     | FunctionPrototype a lexeme [a]
+    | CallbackDecl lexeme lexeme
     | Ellipsis
     -- Constants
     | ConstDecl a lexeme

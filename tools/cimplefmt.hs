@@ -22,7 +22,7 @@ reparseText code =
             BS.putStr . Text.encodeUtf8 $ code
             fail $ "re-parsing our own pretty-printed"
                 <> " output failed: " <> err
-        Right ok' -> BS.putStr . Text.encodeUtf8 . format $ ok'
+        Right _ -> return ()
 
 
 processFile :: [String] -> FilePath -> IO ()

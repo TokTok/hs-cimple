@@ -394,6 +394,7 @@ VarDeclStmt
 VarDecl :: { StringNode }
 VarDecl
 :	QualType ID_VAR DeclSpecArrays				{ Fix $ VarDecl $1 $2 $3 }
+|	ID_FUNC_TYPE '*' ID_VAR DeclSpecArrays			{ Fix $ VarDecl (Fix $ TyPointer $ Fix $ TyFunc $1) $3 $4 }
 
 DeclSpecArrays :: { [StringNode] }
 DeclSpecArrays
@@ -621,7 +622,6 @@ LeafType :: { StringNode }
 LeafType
 :	struct ID_SUE_TYPE					{ Fix $ TyStruct $2 }
 |	void							{ Fix $ TyStd $1 }
-|	ID_FUNC_TYPE						{ Fix $ TyFunc $1 }
 |	ID_STD_TYPE						{ Fix $ TyStd $1 }
 |	ID_SUE_TYPE						{ Fix $ TyUserDefined $1 }
 
@@ -634,10 +634,15 @@ FunctionDeclarator :: { Scope -> StringNode }
 FunctionDeclarator
 :	FunctionPrototype(ID_VAR) ';'				{ \s -> Fix $ FunctionDecl s $1 }
 |	FunctionPrototype(ID_VAR) CompoundStmt			{ \s -> Fix $ FunctionDefn s $1 $2 }
+|	CallbackDecl ';'					{ \s -> Fix $ FunctionDecl s $1 }
+
+CallbackDecl :: { StringNode }
+CallbackDecl
+:	ID_FUNC_TYPE ID_VAR					{ Fix $ CallbackDecl $1 $2 }
 
 FunctionPrototype(id)
 :	QualType id FunctionParamList				{ Fix $ FunctionPrototype $1 $2 $3 }
-|	QualType id FunctionParamList const			{ Fix $ FunctionPrototype $1 $2 $3 }
+|	ID_FUNC_TYPE '*' id FunctionParamList			{ Fix $ FunctionPrototype (Fix $ TyPointer $ Fix $ TyFunc $1) $3 $4 }
 
 FunctionParamList :: { [StringNode] }
 FunctionParamList
@@ -648,8 +653,12 @@ FunctionParamList
 
 FunctionParams :: { [StringNode] }
 FunctionParams
-:	VarDecl							{ [$1] }
-|	FunctionParams ',' VarDecl				{ $3 : $1 }
+:	FunctionParam						{ [$1] }
+|	FunctionParams ',' FunctionParam			{ $3 : $1 }
+
+FunctionParam :: { StringNode }
+FunctionParam
+:	VarDecl							{ $1 }
 
 ConstDecl :: { StringNode }
 ConstDecl

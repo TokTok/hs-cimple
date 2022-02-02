@@ -83,12 +83,10 @@ instance TraverseAst text (Node (Lexeme text)) where
         ->    Node (Lexeme text)
         -> f ()
     traverseFileAst actions@AstActions{..} currentFile = doNode currentFile <*> \node -> case unFix node of
-        PreprocInclude path -> do
-            _ <- recurse path
-            pure ()
-        PreprocDefine name -> do
-            _ <- recurse name
-            pure ()
+        PreprocInclude path ->
+            recurse path
+        PreprocDefine name ->
+            recurse name
         PreprocDefineConst name value -> do
             _ <- recurse name
             _ <- recurse value
@@ -113,34 +111,28 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse thenDecls
             _ <- recurse elseBranch
             pure ()
-        PreprocElse decls -> do
-            _ <- recurse decls
-            pure ()
+        PreprocElse decls ->
+            recurse decls
         PreprocElif cond decls elseBranch -> do
             _ <- recurse cond
             _ <- recurse decls
             _ <- recurse elseBranch
             pure ()
-        PreprocUndef name -> do
-            _ <- recurse name
-            pure ()
-        PreprocDefined name -> do
-            _ <- recurse name
-            pure ()
+        PreprocUndef name ->
+            recurse name
+        PreprocDefined name ->
+            recurse name
         PreprocScopedDefine define stmts undef -> do
             _ <- recurse define
             _ <- recurse stmts
             _ <- recurse undef
             pure ()
-        MacroBodyStmt stmts -> do
-            _ <- recurse stmts
-            pure ()
-        MacroBodyFunCall expr -> do
-            _ <- recurse expr
-            pure ()
-        MacroParam name -> do
-            _ <- recurse name
-            pure ()
+        MacroBodyStmt stmts ->
+            recurse stmts
+        MacroBodyFunCall expr ->
+            recurse expr
+        MacroParam name ->
+            recurse name
         StaticAssert cond msg -> do
             _ <- recurse cond
             _ <- recurse msg
@@ -166,22 +158,18 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse comment
             _ <- recurse subject
             pure ()
-        ExternC decls -> do
-            _ <- recurse decls
-            pure ()
-        CompoundStmt stmts -> do
-            _ <- recurse stmts
-            pure ()
+        ExternC decls ->
+            recurse decls
+        CompoundStmt stmts ->
+            recurse stmts
         Break ->
             pure ()
-        Goto label -> do
-            _ <- recurse label
-            pure ()
+        Goto label ->
+            recurse label
         Continue ->
             pure ()
-        Return value -> do
-            _ <- recurse value
-            pure ()
+        Return value ->
+            recurse value
         SwitchStmt value cases -> do
             _ <- recurse value
             _ <- recurse cases
@@ -209,9 +197,8 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse value
             _ <- recurse stmt
             pure ()
-        Default stmt -> do
-            _ <- recurse stmt
-            pure ()
+        Default stmt ->
+            recurse stmt
         Label label stmt -> do
             _ <- recurse label
             _ <- recurse stmt
@@ -233,15 +220,12 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse name
             _ <- recurse arrs
             pure ()
-        DeclSpecArray size -> do
-            _ <- recurse size
-            pure ()
-        InitialiserList values -> do
-            _ <- recurse values
-            pure ()
-        UnaryExpr _op expr -> do
-            _ <- recurse expr
-            pure ()
+        DeclSpecArray size ->
+            recurse size
+        InitialiserList values ->
+            recurse values
+        UnaryExpr _op expr ->
+            recurse expr
         BinaryExpr lhs _op rhs -> do
             _ <- recurse lhs
             _ <- recurse rhs
@@ -255,9 +239,8 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse lhs
             _ <- recurse rhs
             pure ()
-        ParenExpr expr -> do
-            _ <- recurse expr
-            pure ()
+        ParenExpr expr ->
+            recurse expr
         CastExpr ty expr -> do
             _ <- recurse ty
             _ <- recurse expr
@@ -266,18 +249,14 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse ty
             _ <- recurse expr
             pure ()
-        SizeofExpr expr -> do
-            _ <- recurse expr
-            pure ()
-        SizeofType ty -> do
-            _ <- recurse ty
-            pure ()
-        LiteralExpr _ty value -> do
-            _ <- recurse value
-            pure ()
-        VarExpr name -> do
-            _ <- recurse name
-            pure ()
+        SizeofExpr expr ->
+            recurse expr
+        SizeofType ty ->
+            recurse ty
+        LiteralExpr _ty value ->
+            recurse value
+        VarExpr name ->
+            recurse name
         MemberAccess name field -> do
             _ <- recurse name
             _ <- recurse field
@@ -318,9 +297,8 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse ty
             _ <- recurse name
             pure ()
-        TypedefFunction ty -> do
-            _ <- recurse ty
-            pure ()
+        TypedefFunction ty ->
+            recurse ty
         Struct name members -> do
             _ <- recurse name
             _ <- recurse members
@@ -333,27 +311,20 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse decl
             _ <- recurse bits
             pure ()
-        TyConst ty -> do
-            _ <- recurse ty
-            pure ()
-        TyPointer ty -> do
-            _ <- recurse ty
-            pure ()
-        TyStruct name -> do
-            _ <- recurse name
-            pure ()
-        TyFunc name -> do
-            _ <- recurse name
-            pure ()
-        TyStd name -> do
-            _ <- recurse name
-            pure ()
-        TyUserDefined name -> do
-            _ <- recurse name
-            pure ()
-        FunctionDecl _scope proto -> do
-            _ <- recurse proto
-            pure ()
+        TyConst ty ->
+            recurse ty
+        TyPointer ty ->
+            recurse ty
+        TyStruct name ->
+            recurse name
+        TyFunc name ->
+            recurse name
+        TyStd name ->
+            recurse name
+        TyUserDefined name ->
+            recurse name
+        FunctionDecl _scope proto ->
+            recurse proto
         FunctionDefn _scope proto body -> do
             _ <- recurse proto
             _ <- recurse body
@@ -362,6 +333,10 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse ty
             _ <- recurse name
             _ <- recurse params
+            pure ()
+        CallbackDecl ty name -> do
+            _ <- recurse ty
+            _ <- recurse name
             pure ()
         Ellipsis ->
             pure ()

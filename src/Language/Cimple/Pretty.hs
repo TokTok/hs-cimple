@@ -320,6 +320,8 @@ ppNode = foldFix go
         ppToplevel decls <>
         elseBranch
 
+    CallbackDecl ty name ->
+        ppLexeme ty <+> ppLexeme name
     FunctionPrototype ty name params ->
         ppFunctionPrototype ty name params
     FunctionDecl scope proto ->
