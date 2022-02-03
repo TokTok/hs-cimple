@@ -18,8 +18,8 @@ import qualified Data.Text                       as Text
 import qualified Data.Text.Encoding              as Text
 import           Language.Cimple.Ast             (Node)
 import           Language.Cimple.Lexer           (Lexeme, runAlex)
-import           Language.Cimple.MapAst          (TextActions, textActions,
-                                                  mapAst)
+import           Language.Cimple.MapAst          (TextActions, mapAst,
+                                                  textActions)
 import qualified Language.Cimple.Parser          as Parser
 import           Language.Cimple.Program         (Program)
 import qualified Language.Cimple.Program         as Program

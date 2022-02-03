@@ -5,16 +5,16 @@ module Language.Cimple
     , removeSloc
     ) where
 
-import           Control.Monad.State.Strict  (State)
-import qualified Control.Monad.State.Strict  as State
-import           Data.Text                   (Text)
+import           Control.Monad.State.Strict (State)
+import qualified Control.Monad.State.Strict as State
+import           Data.Text                  (Text)
 
-import           Language.Cimple.Annot       as X
-import           Language.Cimple.Ast         as X
-import           Language.Cimple.Lexer       as X
-import           Language.Cimple.MapAst      as X
-import           Language.Cimple.Parser      as X
-import           Language.Cimple.Tokens      as X
+import           Language.Cimple.Annot      as X
+import           Language.Cimple.Ast        as X
+import           Language.Cimple.Lexer      as X
+import           Language.Cimple.MapAst     as X
+import           Language.Cimple.Parser     as X
+import           Language.Cimple.Tokens     as X
 
 type DefaultActions a = X.IdentityActions (State a) Text
 

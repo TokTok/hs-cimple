@@ -38,13 +38,13 @@ traverseAst
 traverseAst = flip traverseFileAst "<stdin>"
 
 data AstActions f text = AstActions
-    { doFiles     :: [(FilePath, [Node (Lexeme text)])] -> f () -> f ()
-    , doFile      ::  (FilePath, [Node (Lexeme text)])  -> f () -> f ()
-    , doNodes     :: FilePath -> [Node (Lexeme text)]   -> f () -> f ()
-    , doNode      :: FilePath ->  Node (Lexeme text)    -> f () -> f ()
-    , doLexemes   :: FilePath ->       [Lexeme text]    -> f () -> f ()
-    , doLexeme    :: FilePath ->        Lexeme text     -> f () -> f ()
-    , doText      :: FilePath ->               text             -> f ()
+    { doFiles   :: [(FilePath, [Node (Lexeme text)])] -> f () -> f ()
+    , doFile    ::  (FilePath, [Node (Lexeme text)])  -> f () -> f ()
+    , doNodes   :: FilePath -> [Node (Lexeme text)]   -> f () -> f ()
+    , doNode    :: FilePath ->  Node (Lexeme text)    -> f () -> f ()
+    , doLexemes :: FilePath ->       [Lexeme text]    -> f () -> f ()
+    , doLexeme  :: FilePath ->        Lexeme text     -> f () -> f ()
+    , doText    :: FilePath ->               text             -> f ()
     }
 
 instance TraverseAst text        a
