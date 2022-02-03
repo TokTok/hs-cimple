@@ -12,10 +12,10 @@ import           Data.Text                       (Text)
 import qualified Data.Text                       as Text
 import           Language.Cimple.Ast             (NodeF (..))
 import           Language.Cimple.Lexer           (Lexeme (..))
+import           Language.Cimple.MapAst          (IdentityActions, doNode,
+                                                  identityActions, mapAst)
 import           Language.Cimple.Tokens          (LexemeClass (..))
 import           Language.Cimple.TranslationUnit (TranslationUnit)
-import           Language.Cimple.TraverseAst     (IdentityActions, doNode,
-                                                  identityActions, traverseAst)
 import           System.FilePath                 (joinPath, splitPath,
                                                   takeDirectory)
 
@@ -59,4 +59,4 @@ normaliseIncludes :: TranslationUnit Text -> (TranslationUnit Text, [FilePath])
 normaliseIncludes (file, ast) =
     ((file, ast'), includes)
   where
-    (ast', includes) = State.runState (traverseAst (normaliseIncludes' (takeDirectory file)) ast) []
+    (ast', includes) = State.runState (mapAst (normaliseIncludes' (takeDirectory file)) ast) []
