@@ -37,6 +37,7 @@ library
     , Language.Cimple.Flatten
     , Language.Cimple.Graph
     , Language.Cimple.Lexer
+    , Language.Cimple.MapAst
     , Language.Cimple.Parser
     , Language.Cimple.SemCheck.Includes
     , Language.Cimple.Tokens

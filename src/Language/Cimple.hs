@@ -12,9 +12,9 @@ import           Data.Text                   (Text)
 import           Language.Cimple.Annot       as X
 import           Language.Cimple.Ast         as X
 import           Language.Cimple.Lexer       as X
+import           Language.Cimple.MapAst      as X
 import           Language.Cimple.Parser      as X
 import           Language.Cimple.Tokens      as X
-import           Language.Cimple.TraverseAst as X
 
 type DefaultActions a = X.IdentityActions (State a) Text
 
@@ -23,5 +23,5 @@ defaultActions = X.identityActions
 
 removeSloc :: Node (Lexeme Text) -> Node (Lexeme Text)
 removeSloc =
-    flip State.evalState () . traverseAst defaultActions
+    flip State.evalState () . mapAst defaultActions
         { doLexeme = \_ (L _ c t) _ -> pure $ L (AlexPn 0 0 0) c t }
