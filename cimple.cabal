@@ -57,6 +57,7 @@ library
     , monad-parallel
     , mtl
     , recursion-schemes
+    , split
     , text
     , transformers-compat
 

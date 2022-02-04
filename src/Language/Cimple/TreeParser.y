@@ -121,15 +121,10 @@ import           Language.Cimple.Lexer (Lexeme)
 
 TranslationUnit :: { [TextNode] }
 TranslationUnit
-:	licenseDecl FileComment Header				{ [$1, $2, $3] }
-|	licenseDecl FileComment Source				{ $1 : $2 : $3 }
-|	licenseDecl             Header				{ [$1, $2] }
-|	licenseDecl             Source				{ $1 : $2 }
-
-FileComment :: { TextNode }
-FileComment
-:	comment							{ $1 }
-|	docComment						{ $1 }
+:	licenseDecl docComment Header				{ [$1, Fix $ Commented $2 $3] }
+|	licenseDecl docComment Source				{ $1 : mapHead (Fix . Commented $2)$3 }
+|	licenseDecl            Header				{ [$1, $2] }
+|	licenseDecl            Source				{ $1 : $2 }
 
 Header :: { TextNode }
 Header
@@ -137,11 +132,11 @@ Header
 
 HeaderBody :: { [TextNode] }
 HeaderBody
-:	preprocDefine Includes Decls				{ $1 : reverse $2 ++ reverse $3 }
+:	preprocDefine Includes Decls				{ $1 : reverse $2 ++ $3 }
 
 Source :: { [TextNode] }
 Source
-:	Features preprocInclude Includes Decls			{ $1 ++ [$2] ++ reverse $3 ++ reverse $4 }
+:	Features preprocInclude Includes Decls			{ $1 ++ [$2] ++ reverse $3 ++ $4 }
 
 Features :: { [TextNode] }
 Features
@@ -168,8 +163,12 @@ Include
 
 Decls :: { [TextNode] }
 Decls
+:	DeclList						{ reverse $1 }
+
+DeclList :: { [TextNode] }
+DeclList
 :								{ [] }
-|	Decls Decl						{ $2 : $1 }
+|	DeclList Decl						{ $2 : $1 }
 
 Decl :: { TextNode }
 Decl
@@ -207,6 +206,11 @@ newtype TreeParser a = TreeParser { toEither :: Either String a }
 
 instance MonadFail TreeParser where
     fail = TreeParser . Left
+
+
+mapHead :: (a -> a) -> [a] -> [a]
+mapHead _ [] = []
+mapHead f (x:xs) = f x : xs
 
 
 isDefine :: [TextNode] -> Bool

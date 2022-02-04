@@ -1,9 +1,11 @@
-{-# LANGUAGE LambdaCase    #-}
-{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE LambdaCase        #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TupleSections     #-}
 module Language.Cimple.Pretty (ppTranslationUnit, showNode) where
 
 import           Data.Fix                     (foldFix)
 import qualified Data.List                    as List
+import qualified Data.List.Split              as List
 import           Data.Text                    (Text)
 import qualified Data.Text                    as Text
 import           Language.Cimple              (AssignOp (..), BinaryOp (..),
@@ -12,7 +14,6 @@ import           Language.Cimple              (AssignOp (..), BinaryOp (..),
                                                NodeF (..), Scope (..),
                                                UnaryOp (..), lexemeText)
 import           Prelude                      hiding ((<$>))
-import           Text.Groom                   (groom)
 import           Text.PrettyPrint.ANSI.Leijen hiding (semi)
 
 -- | Whether a node needs a semicolon at the end when it's a statement or
@@ -40,20 +41,18 @@ ppText = text . Text.unpack
 ppLexeme :: Lexeme Text -> Doc
 ppLexeme = ppText . lexemeText
 
-ppSep :: Doc -> [ADoc] -> Doc
-ppSep s = foldr (<>) empty . List.intersperse s . map fst
+ppSep :: Doc -> [ADoc] -> [Doc]
+ppSep s = List.intersperse s . map fst
 
-ppCommaSep :: [ADoc] -> Doc
-ppCommaSep = ppSep (text ", ")
+commaSep :: [ADoc] -> [Doc]
+commaSep = punctuate (char ',') . map fst
 
-ppLineSep :: [ADoc] -> Doc
-ppLineSep = ppSep linebreak
+lineSep :: [ADoc] -> [Doc]
+lineSep = ppSep linebreak
 
-ppSemiSep :: [ADoc] -> Doc
-ppSemiSep = ppEnd (char ';')
+semiSep :: [ADoc] -> [Doc]
+semiSep = map $ addEnd $ char ';'
   where
-    ppEnd s = foldr (<>) empty . List.intersperse linebreak . map (addEnd s)
-
     addEnd s (d, SemiYes) = d <> s
     addEnd _ (d, SemiNo)  = d
 
@@ -114,52 +113,24 @@ ppCommentStyle = \case
     Regular -> text "/*"
 
 ppCommentBody :: [Lexeme Text] -> Doc
-ppCommentBody = go
+ppCommentBody = vsep . map (hsep . map ppWord) . groupLines
   where
-    go (L _ LitInteger t1 : L _ PctMinus m : L _ LitInteger t2 : xs) =
-        space <> ppText t1 <> ppText m <> ppText t2 <> go xs
-    go (L _ PctMinus m : L _ LitInteger t : xs) =
-        space <> ppText m <> ppText t <> go xs
+    groupLines = List.splitWhen $ \case
+        L _ PpNewline _ -> True
+        _               -> False
 
-    go (l : L _ PctPeriod t : xs) = go [l] <> ppText t <> go xs
-    go (l : L _ PctComma  t : xs) = go [l] <> ppText t <> go xs
-    go (x                   : xs) = ppWord x <> go xs
-    go []                         = empty
+    ppWord (L _ CmtIndent _) = char '*'
+    ppWord (L _ _         t) = ppText t
 
-    ppWord (L _ CmtSpdxLicense   t) = space <> ppText t
-    ppWord (L _ CmtSpdxCopyright t) = space <> ppText t
-    ppWord (L _ CmtWord          t) = space <> ppText t
-    ppWord (L _ CmtCode          t) = space <> ppText t
-    ppWord (L _ CmtRef           t) = space <> ppText t
-    ppWord (L _ CmtIndent        _) = char '*'
-    ppWord (L _ PpNewline        _) = linebreak
-    ppWord (L _ LitInteger       t) = space <> ppText t
-    ppWord (L _ LitString        t) = space <> ppText t
-    ppWord (L _ PctEMark         t) = space <> ppText t
-    ppWord (L _ PctPlus          t) = space <> ppText t
-    ppWord (L _ PctEq            t) = space <> ppText t
-    ppWord (L _ PctMinus         t) = space <> ppText t
-    ppWord (L _ PctPeriod        t) = space <> ppText t
-    ppWord (L _ PctLParen        t) = space <> ppText t
-    ppWord (L _ PctRParen        t) = space <> ppText t
-    ppWord (L _ PctSemicolon     t) = space <> ppText t
-    ppWord (L _ PctColon         t) = space <> ppText t
-    ppWord (L _ PctQMark         t) = space <> ppText t
-    ppWord (L _ PctSlash         t) = space <> ppText t
-    ppWord (L _ PctGreater       t) = space <> ppText t
-    ppWord (L _ PctLess          t) = space <> ppText t
-    ppWord (L _ PctComma         t) = space <> ppText t
-    ppWord x                        = error $ "ppWord: " <> groom x
-
-ppComment :: CommentStyle -> [Lexeme Text] -> Doc
-ppComment style cs =
-    nest 1 (ppCommentStyle style <> ppCommentBody cs) <+> text "*/"
+ppComment :: CommentStyle -> [Lexeme Text] -> Lexeme Text -> Doc
+ppComment style cs (L l c _) =
+    nest 1 (ppCommentStyle style <+> ppCommentBody (cs ++ [L l c "*/"]))
 
 ppInitialiserList :: [ADoc] -> Doc
-ppInitialiserList l = char '{' <+> ppCommaSep l <+> char '}'
+ppInitialiserList l = char '{' <+> hsep (commaSep l) <+> char '}'
 
 ppFunctionParamList :: [ADoc] -> Doc
-ppFunctionParamList xs = char '(' <> ppCommaSep xs <> char ')'
+ppFunctionParamList xs = char '(' <> hsep (commaSep xs) <> char ')'
 
 ppFunctionPrototype
     :: ADoc
@@ -171,10 +142,10 @@ ppFunctionPrototype ty name params =
 
 ppFunctionCall :: ADoc -> [ADoc] -> Doc
 ppFunctionCall callee args =
-    fst callee <> char '(' <> ppCommaSep args <> char ')'
+    fst callee <> char '(' <> hsep (commaSep args) <> char ')'
 
 ppMacroParamList :: [ADoc] -> Doc
-ppMacroParamList xs = char '(' <> ppCommaSep xs <> char ')'
+ppMacroParamList xs = char '(' <> hsep (commaSep xs) <> char ')'
 
 ppIfStmt
     :: ADoc
@@ -229,7 +200,7 @@ ppSwitchStmt c body =
         text "switch ("
         <> fst c
         <> text ") {" <$>
-        ppSemiSep body
+        vcat (semiSep body)
     ) <$> char '}'
 
 ppVLA :: ADoc -> Lexeme Text -> ADoc -> Doc
@@ -246,7 +217,7 @@ ppCompoundStmt :: [ADoc] -> Doc
 ppCompoundStmt body =
     nest 2 (
         char '{' <$>
-        ppSemiSep body
+        ppToplevel body
     ) <$> char '}'
 
 ppTernaryExpr
@@ -260,7 +231,7 @@ ppTernaryExpr c t e =
 ppLicenseDecl :: Lexeme Text -> [ADoc] -> Doc
 ppLicenseDecl l cs =
     ppCommentStyle Regular <+> text "SPDX-License-Identifier: " <> ppLexeme l <$>
-    ppLineSep cs <$>
+    hcat (lineSep cs) <$>
     text " */"
 
 ppNode :: Node (Lexeme Text) -> ADoc
@@ -273,16 +244,14 @@ ppNode = foldFix go
 
     LicenseDecl l cs -> bare $ ppLicenseDecl l cs
     CopyrightDecl from (Just to) owner -> bare $
-        text " * Copyright © " <>
-        ppLexeme from <> char '-' <> ppLexeme to <>
+        text " * Copyright © " <> ppLexeme from <> char '-' <> ppLexeme to <+>
         ppCommentBody owner
     CopyrightDecl from Nothing owner -> bare $
-        text " * Copyright © " <>
-        ppLexeme from <>
+        text " * Copyright © " <> ppLexeme from <+>
         ppCommentBody owner
 
-    Comment style _ cs _ -> bare $
-        ppComment style cs
+    Comment style _ cs e -> bare $
+        ppComment style cs e
     CommentBlock cs -> bare $
         ppLexeme cs
     Commented (c, _) (d, s) -> (, s) $
@@ -308,7 +277,7 @@ ppNode = foldFix go
     CommentExpr   c e -> semi $ fst c <+> fst e
     Ellipsis          -> semi $ text "..."
 
-    VarDecl ty name arrs      -> bare $ fst ty <+> ppLexeme name <> ppSep empty arrs
+    VarDecl ty name arrs      -> bare $ fst ty <+> ppLexeme name <> hcat (ppSep empty arrs)
     DeclSpecArray Nothing     -> bare $ text "[]"
     DeclSpecArray (Just dim)  -> bare $ char '[' <> fst dim <> char ']'
 
@@ -323,7 +292,9 @@ ppNode = foldFix go
         text "#ifndef __cplusplus" <$>
         text "extern \"C\" {" <$>
         text "#endif" <$>
-        ppSemiSep decls <$>
+        line <>
+        ppToplevel decls <$>
+        line <>
         text "#ifndef __cplusplus" <$>
         text "}" <$>
         text "#endif"
@@ -335,7 +306,7 @@ ppNode = foldFix go
         text "do" <+> fst body <+> text "while (0)"
 
     PreprocScopedDefine def stmts undef -> bare $
-        fst def <$> ppSemiSep stmts <$> fst undef
+        fst def <$> ppToplevel stmts <$> fst undef
 
     PreprocInclude hdr -> bare $
         text "#include" <+> ppLexeme hdr
@@ -350,27 +321,27 @@ ppNode = foldFix go
 
     PreprocIf cond decls elseBranch -> bare $
         text "#if" <+> fst cond <$>
-        ppSemiSep decls <>
+        ppToplevel decls <>
         fst elseBranch <$>
         text "#endif"
     PreprocIfdef name decls elseBranch -> bare $
         text "#ifdef" <+> ppLexeme name <$>
-        ppSemiSep decls <>
+        ppToplevel decls <>
         fst elseBranch <$>
         text "#endif"
     PreprocIfndef name decls elseBranch -> bare $
         text "#ifndef" <+> ppLexeme name <$>
-        ppSemiSep decls <>
+        ppToplevel decls <>
         fst elseBranch <$>
         text "#endif"
     PreprocElse [] -> bare empty
     PreprocElse decls -> bare $
         linebreak <>
         text "#else" <$>
-        ppSemiSep decls
+        ppToplevel decls
     PreprocElif cond decls elseBranch -> bare $
         text "#elif" <+> fst cond <$>
-        ppSemiSep decls <>
+        ppToplevel decls <>
         fst elseBranch <$>
         text "#endif"
 
@@ -389,12 +360,12 @@ ppNode = foldFix go
     Struct name members -> semi $
         nest 2 (
             text "struct" <+> ppLexeme name <+> char '{' <$>
-            ppSemiSep members
+            ppToplevel members
         ) <$> char '}'
     Union name members -> semi $
         nest 2 (
             text "union" <+> ppLexeme name <+> char '{' <$>
-            ppSemiSep members
+            ppToplevel members
         ) <$> char '}'
     Typedef ty tyname -> semi $
         text "typedef" <+> fst ty <+> ppLexeme tyname
@@ -414,17 +385,17 @@ ppNode = foldFix go
     EnumConsts Nothing enums -> semi $
         nest 2 (
             text "enum" <+> char '{' <$>
-            ppLineSep enums
+            hcat (lineSep enums)
         ) <$> char '}'
     EnumConsts (Just name) enums -> semi $
         nest 2 (
             text "enum" <+> ppLexeme name <+> char '{' <$>
-            ppLineSep enums
+            hcat (lineSep enums)
         ) <$> char '}'
     EnumDecl name enums ty -> semi $
         nest 2 (
             text "typedef enum" <+> ppLexeme name <+> char '{' <$>
-            ppLineSep enums
+            hcat (lineSep enums)
         ) <$> text "} " <> ppLexeme ty
 
     -- Statements
@@ -437,7 +408,7 @@ ppNode = foldFix go
     IfStmt cond t e               -> bare $ ppIfStmt cond t e
     ForStmt i c n body            -> bare $ ppForStmt i c n body
     Default s                     -> cp s $ text "default:" <+> fst s
-    Label l s                     -> bare $ ppLexeme l <> char ':' <$> fst s
+    Label l s                     -> cp s $ ppLexeme l <> char ':' <$> fst s
     Goto l                        -> semi $ text "goto " <> ppLexeme l
     Case e s                      -> cp s $ text "case " <> fst e <> char ':' <+> fst s
     WhileStmt c body              -> bare $ ppWhileStmt c body
@@ -447,8 +418,11 @@ ppNode = foldFix go
     VLA ty n sz                   -> semi $ ppVLA ty n sz
 
 
+ppToplevel :: [ADoc] -> Doc
+ppToplevel = vcat . punctuate line . semiSep
+
 ppTranslationUnit :: [Node (Lexeme Text)] -> Doc
-ppTranslationUnit decls = ppSemiSep (map ppNode decls) <> linebreak
+ppTranslationUnit decls = (ppToplevel . map ppNode $ decls) <> linebreak
 
 showNode  :: Node (Lexeme Text) -> Text
 showNode = Text.pack . show . fst . ppNode
