@@ -62,6 +62,7 @@ data NodeF lexeme a
     | Case a a
     | Default a
     | Label lexeme a
+    | ExprStmt a
     -- Variable declarations
     | VLA a lexeme a
     | VarDeclStmt a (Maybe a)
@@ -89,6 +90,7 @@ data NodeF lexeme a
     | EnumConsts (Maybe lexeme) [a]
     | EnumDecl lexeme [a] lexeme
     | Enumerator lexeme (Maybe a)
+    | AggregateDecl a
     | Typedef a lexeme
     | TypedefFunction a
     | Struct lexeme [a]

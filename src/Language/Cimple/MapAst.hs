@@ -172,6 +172,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (Default <$> recurse stmt)
         Label label stmt ->
             Fix <$> (Label <$> recurse label <*> recurse stmt)
+        ExprStmt expr ->
+            Fix <$> (ExprStmt <$> recurse expr)
         VLA ty name size ->
             Fix <$> (VLA <$> recurse ty <*> recurse name <*> recurse size)
         VarDeclStmt decl ini ->
@@ -220,6 +222,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (EnumDecl <$> recurse name <*> recurse members <*> recurse tyName)
         Enumerator name value ->
             Fix <$> (Enumerator <$> recurse name <*> recurse value)
+        AggregateDecl struct ->
+            Fix <$> (AggregateDecl <$> recurse struct)
         Typedef ty name ->
             Fix <$> (Typedef <$> recurse ty <*> recurse name)
         TypedefFunction ty ->

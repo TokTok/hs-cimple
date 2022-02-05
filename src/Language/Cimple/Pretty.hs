@@ -16,45 +16,20 @@ import           Language.Cimple              (AssignOp (..), BinaryOp (..),
 import           Prelude                      hiding ((<$>))
 import           Text.PrettyPrint.ANSI.Leijen hiding (semi)
 
--- | Whether a node needs a semicolon at the end when it's a statement or
--- declaration.
-data NeedsSemi
-    = SemiNo
-    | SemiYes
-
--- | Annotated Doc which is passed upwards through the fold. 'fst' is the
--- accumulated pretty-printed code. 'snd' states whether the current statement
--- should end in a semicolon ';'. E.g. function definitions don't, while
--- function declarations do.
-type ADoc = (Doc, NeedsSemi)
-bare, semi :: Doc -> ADoc
-bare = (, SemiNo)
-semi = (, SemiYes)
-
--- | Copy the 'NeedsSemi' from another 'ADoc' to a newly created doc.
-cp :: ADoc -> Doc -> ADoc
-cp (_, s) d = (d, s)
-
 ppText :: Text -> Doc
 ppText = text . Text.unpack
 
 ppLexeme :: Lexeme Text -> Doc
 ppLexeme = ppText . lexemeText
 
-ppSep :: Doc -> [ADoc] -> [Doc]
-ppSep s = List.intersperse s . map fst
+ppSep :: Doc -> [Doc] -> [Doc]
+ppSep s = List.intersperse s
 
-commaSep :: [ADoc] -> [Doc]
-commaSep = punctuate (char ',') . map fst
+commaSep :: [Doc] -> [Doc]
+commaSep = punctuate (char ',')
 
-lineSep :: [ADoc] -> [Doc]
+lineSep :: [Doc] -> [Doc]
 lineSep = ppSep linebreak
-
-semiSep :: [ADoc] -> [Doc]
-semiSep = map $ addEnd $ char ';'
-  where
-    addEnd s (d, SemiYes) = d <> s
-    addEnd _ (d, SemiNo)  = d
 
 ppScope :: Scope -> Doc
 ppScope = \case
@@ -126,94 +101,92 @@ ppComment :: CommentStyle -> [Lexeme Text] -> Lexeme Text -> Doc
 ppComment style cs (L l c _) =
     nest 1 (ppCommentStyle style <+> ppCommentBody (cs ++ [L l c "*/"]))
 
-ppInitialiserList :: [ADoc] -> Doc
+ppInitialiserList :: [Doc] -> Doc
 ppInitialiserList l = char '{' <+> hsep (commaSep l) <+> char '}'
 
-ppFunctionParamList :: [ADoc] -> Doc
+ppFunctionParamList :: [Doc] -> Doc
 ppFunctionParamList xs = char '(' <> hsep (commaSep xs) <> char ')'
 
 ppFunctionPrototype
-    :: ADoc
+    :: Doc
     -> Lexeme Text
-    -> [ADoc]
+    -> [Doc]
     -> Doc
 ppFunctionPrototype ty name params =
-    fst ty <+> ppLexeme name <> ppFunctionParamList params
+    ty <+> ppLexeme name <> ppFunctionParamList params
 
-ppFunctionCall :: ADoc -> [ADoc] -> Doc
+ppFunctionCall :: Doc -> [Doc] -> Doc
 ppFunctionCall callee args =
-    fst callee <> char '(' <> hsep (commaSep args) <> char ')'
+    callee <> char '(' <> hsep (commaSep args) <> char ')'
 
-ppMacroParamList :: [ADoc] -> Doc
+ppMacroParamList :: [Doc] -> Doc
 ppMacroParamList xs = char '(' <> hsep (commaSep xs) <> char ')'
 
 ppIfStmt
-    :: ADoc
-    -> ADoc
-    -> Maybe ADoc
+    :: Doc
+    -> Doc
+    -> Maybe Doc
     -> Doc
 ppIfStmt cond t Nothing =
-    text "if (" <> fst cond <> text ")" <+> fst t
+    text "if (" <> cond <> text ")" <+> t
 ppIfStmt cond t (Just e) =
-    text "if (" <> fst cond <> text ")" <+> fst t <+> text "else" <+> fst e
+    text "if (" <> cond <> text ")" <+> t <+> text "else" <+> e
 
 ppForStmt
-    :: ADoc
-    -> ADoc
-    -> ADoc
-    -> ADoc
+    :: Doc
+    -> Doc
+    -> Doc
+    -> Doc
     -> Doc
 ppForStmt i c n body =
     text "for ("
-    <> fst i <> char ';'
-    <+> fst c <> char ';'
-    <+> fst n
+    <> i
+    <+> c <> char ';'
+    <+> n
     <> char ')' <+>
-    fst body
+    body
 
 ppWhileStmt
-    :: ADoc
-    -> ADoc
+    :: Doc
+    -> Doc
     -> Doc
 ppWhileStmt c body =
     text "while ("
-    <> fst c
+    <> c
     <> char ')' <+>
-    fst body
+    body
 
 ppDoWhileStmt
-    :: ADoc
-    -> ADoc
+    :: Doc
+    -> Doc
     -> Doc
 ppDoWhileStmt body c =
-    text "do ("
-    <> text ") {" <$>
-    fst body
-    <+> text "while (" <> fst c <> char ')'
+    text "do" <+> body
+    <+> text "while (" <> c <> text ");"
 
 ppSwitchStmt
-    :: ADoc
-    -> [ADoc]
+    :: Doc
+    -> [Doc]
     -> Doc
 ppSwitchStmt c body =
     nest 2 (
         text "switch ("
-        <> fst c
+        <> c
         <> text ") {" <$>
-        vcat (semiSep body)
+        vcat body
     ) <$> char '}'
 
-ppVLA :: ADoc -> Lexeme Text -> ADoc -> Doc
+ppVLA :: Doc -> Lexeme Text -> Doc -> Doc
 ppVLA ty n sz =
     text "VLA("
-        <> fst ty
+        <> ty
         <> text ", "
         <> ppLexeme n
         <> text ", "
-        <> fst sz
-        <> char ')'
+        <> sz
+        <> text ");"
 
-ppCompoundStmt :: [ADoc] -> Doc
+ppCompoundStmt :: [Doc] -> Doc
 ppCompoundStmt body =
     nest 2 (
         char '{' <$>
@@ -221,208 +194,212 @@ ppCompoundStmt body =
     ) <$> char '}'
 
 ppTernaryExpr
-    :: ADoc
-    -> ADoc
-    -> ADoc
+    :: Doc
+    -> Doc
+    -> Doc
     -> Doc
 ppTernaryExpr c t e =
-    fst c <+> char '?' <+> fst t <+> char ':' <+> fst e
+    c <+> char '?' <+> t <+> char ':' <+> e
 
-ppLicenseDecl :: Lexeme Text -> [ADoc] -> Doc
+ppLicenseDecl :: Lexeme Text -> [Doc] -> Doc
 ppLicenseDecl l cs =
     ppCommentStyle Regular <+> text "SPDX-License-Identifier: " <> ppLexeme l <$>
     hcat (lineSep cs) <$>
     text " */"
 
-ppNode :: Node (Lexeme Text) -> ADoc
+ppNode :: Node (Lexeme Text) -> Doc
 ppNode = foldFix go
   where
-  go :: NodeF (Lexeme Text) ADoc -> ADoc
+  go :: NodeF (Lexeme Text) Doc -> Doc
   go = \case
-    StaticAssert cond msg -> semi $
-        text "static_assert(" <+> fst cond <> char ',' <+> ppLexeme msg <> char ')'
+    StaticAssert cond msg ->
+        text "static_assert(" <> cond <> char ',' <+> ppLexeme msg <> text ");"
 
-    LicenseDecl l cs -> bare $ ppLicenseDecl l cs
-    CopyrightDecl from (Just to) owner -> bare $
+    LicenseDecl l cs -> ppLicenseDecl l cs
+    CopyrightDecl from (Just to) owner ->
         text " * Copyright © " <> ppLexeme from <> char '-' <> ppLexeme to <+>
         ppCommentBody owner
-    CopyrightDecl from Nothing owner -> bare $
+    CopyrightDecl from Nothing owner ->
         text " * Copyright © " <> ppLexeme from <+>
         ppCommentBody owner
 
-    Comment style _ cs e -> bare $
+    Comment style _ cs e ->
         ppComment style cs e
-    CommentSectionEnd cs -> bare $
+    CommentSectionEnd cs ->
         ppLexeme cs
-    Commented (c, _) (d, s) -> (, s) $
+    Commented c d ->
         c <$> d
 
-    VarExpr var       -> semi $ ppLexeme var
-    LiteralExpr _ l   -> semi $ ppLexeme l
-    SizeofExpr arg    -> semi $ text "sizeof(" <> fst arg <> char ')'
-    SizeofType arg    -> semi $ text "sizeof(" <> fst arg <> char ')'
-    BinaryExpr  l o r -> semi $ fst l <+> ppBinaryOp o <+> fst r
-    AssignExpr  l o r -> semi $ fst l <+> ppAssignOp o <+> fst r
-    TernaryExpr c t e -> semi $ ppTernaryExpr c t e
-    UnaryExpr o e     -> semi $ ppUnaryOp o <> fst e
-    ParenExpr e       -> semi $ char '(' <> fst e <> char ')'
-    FunctionCall c  a -> semi $ ppFunctionCall c a
-    ArrayAccess  e  i -> semi $ fst e <> char '[' <> fst i <> char ']'
-    CastExpr     ty e -> semi $ char '(' <> fst ty <> char ')' <> fst e
-    CompoundExpr ty e -> semi $ char '(' <> fst ty <> char ')' <+> char '{' <> fst e <> char '}'
-    PreprocDefined  n -> bare $ text "defined(" <> ppLexeme n <> char ')'
-    InitialiserList l -> semi $ ppInitialiserList l
-    PointerAccess e m -> semi $ fst e <> text "->" <> ppLexeme m
-    MemberAccess  e m -> semi $ fst e <> text "." <> ppLexeme m
-    CommentExpr   c e -> semi $ fst c <+> fst e
-    Ellipsis          -> semi $ text "..."
+    VarExpr var       -> ppLexeme var
+    LiteralExpr _ l   -> ppLexeme l
+    SizeofExpr arg    -> text "sizeof(" <> arg <> char ')'
+    SizeofType arg    -> text "sizeof(" <> arg <> char ')'
+    BinaryExpr  l o r -> l <+> ppBinaryOp o <+> r
+    AssignExpr  l o r -> l <+> ppAssignOp o <+> r
+    TernaryExpr c t e -> ppTernaryExpr c t e
+    UnaryExpr o e     -> ppUnaryOp o <> e
+    ParenExpr e       -> char '(' <> e <> char ')'
+    FunctionCall c  a -> ppFunctionCall c a
+    ArrayAccess  e  i -> e <> char '[' <> i <> char ']'
+    CastExpr     ty e -> char '(' <> ty <> char ')' <> e
+    CompoundExpr ty e -> char '(' <> ty <> char ')' <+> char '{' <> e <> char '}'
+    PreprocDefined  n -> text "defined(" <> ppLexeme n <> char ')'
+    InitialiserList l -> ppInitialiserList l
+    PointerAccess e m -> e <> text "->" <> ppLexeme m
+    MemberAccess  e m -> e <> text "." <> ppLexeme m
+    CommentExpr   c e -> c <+> e
+    Ellipsis          -> text "..."
 
-    VarDecl ty name arrs      -> bare $ fst ty <+> ppLexeme name <> hcat (ppSep empty arrs)
-    DeclSpecArray Nothing     -> bare $ text "[]"
-    DeclSpecArray (Just dim)  -> bare $ char '[' <> fst dim <> char ']'
+    VarDecl ty name arrs      -> ty <+> ppLexeme name <> hcat (ppSep empty arrs)
+    DeclSpecArray Nothing     -> text "[]"
+    DeclSpecArray (Just dim)  -> char '[' <> dim <> char ']'
 
-    TyPointer     ty -> bare $ fst ty <> char '*'
-    TyConst       ty -> bare $ fst ty <+> text "const"
-    TyUserDefined l  -> bare $ ppLexeme l
-    TyStd         l  -> bare $ ppLexeme l
-    TyFunc        l  -> bare $ ppLexeme l
-    TyStruct      l  -> bare $ text "struct" <+> ppLexeme l
+    TyPointer     ty -> ty <> char '*'
+    TyConst       ty -> ty <+> text "const"
+    TyUserDefined l  -> ppLexeme l
+    TyStd         l  -> ppLexeme l
+    TyFunc        l  -> ppLexeme l
+    TyStruct      l  -> text "struct" <+> ppLexeme l
 
-    ExternC decls -> bare $
-        text "#ifndef __cplusplus" <$>
+    ExternC decls ->
+        text "#ifdef __cplusplus" <$>
         text "extern \"C\" {" <$>
         text "#endif" <$>
         line <>
         ppToplevel decls <$>
         line <>
-        text "#ifndef __cplusplus" <$>
+        text "#ifdef __cplusplus" <$>
         text "}" <$>
         text "#endif"
 
-    MacroParam l -> bare $ ppLexeme l
+    MacroParam l -> ppLexeme l
 
     MacroBodyFunCall e -> e
-    MacroBodyStmt body -> bare $
-        text "do" <+> fst body <+> text "while (0)"
+    MacroBodyStmt body ->
+        if False
+           then text "do" <+> body <+> text "while (0)"
+           else text "do { nothing(); } while (0)  // macros aren't supported well yet"
 
-    PreprocScopedDefine def stmts undef -> bare $
-        fst def <$> ppToplevel stmts <$> fst undef
+    PreprocScopedDefine def stmts undef ->
+        def <$> ppToplevel stmts <$> undef
 
-    PreprocInclude hdr -> bare $
+    PreprocInclude hdr ->
         text "#include" <+> ppLexeme hdr
-    PreprocDefine name -> bare $
+    PreprocDefine name ->
         text "#define" <+> ppLexeme name
-    PreprocDefineConst name value -> bare $
-        text "#define" <+> ppLexeme name <+> fst value
-    PreprocDefineMacro name params body -> bare $
-        text "#define" <+> ppLexeme name <> ppMacroParamList params <+> fst body
-    PreprocUndef name -> bare $
+    PreprocDefineConst name value ->
+        text "#define" <+> ppLexeme name <+> value
+    PreprocDefineMacro name params body ->
+        text "#define" <+> ppLexeme name <> ppMacroParamList params <+> body
+    PreprocUndef name ->
         text "#undef" <+> ppLexeme name
 
-    PreprocIf cond decls elseBranch -> bare $
-        text "#if" <+> fst cond <$>
+    PreprocIf cond decls elseBranch ->
+        text "#if" <+> cond <$>
         ppToplevel decls <>
-        fst elseBranch <$>
+        elseBranch <$>
         text "#endif"
-    PreprocIfdef name decls elseBranch -> bare $
+    PreprocIfdef name decls elseBranch ->
         text "#ifdef" <+> ppLexeme name <$>
         ppToplevel decls <>
-        fst elseBranch <$>
+        elseBranch <$>
         text "#endif"
-    PreprocIfndef name decls elseBranch -> bare $
+    PreprocIfndef name decls elseBranch ->
         text "#ifndef" <+> ppLexeme name <$>
         ppToplevel decls <>
-        fst elseBranch <$>
+        elseBranch <$>
         text "#endif"
-    PreprocElse [] -> bare empty
-    PreprocElse decls -> bare $
+    PreprocElse [] -> empty
+    PreprocElse decls ->
         linebreak <>
         text "#else" <$>
         ppToplevel decls
-    PreprocElif cond decls elseBranch -> bare $
-        text "#elif" <+> fst cond <$>
+    PreprocElif cond decls elseBranch ->
+        hardline <>
+        text "#elif" <+> cond <$>
         ppToplevel decls <>
-        fst elseBranch <$>
-        text "#endif"
+        elseBranch
 
-    FunctionPrototype ty name params -> bare $
+    FunctionPrototype ty name params ->
         ppFunctionPrototype ty name params
-    FunctionDecl scope proto -> semi $
-        ppScope scope <> fst proto
-    FunctionDefn scope proto body -> bare $
-        ppScope scope <> fst proto <+> fst body
+    FunctionDecl scope proto ->
+        ppScope scope <> proto <> char ';'
+    FunctionDefn scope proto body ->
+        ppScope scope <> proto <+> body
 
-    MemberDecl decl Nothing -> semi $
-        fst decl
-    MemberDecl decl (Just size) -> semi $
-        fst decl <+> char ':' <+> ppLexeme size
+    MemberDecl decl Nothing ->
+        decl <> char ';'
+    MemberDecl decl (Just size) ->
+        decl <+> char ':' <+> ppLexeme size <> char ';'
 
-    Struct name members -> semi $
+    AggregateDecl struct -> struct <> char ';'
+    Struct name members ->
         nest 2 (
             text "struct" <+> ppLexeme name <+> char '{' <$>
             ppToplevel members
         ) <$> char '}'
-    Union name members -> semi $
+    Union name members ->
         nest 2 (
             text "union" <+> ppLexeme name <+> char '{' <$>
             ppToplevel members
         ) <$> char '}'
-    Typedef ty tyname -> semi $
-        text "typedef" <+> fst ty <+> ppLexeme tyname
-    TypedefFunction proto -> semi $
-        text "typedef" <+> fst proto
+    Typedef ty tyname ->
+        text "typedef" <+> ty <+> ppLexeme tyname <> char ';'
+    TypedefFunction proto ->
+        text "typedef" <+> proto <> char ';'
 
-    ConstDecl ty name -> semi $
-        text "extern const" <+> fst ty <+> ppLexeme name
-    ConstDefn scope ty name value -> semi $
+    ConstDecl ty name ->
+        text "extern const" <+> ty <+> ppLexeme name <> char ';'
+    ConstDefn scope ty name value ->
         ppScope scope <> text "const" <+>
-        fst ty <+> ppLexeme name <+> char '=' <+> fst value
+        ty <+> ppLexeme name <+> char '=' <+> value <> char ';'
 
-    Enumerator name  Nothing -> bare $ ppLexeme name <> char ','
-    Enumerator name (Just value) -> bare $
-        ppLexeme name <+> char '=' <+> fst value <> char ','
+    Enumerator name  Nothing -> ppLexeme name <> char ','
+    Enumerator name (Just value) ->
+        ppLexeme name <+> char '=' <+> value <> char ','
 
-    EnumConsts Nothing enums -> semi $
+    EnumConsts Nothing enums ->
         nest 2 (
             text "enum" <+> char '{' <$>
             hcat (lineSep enums)
-        ) <$> char '}'
-    EnumConsts (Just name) enums -> semi $
+        ) <$> text "};"
+    EnumConsts (Just name) enums ->
         nest 2 (
             text "enum" <+> ppLexeme name <+> char '{' <$>
             hcat (lineSep enums)
-        ) <$> char '}'
-    EnumDecl name enums ty -> semi $
+        ) <$> text "};"
+    EnumDecl name enums ty ->
         nest 2 (
             text "typedef enum" <+> ppLexeme name <+> char '{' <$>
             hcat (lineSep enums)
-        ) <$> text "} " <> ppLexeme ty
+        ) <$> text "} " <> ppLexeme ty <> char ';'
 
     -- Statements
-    VarDeclStmt decl Nothing      -> semi $ fst decl
-    VarDeclStmt decl (Just initr) -> semi $ fst decl <+> char '=' <+> fst initr
-    Return Nothing                -> semi $ text "return"
-    Return (Just e)               -> semi $ text "return" <+> fst e
-    Continue                      -> semi $ text "continue"
-    Break                         -> semi $ text "break"
-    IfStmt cond t e               -> bare $ ppIfStmt cond t e
-    ForStmt i c n body            -> bare $ ppForStmt i c n body
-    Default s                     -> cp s $ text "default:" <+> fst s
-    Label l s                     -> cp s $ ppLexeme l <> char ':' <$> fst s
-    Goto l                        -> semi $ text "goto " <> ppLexeme l
-    Case e s                      -> cp s $ text "case " <> fst e <> char ':' <+> fst s
-    WhileStmt c body              -> bare $ ppWhileStmt c body
-    DoWhileStmt body c            -> semi $ ppDoWhileStmt body c
-    SwitchStmt c body             -> bare $ ppSwitchStmt c body
-    CompoundStmt body             -> bare $ ppCompoundStmt body
-    VLA ty n sz                   -> semi $ ppVLA ty n sz
+    VarDeclStmt decl Nothing      -> decl <> char ';'
+    VarDeclStmt decl (Just initr) -> decl <+> char '=' <+> initr <> char ';'
+    Return Nothing                -> text "return;"
+    Return (Just e)               -> text "return" <+> e <> char ';'
+    Continue                      -> text "continue;"
+    Break                         -> text "break;"
+    IfStmt cond t e               -> ppIfStmt cond t e
+    ForStmt i c n body            -> ppForStmt i c n body
+    Default s                     -> text "default:" <+> s
+    Label l s                     -> ppLexeme l <> char ':' <$> s
+    ExprStmt e                    -> e <> char ';'
+    Goto l                        -> text "goto " <> ppLexeme l <> char ';'
+    Case e s                      -> text "case " <> e <> char ':' <+> s
+    WhileStmt c body              -> ppWhileStmt c body
+    DoWhileStmt body c            -> ppDoWhileStmt body c
+    SwitchStmt c body             -> ppSwitchStmt c body
+    CompoundStmt body             -> ppCompoundStmt body
+    VLA ty n sz                   -> ppVLA ty n sz
 
 
-ppToplevel :: [ADoc] -> Doc
-ppToplevel = vcat . punctuate line . semiSep
+ppToplevel :: [Doc] -> Doc
+ppToplevel = vcat . punctuate line
 
 ppTranslationUnit :: [Node (Lexeme Text)] -> Doc
 ppTranslationUnit decls = (ppToplevel . map ppNode $ decls) <> linebreak
 
 showNode  :: Node (Lexeme Text) -> Text
-showNode = Text.pack . show . fst . ppNode
+showNode = Text.pack . show . ppNode

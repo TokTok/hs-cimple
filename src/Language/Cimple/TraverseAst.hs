@@ -216,6 +216,9 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse label
             _ <- recurse stmt
             pure ()
+        ExprStmt expr -> do
+            _ <- recurse expr
+            pure ()
         VLA ty name size -> do
             _ <- recurse ty
             _ <- recurse name
@@ -307,6 +310,9 @@ instance TraverseAst text (Node (Lexeme text)) where
         Enumerator name value -> do
             _ <- recurse name
             _ <- recurse value
+            pure ()
+        AggregateDecl struct -> do
+            _ <- recurse struct
             pure ()
         Typedef ty name -> do
             _ <- recurse ty

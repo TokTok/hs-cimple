@@ -32,9 +32,9 @@ processFile flags source = do
     case ast of
         Left err -> fail err
         Right (_, ok) ->
-            if "--reparse" `elem` flags
-               then reparseText $ format ok
-               else BS.putStr . Text.encodeUtf8 . format $ ok
+            if "--no-reparse" `elem` flags
+               then BS.putStr . Text.encodeUtf8 . format $ ok
+               else reparseText $ format ok
 
 
 main :: IO ()

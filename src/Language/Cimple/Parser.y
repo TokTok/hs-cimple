@@ -325,9 +325,9 @@ Stmt
 |	ForStmt							{ $1 }
 |	WhileStmt						{ $1 }
 |	DoWhileStmt						{ $1 }
-|	AssignExpr ';'						{ $1 }
-|	ExprStmt ';'						{ $1 }
-|	FunctionCall ';'					{ $1 }
+|	AssignExpr ';'						{ Fix $ ExprStmt $1 }
+|	ExprStmt ';'						{ Fix $ ExprStmt $1 }
+|	FunctionCall ';'					{ Fix $ ExprStmt $1 }
 |	break ';'						{ Fix $ Break }
 |	goto ID_CONST ';'					{ Fix $ Goto $2 }
 |	ID_CONST ':' Stmt					{ Fix $ Label $1 $3 }
@@ -349,7 +349,7 @@ ForStmt
 
 ForInit :: { StringNode }
 ForInit
-:	AssignExpr ';'						{ $1 }
+:	AssignExpr ';'						{ Fix $ ExprStmt $1 }
 |	VarDeclStmt						{ $1 }
 
 ForNext :: { StringNode }
@@ -572,7 +572,7 @@ EnumeratorName
 
 AggregateDecl :: { StringNode }
 AggregateDecl
-:	AggregateType ';'					{ $1 }
+:	AggregateType ';'					{ Fix $ AggregateDecl $1 }
 |	typedef AggregateType ID_SUE_TYPE ';'			{ Fix $ Typedef $2 $3 }
 
 AggregateType :: { StringNode }

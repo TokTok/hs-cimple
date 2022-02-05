@@ -70,6 +70,7 @@ import           Language.Cimple.Lexer (Lexeme)
     case		{ Fix (Case{}) }
     default		{ Fix (Default{}) }
     label		{ Fix (Label{}) }
+    exprStmt		{ Fix (ExprStmt{}) }
     -- Variable declarations
     vLA			{ Fix (VLA{}) }
     varDeclStmt		{ Fix (VarDecl{}) }
@@ -97,6 +98,7 @@ import           Language.Cimple.Lexer (Lexeme)
     enumConsts		{ Fix (EnumConsts{}) }
     enumDecl		{ Fix (EnumDecl{}) }
     enumerator		{ Fix (Enumerator{}) }
+    aggregateDecl	{ Fix (AggregateDecl{}) }
     typedef		{ Fix (Typedef{}) }
     typedefFunction	{ Fix (TypedefFunction{}) }
     struct		{ Fix (Struct{}) }
@@ -181,6 +183,7 @@ CommentableDecl :: { TextNode }
 CommentableDecl
 :	functionDecl						{ $1 }
 |	functionDefn						{ $1 }
+|	aggregateDecl						{ $1 }
 |	struct							{ $1 }
 |	typedef							{ $1 }
 |	constDecl						{ $1 }
