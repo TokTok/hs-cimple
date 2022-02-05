@@ -115,9 +115,10 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '#include'			{ L _ PpInclude			_ }
     '#undef'			{ L _ PpUndef			_ }
     '\n'			{ L _ PpNewline			_ }
-    '/**/'			{ L _ CmtBlock			_ }
     '/*'			{ L _ CmtStart			_ }
     '/**'			{ L _ CmtStartDoc		_ }
+    '/** @{'			{ L _ CmtStartDocSection	_ }
+    '/** @} */'			{ L _ CmtEndDocSection		_ }
     '/***'			{ L _ CmtStartBlock		_ }
     ' * '			{ L _ CmtIndent			_ }
     '*/'			{ L _ CmtEnd			_ }
@@ -201,8 +202,9 @@ Comment :: { StringNode }
 Comment
 :	'/*' CommentTokens '*/'					{ Fix $ Comment Regular $1 (reverse $2) $3 }
 |	'/**' CommentTokens '*/'				{ Fix $ Comment Doxygen $1 (reverse $2) $3 }
+|	'/** @{' CommentTokens '*/'				{ Fix $ Comment Block $1 (reverse $2) $3 }
 |	'/***' CommentTokens '*/'				{ Fix $ Comment Block $1 (reverse $2) $3 }
-|	'/**/'							{ Fix $ CommentBlock $1 }
+|	'/** @} */'						{ Fix $ CommentSectionEnd $1 }
 
 CommentTokens :: { [StringLexeme] }
 CommentTokens

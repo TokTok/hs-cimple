@@ -44,7 +44,7 @@ data NodeF lexeme a
     | LicenseDecl lexeme [a]
     | CopyrightDecl lexeme (Maybe lexeme) [lexeme]
     | Comment CommentStyle lexeme [lexeme] lexeme
-    | CommentBlock lexeme
+    | CommentSectionEnd lexeme
     | Commented a a
     -- Namespace-like blocks
     | ExternC [a]

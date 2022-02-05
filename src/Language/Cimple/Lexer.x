@@ -106,6 +106,8 @@ tokens :-
 <0>		"//!TOKSTYLE-"				{ start ignoreSC }
 <0>		"/*"					{ mkL CmtStart `andBegin` cmtSC }
 <0>		"/**"					{ mkL CmtStartDoc `andBegin` cmtSC }
+<0>		"/** @{"				{ mkL CmtStartDocSection `andBegin` cmtSC }
+<0>		"/** @} */"				{ mkL CmtEndDocSection }
 <0>		"/**""*"+				{ mkL CmtStartBlock `andBegin` cmtSC }
 <0,cmtSC>	\"(\\.|[^\"])*\"			{ mkL LitString }
 <0>		'(\\|[^'])*'				{ mkL LitChar }

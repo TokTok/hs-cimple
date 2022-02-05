@@ -159,7 +159,7 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse contents
             _ <- recurse end
             pure ()
-        CommentBlock comment -> do
+        CommentSectionEnd comment -> do
             _ <- recurse comment
             pure ()
         Commented comment subject -> do

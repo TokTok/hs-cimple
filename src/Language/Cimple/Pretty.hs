@@ -252,7 +252,7 @@ ppNode = foldFix go
 
     Comment style _ cs e -> bare $
         ppComment style cs e
-    CommentBlock cs -> bare $
+    CommentSectionEnd cs -> bare $
         ppLexeme cs
     Commented (c, _) (d, s) -> (, s) $
         c <$> d

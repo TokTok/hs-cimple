@@ -140,8 +140,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (CopyrightDecl <$> recurse from <*> recurse to <*> recurse owner)
         Comment doc start contents end ->
             Fix <$> (Comment doc <$> recurse start <*> recurse contents <*> recurse end)
-        CommentBlock comment ->
-            Fix <$> (CommentBlock <$> recurse comment)
+        CommentSectionEnd comment ->
+            Fix <$> (CommentSectionEnd <$> recurse comment)
         Commented comment subject ->
             Fix <$> (Commented <$> recurse comment <*> recurse subject)
         ExternC decls ->

@@ -52,7 +52,7 @@ import           Language.Cimple.Lexer (Lexeme)
     licenseDecl		{ Fix (LicenseDecl{}) }
     copyrightDecl	{ Fix (CopyrightDecl{}) }
     comment		{ Fix (Comment{}) }
-    commentBlock	{ Fix (CommentBlock{}) }
+    commentSectionEnd	{ Fix (CommentSectionEnd{}) }
     commented		{ Fix (Commented{}) }
     -- Namespace-like blocks
     externC		{ Fix (ExternC{}) }
@@ -173,6 +173,7 @@ DeclList
 Decl :: { TextNode }
 Decl
 :	comment							{ $1 }
+|	commentSectionEnd					{ $1 }
 |	CommentableDecl						{ $1 }
 |	docComment CommentableDecl				{ Fix $ Commented $1 $2 }
 

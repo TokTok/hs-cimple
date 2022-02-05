@@ -100,10 +100,12 @@ data LexemeClass
     | PpNewline
     | PpUndef
     | CmtBlock
+    | CmtEndDocSection
     | CmtIndent
     | CmtStart
     | CmtStartBlock
     | CmtStartDoc
+    | CmtStartDocSection
     | CmtSpdxCopyright
     | CmtSpdxLicense
     | CmtCode
