@@ -82,6 +82,12 @@ tokens :-
 <0>		"timespec"				{ mkL IdSueType }
 <0>		"timeval"				{ mkL IdSueType }
 
+-- Msgpack struct types.
+<0>		"msgpack_object"			{ mkL IdSueType }
+<0>		"msgpack_packer"			{ mkL IdSueType }
+<0>		"msgpack_sbuffer"			{ mkL IdSueType }
+<0>		"msgpack_zone"				{ mkL IdSueType }
+
 -- Sodium constants.
 <0,ppSC>	"crypto_auth_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
 <0,ppSC>	"crypto_box_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
