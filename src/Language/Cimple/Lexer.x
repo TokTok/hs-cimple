@@ -224,7 +224,7 @@ tokens :-
 <cmtSC>		"TODO("[^\)]+"):"			{ mkL CmtWord }
 <cmtSC>		"@code"					{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
-<cmtSC>		[@\\][a-z]+				{ mkL CmtWord }
+<cmtSC>		[@\\][a-z]+				{ mkL CmtCommand }
 <cmtSC>		"*"[A-Za-z][A-Za-z0-9_']*"*"		{ mkL CmtWord }
 <cmtSC>		"#"[A-Za-z][A-Za-z0-9_]*		{ mkL CmtRef }
 <cmtSC>		[A-Za-z][A-Za-z0-9_']*			{ mkL CmtWord }

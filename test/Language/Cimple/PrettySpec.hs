@@ -4,7 +4,7 @@ import           Test.Hspec                   (Spec, describe, it, shouldBe)
 
 import qualified Data.Text                    as Text
 import           Language.Cimple.IO           (parseText)
-import           Language.Cimple.Pretty       (ppTranslationUnit)
+import           Language.Cimple.Pretty       (plain, ppTranslationUnit)
 import           Text.PrettyPrint.ANSI.Leijen (displayS, renderCompact)
 
 getRight :: Either String a -> a
@@ -14,6 +14,7 @@ getRight (Right ok ) = ok
 pretty :: String -> String
 pretty =
     show
+    . plain
     . ppTranslationUnit
     . getRight
     . parseText
@@ -23,6 +24,7 @@ compact :: String -> String
 compact =
     flip displayS ""
     . renderCompact
+    . plain
     . ppTranslationUnit
     . getRight
     . parseText

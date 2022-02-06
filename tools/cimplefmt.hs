@@ -7,12 +7,14 @@ import qualified Data.Text              as Text
 import qualified Data.Text.Encoding     as Text
 import           Language.Cimple        (Lexeme, Node)
 import           Language.Cimple.IO     (parseFile, parseText)
-import           Language.Cimple.Pretty (ppTranslationUnit)
+import           Language.Cimple.Pretty (plain, ppTranslationUnit)
 import           System.Environment     (getArgs)
 
 
-format :: [Node (Lexeme Text)] -> Text
-format = Text.pack . show . ppTranslationUnit
+format :: Bool -> [Node (Lexeme Text)] -> Text
+format color = Text.pack . show . maybePlain . ppTranslationUnit
+  where
+    maybePlain = if color then id else plain
 
 
 reparseText :: Text -> IO ()
@@ -33,8 +35,8 @@ processFile flags source = do
         Left err -> fail err
         Right (_, ok) ->
             if "--no-reparse" `elem` flags
-               then BS.putStr . Text.encodeUtf8 . format $ ok
-               else reparseText $ format ok
+               then BS.putStr . Text.encodeUtf8 . format True $ ok
+               else reparseText $ format False ok
 
 
 main :: IO ()
