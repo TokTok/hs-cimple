@@ -83,9 +83,24 @@ tokens :-
 <0>		"timeval"				{ mkL IdSueType }
 
 -- Msgpack struct types.
+<0>		"msgpack_iovec"				{ mkL IdSueType }
+<0>		"msgpack_object_array"			{ mkL IdSueType }
+<0>		"msgpack_object_bin"			{ mkL IdSueType }
+<0>		"msgpack_object_ext"			{ mkL IdSueType }
+<0>		"msgpack_object_kv"			{ mkL IdSueType }
+<0>		"msgpack_object_map"			{ mkL IdSueType }
 <0>		"msgpack_object"			{ mkL IdSueType }
+<0>		"msgpack_object_str"			{ mkL IdSueType }
+<0>		"msgpack_object_type"			{ mkL IdSueType }
 <0>		"msgpack_packer"			{ mkL IdSueType }
+<0>		"msgpack_packer_write"			{ mkL IdFuncType }
 <0>		"msgpack_sbuffer"			{ mkL IdSueType }
+<0>		"msgpack_timestamp"			{ mkL IdSueType }
+<0>		"msgpack_unpacked"			{ mkL IdSueType }
+<0>		"msgpack_unpacker"			{ mkL IdSueType }
+<0>		"msgpack_unpack_return"			{ mkL IdSueType }
+<0>		"msgpack_vrefbuffer"			{ mkL IdSueType }
+<0>		"msgpack_zbuffer"			{ mkL IdSueType }
 <0>		"msgpack_zone"				{ mkL IdSueType }
 
 -- Sodium constants.
