@@ -29,7 +29,7 @@ kwFor           = dullred   $ text "for"
 kwGoto          = dullred   $ text "goto"
 kwIf            = dullred   $ text "if"
 kwNullable      = dullgreen $ text "nullable"
-kwNonnull       = dullgreen $ text "nonnull"
+kwNonNull       = dullgreen $ text "non_null"
 kwReturn        = dullred   $ text "return"
 kwSizeof        = dullred   $ text "sizeof"
 kwStaticAssert  = dullred   $ text "static_assert"
@@ -384,8 +384,8 @@ ppNode = foldFix go
             vcat enums
         ) <$> rbrace <+> dullgreen (ppLexeme ty) <> semi
 
-    Nonnull args f ->
-        kwNonnull <> ppIntList args <$> f
+    NonNull args f ->
+        kwNonNull <> ppIntList args <$> f
     Nullable args f ->
         kwNullable <> ppIntList args <$> f
 

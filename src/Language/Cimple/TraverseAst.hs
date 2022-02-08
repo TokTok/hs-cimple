@@ -340,7 +340,7 @@ instance TraverseAst text (Node (Lexeme text)) where
             pure ()
         Ellipsis ->
             pure ()
-        Nonnull args f -> do
+        NonNull args f -> do
             _ <- recurse args
             _ <- recurse f
             pure ()

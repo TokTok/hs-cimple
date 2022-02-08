@@ -41,7 +41,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     for				{ L _ KwFor			_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
-    nonnull			{ L _ KwNonnull			_ }
+    non_null			{ L _ KwNonNull			_ }
     nullable			{ L _ KwNullable		_ }
     return			{ L _ KwReturn			_ }
     sizeof			{ L _ KwSizeof			_ }
@@ -639,8 +639,8 @@ FunctionDecl
 Nullable :: { StringNode -> StringNode }
 Nullable
 :	nullable '(' Ints ')'					{ Fix . Nullable $3 }
-|	nonnull '(' Ints ')'					{ Fix . Nonnull $3 }
-|	nullable '(' Ints ')' nonnull '(' Ints ')'		{ Fix . Nullable $3 . Fix . Nonnull $7 }
+|	non_null '(' Ints ')'					{ Fix . NonNull $3 }
+|	nullable '(' Ints ')' non_null '(' Ints ')'		{ Fix . Nullable $3 . Fix . NonNull $7 }
 
 Ints :: { [StringLexeme] }
 Ints

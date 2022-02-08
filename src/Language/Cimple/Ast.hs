@@ -108,7 +108,7 @@ data NodeF lexeme a
     | FunctionPrototype a lexeme [a]
     | CallbackDecl lexeme lexeme
     | Ellipsis
-    | Nonnull [lexeme] a
+    | NonNull [lexeme] a
     | Nullable [lexeme] a
     -- Constants
     | ConstDecl a lexeme
