@@ -115,6 +115,8 @@ import           Language.Cimple.Lexer (Lexeme)
     functionDefn	{ Fix (FunctionDefn{}) }
     functionPrototype	{ Fix (FunctionPrototype{}) }
     ellipsis		{ Fix (Ellipsis) }
+    nonnull		{ Fix (Nonnull{}) }
+    nullable		{ Fix (Nullable{}) }
     -- Constants
     constDecl		{ Fix (ConstDecl{}) }
     constDefn		{ Fix (ConstDefn{}) }
@@ -183,6 +185,8 @@ CommentableDecl :: { TextNode }
 CommentableDecl
 :	functionDecl						{ $1 }
 |	functionDefn						{ $1 }
+|	nonnull							{ $1 }
+|	nullable						{ $1 }
 |	aggregateDecl						{ $1 }
 |	struct							{ $1 }
 |	typedef							{ $1 }

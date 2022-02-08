@@ -25,6 +25,8 @@ data LexemeClass
     | KwFor
     | KwGoto
     | KwIf
+    | KwNonnull
+    | KwNullable
     | KwReturn
     | KwSizeof
     | KwStatic

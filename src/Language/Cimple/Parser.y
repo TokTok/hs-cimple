@@ -41,6 +41,8 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     for				{ L _ KwFor			_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
+    nonnull			{ L _ KwNonnull			_ }
+    nullable			{ L _ KwNullable		_ }
     return			{ L _ KwReturn			_ }
     sizeof			{ L _ KwSizeof			_ }
     static			{ L _ KwStatic			_ }
@@ -631,6 +633,24 @@ FunctionDecl :: { StringNode }
 FunctionDecl
 :	FunctionDeclarator					{ $1 Global }
 |	static FunctionDeclarator				{ $2 Static }
+|	Nullable FunctionDeclarator				{ $1 $ $2 Global }
+|	Nullable static FunctionDeclarator			{ $1 $ $3 Static }
+
+Nullable :: { StringNode -> StringNode }
+Nullable
+:	nullable '(' Ints ')'					{ Fix . Nullable $3 }
+|	nonnull '(' Ints ')'					{ Fix . Nonnull $3 }
+|	nullable '(' Ints ')' nonnull '(' Ints ')'		{ Fix . Nullable $3 . Fix . Nonnull $7 }
+
+Ints :: { [StringLexeme] }
+Ints
+:								{ [] }
+|	IntList							{ reverse $1 }
+
+IntList :: { [StringLexeme] }
+IntList
+:	LIT_INTEGER						{ [$1] }
+|	IntList ',' LIT_INTEGER					{ $3 : $1 }
 
 FunctionDeclarator :: { Scope -> StringNode }
 FunctionDeclarator

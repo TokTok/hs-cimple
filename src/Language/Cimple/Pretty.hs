@@ -28,6 +28,8 @@ kwExtern        = dullgreen $ text "extern"
 kwFor           = dullred   $ text "for"
 kwGoto          = dullred   $ text "goto"
 kwIf            = dullred   $ text "if"
+kwNullable      = dullgreen $ text "nullable"
+kwNonnull       = dullgreen $ text "nonnull"
 kwReturn        = dullred   $ text "return"
 kwSizeof        = dullred   $ text "sizeof"
 kwStaticAssert  = dullred   $ text "static_assert"
@@ -210,6 +212,9 @@ ppLicenseDecl l cs =
     vcat (map dullyellow cs) <$>
     dullyellow (text " */")
 
+ppIntList :: [Lexeme Text] -> Doc
+ppIntList = parens . commaSep . map (dullred . ppLexeme)
+
 ppNode :: Node (Lexeme Text) -> Doc
 ppNode = foldFix go
   where
@@ -379,6 +384,11 @@ ppNode = foldFix go
             vcat enums
         ) <$> rbrace <+> dullgreen (ppLexeme ty) <> semi
 
+    Nonnull args f ->
+        kwNonnull <> ppIntList args <$> f
+    Nullable args f ->
+        kwNullable <> ppIntList args <$> f
+
     -- Statements
     VarDeclStmt decl Nothing      -> decl <> semi
     VarDeclStmt decl (Just initr) -> decl <+> equals <+> initr <> semi
@@ -398,7 +408,6 @@ ppNode = foldFix go
     SwitchStmt c body             -> ppSwitchStmt c body
     CompoundStmt body             -> ppCompoundStmt body
     VLA ty n sz                   -> ppVLA ty n sz
-
 
 ppToplevel :: [Doc] -> Doc
 ppToplevel = vcat . punctuate line
