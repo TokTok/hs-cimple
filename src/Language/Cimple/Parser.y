@@ -633,19 +633,18 @@ FunctionDecl :: { StringNode }
 FunctionDecl
 :	FunctionDeclarator					{ $1 Global }
 |	static FunctionDeclarator				{ $2 Static }
-|	Nullable FunctionDeclarator				{ $1 $ $2 Global }
-|	Nullable static FunctionDeclarator			{ $1 $ $3 Static }
+|	NonNull FunctionDeclarator				{ $1 $ $2 Global }
+|	NonNull static FunctionDeclarator			{ $1 $ $3 Static }
 
-Nullable :: { StringNode -> StringNode }
-Nullable
-:	nullable '(' Ints ')'					{ Fix . Nullable $3 }
-|	non_null '(' Ints ')'					{ Fix . NonNull $3 }
-|	nullable '(' Ints ')' non_null '(' Ints ')'		{ Fix . Nullable $3 . Fix . NonNull $7 }
+NonNull :: { StringNode -> StringNode }
+NonNull
+:	non_null '(' ')'					{ Fix . NonNull [] [] }
+|	nullable '(' Ints ')'					{ Fix . NonNull [] $3 }
+|	non_null '(' Ints ')' nullable '(' Ints ')'		{ Fix . NonNull $3 $7 }
 
 Ints :: { [StringLexeme] }
 Ints
-:								{ [] }
-|	IntList							{ reverse $1 }
+:	IntList							{ reverse $1 }
 
 IntList :: { [StringLexeme] }
 IntList
