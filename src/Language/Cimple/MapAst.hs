@@ -254,10 +254,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (FunctionPrototype <$> recurse ty <*> recurse name <*> recurse params)
         CallbackDecl ty name ->
             Fix <$> (CallbackDecl <$> recurse ty <*> recurse name)
-        NonNull args f ->
-            Fix <$> (NonNull <$> recurse args <*> recurse f)
-        Nullable args f ->
-            Fix <$> (Nullable <$> recurse args <*> recurse f)
+        NonNull nonnull nullable f ->
+            Fix <$> (NonNull <$> recurse nonnull <*> recurse nullable <*> recurse f)
         Ellipsis ->
             pure $ Fix Ellipsis
         ConstDecl ty name ->
