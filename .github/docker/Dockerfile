@@ -1,6 +1,8 @@
-# hadolint ignore=DL3007
-FROM toxchat/haskell:latest
+FROM toxchat/toktok-stack:haskell AS build
 
 RUN ["rm", "-rf", "/work/hs-cimple"]
 COPY --chown=builder:users . /work/hs-cimple
-RUN ["stack", "build", "cimple"]
+RUN ["stack", "install", "cimple"]
+
+FROM scratch
+COPY --from=build /home/builder/.local/ /
