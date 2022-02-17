@@ -196,8 +196,10 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (ParenExpr <$> recurse expr)
         CastExpr ty expr ->
             Fix <$> (CastExpr <$> recurse ty <*> recurse expr)
-        CompoundExpr ty expr ->
+        CompoundExpr ty expr -> -- DEPRECATED
             Fix <$> (CompoundExpr <$> recurse ty <*> recurse expr)
+        CompoundLiteral ty expr ->
+            Fix <$> (CompoundLiteral <$> recurse ty <*> recurse expr)
         SizeofExpr expr ->
             Fix <$> (SizeofExpr <$> recurse expr)
         SizeofType ty ->

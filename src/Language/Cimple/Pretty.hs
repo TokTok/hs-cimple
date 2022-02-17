@@ -238,25 +238,26 @@ ppNode = foldFix go
     Commented c d ->
         c <$> d
 
-    VarExpr var       -> ppLexeme var
-    LiteralExpr _ l   -> dullred $ ppLexeme l
-    SizeofExpr arg    -> kwSizeof <> parens arg
-    SizeofType arg    -> kwSizeof <> parens arg
-    BinaryExpr  l o r -> l <+> ppBinaryOp o <+> r
-    AssignExpr  l o r -> l <+> ppAssignOp o <+> r
-    TernaryExpr c t e -> ppTernaryExpr c t e
-    UnaryExpr o e     -> ppUnaryOp o <> e
-    ParenExpr e       -> parens e
-    FunctionCall c  a -> ppFunctionCall c a
-    ArrayAccess  e  i -> e <> char '[' <> i <> char ']'
-    CastExpr     ty e -> parens ty <> e
-    CompoundExpr ty e -> parens ty <+> lbrace <> e <> rbrace
-    PreprocDefined  n -> text "defined(" <> ppLexeme n <> char ')'
-    InitialiserList l -> ppInitialiserList l
-    PointerAccess e m -> e <> text "->" <> ppLexeme m
-    MemberAccess  e m -> e <> text "." <> ppLexeme m
-    CommentExpr   c e -> c <+> e
-    Ellipsis          -> text "..."
+    VarExpr var          -> ppLexeme var
+    LiteralExpr _ l      -> dullred $ ppLexeme l
+    SizeofExpr arg       -> kwSizeof <> parens arg
+    SizeofType arg       -> kwSizeof <> parens arg
+    BinaryExpr  l o r    -> l <+> ppBinaryOp o <+> r
+    AssignExpr  l o r    -> l <+> ppAssignOp o <+> r
+    TernaryExpr c t e    -> ppTernaryExpr c t e
+    UnaryExpr o e        -> ppUnaryOp o <> e
+    ParenExpr e          -> parens e
+    FunctionCall c  a    -> ppFunctionCall c a
+    ArrayAccess  e  i    -> e <> char '[' <> i <> char ']'
+    CastExpr     ty e    -> parens ty <> e
+    CompoundExpr    ty e -> parens ty <+> lbrace <> e <> rbrace  -- DEPRECATED
+    CompoundLiteral ty e -> parens ty <+> lbrace <> e <> rbrace
+    PreprocDefined  n    -> text "defined(" <> ppLexeme n <> char ')'
+    InitialiserList l    -> ppInitialiserList l
+    PointerAccess e m    -> e <> text "->" <> ppLexeme m
+    MemberAccess  e m    -> e <> text "." <> ppLexeme m
+    CommentExpr   c e    -> c <+> e
+    Ellipsis             -> text "..."
 
     VarDecl ty name arrs      -> ty <+> ppLexeme name <> hcat arrs
     DeclSpecArray Nothing     -> text "[]"

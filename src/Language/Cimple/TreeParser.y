@@ -84,7 +84,7 @@ import           Language.Cimple.Lexer (Lexeme)
     assignExpr		{ Fix (AssignExpr{}) }
     parenExpr		{ Fix (ParenExpr{}) }
     castExpr		{ Fix (CastExpr{}) }
-    compoundExpr	{ Fix (CompoundExpr{}) }
+    compoundLiteral	{ Fix (CompoundLiteral{}) }
     sizeofExpr		{ Fix (SizeofExpr{}) }
     sizeofType		{ Fix (SizeofType{}) }
     literalExpr		{ Fix (LiteralExpr{}) }

@@ -76,7 +76,8 @@ data NodeF lexeme a
     | AssignExpr a AssignOp a
     | ParenExpr a
     | CastExpr a a
-    | CompoundExpr a a
+    | CompoundExpr a a -- DEPRECATED
+    | CompoundLiteral a a
     | SizeofExpr a
     | SizeofType a
     | LiteralExpr LiteralType lexeme

@@ -499,13 +499,22 @@ Expr
 :	LhsExpr							{ $1 }
 |	ExprStmt						{ $1 }
 |	FunctionCall						{ $1 }
-|	CompoundExpr						{ $1 }
+|	CompoundLiteral						{ $1 }
 |	PureExpr(Expr)						{ $1 }
 
 -- Allow `(Type){0}` to set struct values to all-zero.
-CompoundExpr :: { StringNode }
-CompoundExpr
-:	'(' QualType ')' '{' Expr '}'				{ Fix $ CompoundExpr $2 $5 }
+CompoundLiteral :: { StringNode }
+CompoundLiteral
+:	'(' QualType ')' '{' ZeroInitExpr '}'			{ Fix $ CompoundLiteral $2 $5 }
+
+ZeroInitExpr :: { StringNode }
+ZeroInitExpr
+:	ID_VAR							{ Fix $ VarExpr $1 }
+|	LIT_CHAR						{ Fix $ LiteralExpr Char $1 }
+|	LIT_INTEGER						{ Fix $ LiteralExpr Int $1 }
+|	LIT_FALSE						{ Fix $ LiteralExpr Bool $1 }
+|	ID_CONST						{ Fix $ LiteralExpr ConstId $1 }
+|	'{' ZeroInitExpr '}'					{ Fix $ InitialiserList [$2] }
 
 AssignExpr :: { StringNode }
 AssignExpr

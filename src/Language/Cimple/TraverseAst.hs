@@ -245,7 +245,11 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse ty
             _ <- recurse expr
             pure ()
-        CompoundExpr ty expr -> do
+        CompoundExpr ty expr -> do -- DEPRECATED
+            _ <- recurse ty
+            _ <- recurse expr
+            pure ()
+        CompoundLiteral ty expr -> do
             _ <- recurse ty
             _ <- recurse expr
             pure ()
