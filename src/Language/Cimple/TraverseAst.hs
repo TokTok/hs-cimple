@@ -327,6 +327,11 @@ instance TraverseAst text (Node (Lexeme text)) where
             recurse name
         TyUserDefined name ->
             recurse name
+        AttrPrintf fmt ellipsis fun -> do
+            _ <- recurse fmt
+            _ <- recurse ellipsis
+            _ <- recurse fun
+            pure ()
         FunctionDecl _scope proto ->
             recurse proto
         FunctionDefn _scope proto body -> do

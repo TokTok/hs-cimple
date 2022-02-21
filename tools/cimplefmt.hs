@@ -3,16 +3,15 @@ module Main (main) where
 import qualified Data.ByteString        as BS
 import           Data.List              (isPrefixOf)
 import           Data.Text              (Text)
-import qualified Data.Text              as Text
 import qualified Data.Text.Encoding     as Text
 import           Language.Cimple        (Lexeme, Node)
 import           Language.Cimple.IO     (parseFile, parseText)
-import           Language.Cimple.Pretty (plain, ppTranslationUnit)
+import           Language.Cimple.Pretty (plain, ppTranslationUnit, render)
 import           System.Environment     (getArgs)
 
 
 format :: Bool -> [Node (Lexeme Text)] -> Text
-format color = Text.pack . show . maybePlain . ppTranslationUnit
+format color = render . maybePlain . ppTranslationUnit
   where
     maybePlain = if color then id else plain
 
@@ -34,9 +33,9 @@ processFile flags source = do
     case ast of
         Left err -> fail err
         Right (_, ok) ->
-            if "--no-reparse" `elem` flags
-               then BS.putStr . Text.encodeUtf8 . format True $ ok
-               else reparseText $ format False ok
+            if "--reparse" `elem` flags
+               then reparseText $ format False ok
+               else BS.putStr . Text.encodeUtf8 . format True $ ok
 
 
 main :: IO ()

@@ -1,5 +1,6 @@
 {
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE ViewPatterns               #-}
 module Language.Cimple.TreeParser
     ( TreeParser
     , parseTranslationUnit
@@ -21,13 +22,11 @@ import           Language.Cimple.Lexer (Lexeme)
 %monad {TreeParser}
 %tokentype {TextNode}
 %token
-    ifndefDefine	{ Fix (PreprocIfndef _ body (Fix (PreprocElse []))) | isDefine body }
-    ifdefDefine		{ Fix (PreprocIfdef _ body (Fix (PreprocElse []))) | isDefine body }
-    ifDefine		{ Fix (PreprocIf _ body (Fix (PreprocElse []))) | isDefine body }
+    ifndefDefine	{ Fix (PreprocIfndef _ (isDefine -> True) (Fix (PreprocElse []))) }
+    ifdefDefine		{ Fix (PreprocIfdef _ (isDefine -> True) (Fix (PreprocElse []))) }
+    ifDefine		{ Fix (PreprocIf _ (isDefine -> True) (Fix (PreprocElse []))) }
 
-    ifndefInclude	{ Fix (PreprocIfndef{}) | isPreproc tk && hasInclude tk }
-    ifdefInclude	{ Fix (PreprocIfdef{}) | isPreproc tk && hasInclude tk }
-    ifInclude		{ Fix (PreprocIf{}) | isPreproc tk && hasInclude tk }
+    includeBlock	{ (isIncludeBlock -> True) }
 
     docComment		{ Fix (Comment Doxygen _ _ _) }
 
@@ -160,9 +159,7 @@ Includes
 Include :: { TextNode }
 Include
 :	preprocInclude						{ $1 }
-|	ifndefInclude						{ $1 }
-|	ifdefInclude						{ $1 }
-|	ifInclude						{ $1 }
+|	includeBlock						{ $1 }
 
 Decls :: { [TextNode] }
 Decls
@@ -224,6 +221,12 @@ isDefine (Fix PreprocUndef{}:d)     = isDefine d
 isDefine [Fix PreprocDefine{}]      = True
 isDefine [Fix PreprocDefineConst{}] = True
 isDefine _                          = False
+
+isIncludeBlock :: TextNode -> Bool
+isIncludeBlock tk@(Fix PreprocIfndef{}) = isPreproc tk && hasInclude tk
+isIncludeBlock tk@(Fix PreprocIfdef{})  = isPreproc tk && hasInclude tk
+isIncludeBlock tk@(Fix PreprocIf{})     = isPreproc tk && hasInclude tk
+isIncludeBlock _                        = False
 
 isPreproc :: TextNode -> Bool
 isPreproc (Fix PreprocInclude{})        = True
