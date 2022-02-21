@@ -23,6 +23,7 @@ data LexemeClass
     | KwEnum
     | KwExtern
     | KwFor
+    | KwGnuPrintf
     | KwGoto
     | KwIf
     | KwNonNull
@@ -115,10 +116,13 @@ data LexemeClass
     | CmtWord
     | CmtRef
     | CmtEnd
+    | IgnStart
+    | IgnBody
+    | IgnEnd
 
     | Error
     | Eof
-    deriving (Show, Eq, Generic, Ord)
+    deriving (Enum, Bounded, Ord, Eq, Show, Generic)
 
 instance FromJSON LexemeClass
 instance ToJSON LexemeClass

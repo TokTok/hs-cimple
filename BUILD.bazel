@@ -27,6 +27,20 @@ haskell_library(
     ],
 )
 
+haskell_library(
+    name = "ast",
+    srcs = ["src/Language/Cimple/Ast.hs"],
+    src_strip_prefix = "src",
+    visibility = ["//hs-cimple:__subpackages__"],
+    deps = [
+        ":lexer",
+        hazel_library("aeson"),
+        hazel_library("base"),
+        hazel_library("data-fix"),
+        hazel_library("transformers-compat"),
+    ],
+)
+
 happy_parser(
     name = "Parser",
     src = "src/Language/Cimple/Parser.y",
@@ -35,13 +49,11 @@ happy_parser(
 
 haskell_library(
     name = "parser",
-    srcs = [
-        "src/Language/Cimple/Ast.hs",
-        "src/Language/Cimple/Parser.hs",
-    ],
+    srcs = [":Parser"],
     src_strip_prefix = "src",
     visibility = ["//hs-cimple:__subpackages__"],
     deps = [
+        ":ast",
         ":lexer",
         hazel_library("aeson"),
         hazel_library("array"),
@@ -60,12 +72,12 @@ happy_parser(
 
 haskell_library(
     name = "tree_parser",
-    srcs = ["src/Language/Cimple/TreeParser.hs"],
+    srcs = [":TreeParser"],
     src_strip_prefix = "src",
     visibility = ["//hs-cimple:__subpackages__"],
     deps = [
+        ":ast",
         ":lexer",
-        ":parser",
         hazel_library("array"),
         hazel_library("base"),
         hazel_library("data-fix"),
@@ -86,6 +98,7 @@ haskell_library(
     version = "0.0.15",
     visibility = ["//visibility:public"],
     deps = [
+        ":ast",
         ":lexer",
         ":parser",
         ":tree_parser",

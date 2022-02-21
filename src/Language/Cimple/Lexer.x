@@ -29,7 +29,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
 tokens :-
 
 -- Ignore attributes.
-<0>		"GNU_PRINTF("[^\)]+")"			;
+<0>		"GNU_PRINTF"				{ mkL KwGnuPrintf }
 <0>		"VLA"					{ mkL KwVla }
 
 -- Winapi functions.
@@ -104,12 +104,7 @@ tokens :-
 <0>		"msgpack_zone"				{ mkL IdSueType }
 
 -- Sodium constants.
-<0,ppSC>	"crypto_auth_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
-<0,ppSC>	"crypto_box_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
-<0,ppSC>	"crypto_hash_sha256_"[A-Z][A-Z0-9_]*	{ mkL IdConst }
-<0,ppSC>	"crypto_hash_sha512_"[A-Z][A-Z0-9_]*	{ mkL IdConst }
-<0,ppSC>	"crypto_pwhash_scryptsalsa208sha256_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
-<0,ppSC>	"crypto_sign_"[A-Z][A-Z0-9_]*		{ mkL IdConst }
+<0,ppSC>	"crypto_"[a-z0-9_]+[A-Z][A-Z0-9_]*	{ mkL IdConst }
 
 -- Standard C (ish).
 <ppSC>		defined					{ mkL PpDefined }
@@ -118,13 +113,13 @@ tokens :-
 <ppSC>		\\\n					;
 <ppSC>		$white					;
 
-<ignoreSC>	"//!TOKSTYLE+"				{ start 0 }
-<ignoreSC>	[.\n]					;
+<ignoreSC>	"//!TOKSTYLE+"				{ mkL IgnEnd `andBegin` 0 }
+<ignoreSC>	([^\/]+|.|\n)				{ mkL IgnBody }
 
 <0,ppSC>	"//"\n					;
 <0,ppSC>	"// ".*					;
 <0>		$white+					;
-<0>		"//!TOKSTYLE-"				{ start ignoreSC }
+<0>		"//!TOKSTYLE-"				{ mkL IgnStart `andBegin` ignoreSC }
 <0>		"/*"					{ mkL CmtStart `andBegin` cmtSC }
 <0>		"/**"					{ mkL CmtStartDoc `andBegin` cmtSC }
 <0>		"/** @{"				{ mkL CmtStartDocSection `andBegin` cmtSC }
@@ -275,12 +270,13 @@ tokens :-
 <0,ppSC,cmtSC,codeSC>	.				{ mkL Error }
 
 {
+deriving instance Ord AlexPosn
 deriving instance Generic AlexPosn
 instance FromJSON AlexPosn
 instance ToJSON AlexPosn
 
 data Lexeme text = L AlexPosn LexemeClass text
-    deriving (Show, Eq, Generic, Functor, Foldable, Traversable)
+    deriving (Ord, Eq, Show, Generic, Functor, Foldable, Traversable)
 
 instance FromJSON text => FromJSON (Lexeme text)
 instance ToJSON text => ToJSON (Lexeme text)
