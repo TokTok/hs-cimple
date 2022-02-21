@@ -2,7 +2,12 @@
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections     #-}
-module Language.Cimple.Pretty (plain, ppTranslationUnit, showNode) where
+module Language.Cimple.Pretty
+    ( plain
+    , render
+    , ppTranslationUnit
+    , showNode
+    ) where
 
 import           Data.Fix                     (foldFix)
 import qualified Data.List.Split              as List
@@ -26,6 +31,7 @@ kwElse          = dullred   $ text "else"
 kwEnum          = dullgreen $ text "enum"
 kwExtern        = dullgreen $ text "extern"
 kwFor           = dullred   $ text "for"
+kwGnuPrintf     = dullgreen $ text "GNU_PRINTF"
 kwGoto          = dullred   $ text "goto"
 kwIf            = dullred   $ text "if"
 kwNonNull       = dullgreen $ text "non_null"
@@ -99,11 +105,13 @@ ppUnaryOp = \case
     UopIncr    -> text "++"
     UopDecr    -> text "--"
 
-ppCommentStyle :: CommentStyle -> Doc
-ppCommentStyle = dullyellow . \case
+ppCommentStart :: CommentStyle -> Doc
+ppCommentStart = dullyellow . \case
     Block   -> text "/***"
     Doxygen -> text "/**"
+    Section -> text "/** @{"
     Regular -> text "/*"
+    Ignore  -> text "//!TOKSTYLE-"
 
 ppCommentBody :: [Lexeme Text] -> Doc
 ppCommentBody = vsep . map (hsep . map ppWord) . groupLines
@@ -112,13 +120,15 @@ ppCommentBody = vsep . map (hsep . map ppWord) . groupLines
         L _ PpNewline _ -> True
         _               -> False
 
-    ppWord (L _ CmtIndent  _) = dullyellow $ char '*'
-    ppWord (L _ CmtCommand t) = dullcyan   $ ppText t
-    ppWord (L _ _          t) = dullyellow $ ppText t
+ppWord (L _ CmtIndent  _) = dullyellow $ char '*'
+ppWord (L _ CmtCommand t) = dullcyan   $ ppText t
+ppWord (L _ _          t) = dullyellow $ ppText t
 
 ppComment :: CommentStyle -> [Lexeme Text] -> Lexeme Text -> Doc
+ppComment Ignore cs _ =
+    ppCommentStart Ignore <> hcat (map ppWord cs) <> dullyellow (text "//!TOKSTYLE+" <> line)
 ppComment style cs (L l c _) =
-    nest 1 $ ppCommentStyle style <+> ppCommentBody (cs ++ [L l c "*/"])
+    nest 1 $ ppCommentStart style <+> ppCommentBody (cs ++ [L l c "*/"])
 
 ppInitialiserList :: [Doc] -> Doc
 ppInitialiserList l = lbrace <+> commaSep l <+> rbrace
@@ -208,12 +218,15 @@ ppTernaryExpr c t e =
 
 ppLicenseDecl :: Lexeme Text -> [Doc] -> Doc
 ppLicenseDecl l cs =
-    dullyellow $ ppCommentStyle Regular <+> text "SPDX-License-Identifier: " <> ppLexeme l <$>
+    dullyellow $ ppCommentStart Regular <+> text "SPDX-License-Identifier: " <> ppLexeme l <$>
     vcat (map dullyellow cs) <$>
     dullyellow (text " */")
 
 ppIntList :: [Lexeme Text] -> Doc
 ppIntList = parens . commaSep . map (dullred . ppLexeme)
+
+ppMacroBody :: Doc -> Doc
+ppMacroBody = vcat . punctuate (text " \\") . map text . List.splitOn "\n" . renderS . plain
 
 ppNode :: Node (Lexeme Text) -> Doc
 ppNode = foldFix go
@@ -285,9 +298,7 @@ ppNode = foldFix go
 
     MacroBodyFunCall e -> e
     MacroBodyStmt body ->
-        if False
-           then kwDo <+> body <+> kwWhile <+> text "(0)"
-           else text "do { nothing(); } while (0)  // macros aren't supported well yet"
+        ppMacroBody $ kwDo <+> body <+> kwWhile <+> text "(0)"
 
     PreprocScopedDefine def stmts undef ->
         def <$> ppToplevel stmts <$> undef
@@ -329,6 +340,8 @@ ppNode = foldFix go
         ppToplevel decls <>
         elseBranch
 
+    AttrPrintf fmt ellipsis fun ->
+        kwGnuPrintf <> ppIntList [fmt, ellipsis] <$> fun
     CallbackDecl ty name ->
         ppLexeme ty <+> ppLexeme name
     FunctionPrototype ty name params ->
@@ -422,3 +435,9 @@ ppTranslationUnit decls = (ppToplevel . map ppNode $ decls) <> linebreak
 
 showNode  :: Node (Lexeme Text) -> Text
 showNode = Text.pack . show . ppNode
+
+renderS :: Doc -> String
+renderS = flip displayS "" . renderSmart 0.4 200
+
+render :: Doc -> Text
+render = Text.pack . renderS

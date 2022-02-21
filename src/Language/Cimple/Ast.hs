@@ -18,7 +18,7 @@ module Language.Cimple.Ast
 import           Data.Aeson                   (FromJSON, FromJSON1, ToJSON,
                                                ToJSON1)
 import           Data.Fix                     (Fix)
-import           Data.Functor.Classes         (Eq1, Read1, Show1)
+import           Data.Functor.Classes         (Eq1, Ord1, Read1, Show1)
 import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
 import           GHC.Generics                 (Generic, Generic1)
 
@@ -104,6 +104,7 @@ data NodeF lexeme a
     | TyStd lexeme
     | TyUserDefined lexeme
     -- Functions
+    | AttrPrintf lexeme lexeme a
     | FunctionDecl Scope a
     | FunctionDefn Scope a a
     | FunctionPrototype a lexeme [a]
@@ -113,8 +114,8 @@ data NodeF lexeme a
     -- Constants
     | ConstDecl a lexeme
     | ConstDefn Scope a lexeme a
-    deriving (Show, Read, Eq, Generic, Generic1, Functor, Foldable, Traversable)
-    deriving (Show1, Read1, Eq1) via FunctorClassesDefault (NodeF lexeme)
+    deriving (Show, Read, Eq, Ord, Generic, Generic1, Functor, Foldable, Traversable)
+    deriving (Show1, Read1, Eq1, Ord1) via FunctorClassesDefault (NodeF lexeme)
 
 type Node lexeme = Fix (NodeF lexeme)
 
@@ -133,7 +134,7 @@ data AssignOp
     | AopMod
     | AopLsh
     | AopRsh
-    deriving (Show, Read, Eq, Generic)
+    deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
 
 instance FromJSON AssignOp
 instance ToJSON AssignOp
@@ -157,7 +158,7 @@ data BinaryOp
     | BopGt
     | BopGe
     | BopRsh
-    deriving (Show, Read, Eq, Generic)
+    deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
 
 instance FromJSON BinaryOp
 instance ToJSON BinaryOp
@@ -170,7 +171,7 @@ data UnaryOp
     | UopDeref
     | UopIncr
     | UopDecr
-    deriving (Show, Read, Eq, Generic)
+    deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
 
 instance FromJSON UnaryOp
 instance ToJSON UnaryOp
@@ -181,7 +182,7 @@ data LiteralType
     | Bool
     | String
     | ConstId
-    deriving (Show, Read, Eq, Generic)
+    deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
 
 instance FromJSON LiteralType
 instance ToJSON LiteralType
@@ -189,7 +190,7 @@ instance ToJSON LiteralType
 data Scope
     = Global
     | Static
-    deriving (Show, Read, Eq, Generic)
+    deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
 
 instance FromJSON Scope
 instance ToJSON Scope
@@ -197,8 +198,10 @@ instance ToJSON Scope
 data CommentStyle
     = Regular
     | Doxygen
+    | Section
     | Block
-    deriving (Show, Read, Eq, Generic)
+    | Ignore
+    deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
 
 instance FromJSON CommentStyle
 instance ToJSON CommentStyle

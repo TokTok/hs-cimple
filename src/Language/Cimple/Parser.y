@@ -22,7 +22,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
 %errorhandlertype explist
 %lexer {lexwrap} {L _ Eof _}
 %monad {Alex}
-%tokentype {Lexeme String}
+%tokentype {StringLexeme}
 %token
     ID_CONST			{ L _ IdConst			_ }
     ID_FUNC_TYPE		{ L _ IdFuncType		_ }
@@ -39,6 +39,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     enum			{ L _ KwEnum			_ }
     extern			{ L _ KwExtern			_ }
     for				{ L _ KwFor			_ }
+    GNU_PRINTF			{ L _ KwGnuPrintf		_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
     non_null			{ L _ KwNonNull			_ }
@@ -130,6 +131,9 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     CMT_COMMAND			{ L _ CmtCommand		_ }
     CMT_WORD			{ L _ CmtWord			_ }
     CMT_REF			{ L _ CmtRef			_ }
+    IGN_START			{ L _ IgnStart			_ }
+    IGN_BODY			{ L _ IgnBody			_ }
+    IGN_END			{ L _ IgnEnd			_ }
 
 %left ','
 %right '=' '+=' '-=' '*=' '/=' '%=' '<<=' '>>=' '&=' '^=' '|='
@@ -205,9 +209,10 @@ Comment :: { StringNode }
 Comment
 :	'/*' CommentTokens '*/'					{ Fix $ Comment Regular $1 (reverse $2) $3 }
 |	'/**' CommentTokens '*/'				{ Fix $ Comment Doxygen $1 (reverse $2) $3 }
-|	'/** @{' CommentTokens '*/'				{ Fix $ Comment Block $1 (reverse $2) $3 }
+|	'/** @{' CommentTokens '*/'				{ Fix $ Comment Section $1 (reverse $2) $3 }
 |	'/***' CommentTokens '*/'				{ Fix $ Comment Block $1 (reverse $2) $3 }
 |	'/** @} */'						{ Fix $ CommentSectionEnd $1 }
+|	Ignore							{ $1 }
 
 CommentTokens :: { [StringLexeme] }
 CommentTokens
@@ -247,6 +252,15 @@ CommentWord
 |	'+'							{ $1 }
 |	'-'							{ $1 }
 |	'='							{ $1 }
+
+Ignore :: { StringNode }
+Ignore
+:	IGN_START IgnoreBody IGN_END				{ Fix $ Comment Ignore $1 (reverse $2) $3 }
+
+IgnoreBody :: { [StringLexeme] }
+IgnoreBody
+:	IGN_BODY						{ [$1] }
+|	IgnoreBody IGN_BODY					{ $2 : $1 }
 
 PreprocIfdef(decls)
 :	'#ifdef' ID_CONST decls PreprocElse(decls) '#endif'	{ Fix $ PreprocIfdef $2 (reverse $3) $4 }
@@ -329,6 +343,7 @@ Stmt
 |	ForStmt							{ $1 }
 |	WhileStmt						{ $1 }
 |	DoWhileStmt						{ $1 }
+|	StaticAssert						{ $1 }
 |	AssignExpr ';'						{ Fix $ ExprStmt $1 }
 |	ExprStmt ';'						{ Fix $ ExprStmt $1 }
 |	FunctionCall ';'					{ Fix $ ExprStmt $1 }
@@ -439,7 +454,7 @@ PreprocSafeExpr(x)
 :	LiteralExpr						{ $1 }
 |	'(' x ')'						{ Fix $ ParenExpr $2 }
 |	'(' QualType ')' x %prec CAST				{ Fix $ CastExpr $2 $4 }
-|	sizeof '(' x ')'					{ Fix $ SizeofExpr $3 }
+|	sizeof '(' Expr ')'					{ Fix $ SizeofExpr $3 }
 |	sizeof '(' QualType ')'					{ Fix $ SizeofType $3 }
 
 ConstExpr :: { StringNode }
@@ -579,7 +594,7 @@ Enumerator
 |	EnumeratorName '=' ConstExpr ','			{ Fix $ Enumerator $1 (Just $3) }
 |	Comment							{ $1 }
 
-EnumeratorName :: { Lexeme String }
+EnumeratorName :: { StringLexeme }
 EnumeratorName
 :	ID_CONST						{ $1 }
 |	ID_SUE_TYPE						{ $1 }
@@ -644,6 +659,11 @@ FunctionDecl
 |	static FunctionDeclarator				{ $2 Static }
 |	NonNull FunctionDeclarator				{ $1 $ $2 Global }
 |	NonNull static FunctionDeclarator			{ $1 $ $3 Static }
+|	NonNull Attrs FunctionDeclarator			{ $1 . $2 . $3 $ Global }
+
+Attrs :: { StringNode -> StringNode }
+Attrs
+:	GNU_PRINTF '(' LIT_INTEGER ',' LIT_INTEGER ')'		{ Fix . AttrPrintf $3 $5 }
 
 NonNull :: { StringNode -> StringNode }
 NonNull
