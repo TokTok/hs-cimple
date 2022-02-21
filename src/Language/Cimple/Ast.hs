@@ -18,7 +18,7 @@ module Language.Cimple.Ast
 import           Data.Aeson                   (FromJSON, FromJSON1, ToJSON,
                                                ToJSON1)
 import           Data.Fix                     (Fix)
-import           Data.Functor.Classes         (Ord1, Eq1, Read1, Show1)
+import           Data.Functor.Classes         (Eq1, Ord1, Read1, Show1)
 import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
 import           GHC.Generics                 (Generic, Generic1)
 
