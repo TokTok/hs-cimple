@@ -41,6 +41,23 @@ haskell_library(
     ],
 )
 
+haskell_library(
+    name = "describe-ast",
+    srcs = [
+        "src/Language/Cimple/DescribeAst.hs",
+        "src/Language/Cimple/Flatten.hs",
+    ],
+    src_strip_prefix = "src",
+    visibility = ["//hs-cimple:__subpackages__"],
+    deps = [
+        ":ast",
+        ":lexer",
+        hazel_library("base"),
+        hazel_library("data-fix"),
+        hazel_library("text"),
+    ],
+)
+
 happy_parser(
     name = "Parser",
     src = "src/Language/Cimple/Parser.y",
@@ -71,12 +88,13 @@ happy_parser(
 )
 
 haskell_library(
-    name = "tree_parser",
+    name = "tree-parser",
     srcs = [":TreeParser"],
     src_strip_prefix = "src",
     visibility = ["//hs-cimple:__subpackages__"],
     deps = [
         ":ast",
+        ":describe-ast",
         ":lexer",
         hazel_library("array"),
         hazel_library("base"),
@@ -91,17 +109,20 @@ haskell_library(
         ["src/**/*.*hs"],
         exclude = [
             "src/Language/Cimple/Ast.hs",
+            "src/Language/Cimple/DescribeAst.hs",
+            "src/Language/Cimple/Flatten.hs",
             "src/Language/Cimple/Tokens.hs",
         ],
     ),
     src_strip_prefix = "src",
-    version = "0.0.15",
+    version = "0.0.16",
     visibility = ["//visibility:public"],
     deps = [
         ":ast",
+        ":describe-ast",
         ":lexer",
         ":parser",
-        ":tree_parser",
+        ":tree-parser",
         hazel_library("aeson"),
         hazel_library("ansi-wl-pprint"),
         hazel_library("array"),

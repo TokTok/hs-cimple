@@ -44,10 +44,14 @@ data NodeF lexeme a
     | LicenseDecl lexeme [a]
     | CopyrightDecl lexeme (Maybe lexeme) [lexeme]
     | Comment CommentStyle lexeme [lexeme] lexeme
+    | CommentSection a [a] a
     | CommentSectionEnd lexeme
     | Commented a a
     -- Namespace-like blocks
     | ExternC [a]
+    -- An inferred coherent block of nodes, printed without empty lines
+    -- between them.
+    | Group [a]
     -- Statements
     | CompoundStmt [a]
     | Break

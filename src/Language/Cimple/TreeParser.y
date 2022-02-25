@@ -7,10 +7,14 @@ module Language.Cimple.TreeParser
     , toEither
     ) where
 
-import           Data.Fix              (Fix (..))
-import           Data.Text             (Text)
-import           Language.Cimple.Ast   (CommentStyle (..), Node, NodeF (..))
-import           Language.Cimple.Lexer (Lexeme)
+import           Data.Fix                    (Fix (..))
+import           Data.Text                   (Text)
+import qualified Data.Text                   as Text
+import           Language.Cimple.Ast         (CommentStyle (..), Node,
+                                              NodeF (..))
+import           Language.Cimple.DescribeAst (describeNode, sloc)
+import           Language.Cimple.Lexer       (Lexeme (..))
+import           Language.Cimple.Tokens      (LexemeClass (..))
 }
 
 %name parseTranslationUnit TranslationUnit
@@ -20,18 +24,20 @@ import           Language.Cimple.Lexer (Lexeme)
 %error {parseError}
 %errorhandlertype explist
 %monad {TreeParser}
-%tokentype {TextNode}
+%tokentype {NonTerm}
 %token
     ifndefDefine	{ Fix (PreprocIfndef _ (isDefine -> True) (Fix (PreprocElse []))) }
     ifdefDefine		{ Fix (PreprocIfdef _ (isDefine -> True) (Fix (PreprocElse []))) }
     ifDefine		{ Fix (PreprocIf _ (isDefine -> True) (Fix (PreprocElse []))) }
 
-    includeBlock	{ (isIncludeBlock -> True) }
-
     docComment		{ Fix (Comment Doxygen _ _ _) }
 
     -- Preprocessor
-    preprocInclude	{ Fix (PreprocInclude{}) }
+    localIncludeBlock	{ (isIncludeBlock LitString -> True) }
+    sysIncludeBlock	{ (isIncludeBlock LitSysInclude -> True) }
+    localInclude	{ Fix (PreprocInclude (L _ LitString _)) }
+    sysInclude		{ Fix (PreprocInclude (L _ LitSysInclude _)) }
+
     preprocDefine	{ Fix (PreprocDefine{}) }
     preprocDefineConst	{ Fix (PreprocDefineConst{}) }
     preprocDefineMacro	{ Fix (PreprocDefineMacro{}) }
@@ -50,8 +56,9 @@ import           Language.Cimple.Lexer (Lexeme)
     -- Comments
     licenseDecl		{ Fix (LicenseDecl{}) }
     copyrightDecl	{ Fix (CopyrightDecl{}) }
-    comment		{ Fix (Comment{}) }
+    commentSectionStart	{ Fix (Comment Section _ _ _) }
     commentSectionEnd	{ Fix (CommentSectionEnd{}) }
+    comment		{ Fix (Comment{}) }
     commented		{ Fix (Commented{}) }
     -- Namespace-like blocks
     externC		{ Fix (ExternC{}) }
@@ -121,63 +128,65 @@ import           Language.Cimple.Lexer (Lexeme)
 
 %%
 
-TranslationUnit :: { [TextNode] }
+TranslationUnit :: { [NonTerm] }
 TranslationUnit
 :	licenseDecl docComment Header				{ [$1, Fix $ Commented $2 $3] }
-|	licenseDecl docComment Source				{ $1 : mapHead (Fix . Commented $2)$3 }
+|	licenseDecl docComment Source				{ $1 : mapHead (Fix . Commented $2) $3 }
 |	licenseDecl            Header				{ [$1, $2] }
 |	licenseDecl            Source				{ $1 : $2 }
 
-Header :: { TextNode }
+Header :: { NonTerm }
 Header
 :	preprocIfndef						{% recurse parseHeaderBody $1 }
 
-HeaderBody :: { [TextNode] }
+HeaderBody :: { [NonTerm] }
 HeaderBody
-:	preprocDefine Includes Decls				{ $1 : reverse $2 ++ $3 }
+:	preprocDefine Includes Decls				{ $1 : $2 ++ $3 }
 
-Source :: { [TextNode] }
+Source :: { [NonTerm] }
 Source
-:	Features preprocInclude Includes Decls			{ $1 ++ [$2] ++ reverse $3 ++ $4 }
+:	Features localInclude Includes Decls			{ [Fix (Group $1), $2] ++ $3 ++ $4 }
 
-Features :: { [TextNode] }
+Features :: { [NonTerm] }
 Features
 :								{ [] }
 |	Features IfDefine					{ $2 : $1 }
 
-IfDefine :: { TextNode }
+IfDefine :: { NonTerm }
 IfDefine
 :	ifndefDefine						{ $1 }
 |	ifdefDefine						{ $1 }
 |	ifDefine						{ $1 }
 
-Includes :: { [TextNode] }
+Includes :: { [NonTerm] }
 Includes
 :								{ [] }
-|	Includes Include					{ $2 : $1 }
+|	NonEmptyList(SysInclude)				{ [Fix $ Group $1] }
+|	NonEmptyList(LocalInclude)				{ [Fix $ Group $1] }
+|	NonEmptyList(SysInclude) NonEmptyList(LocalInclude)	{ [Fix $ Group $1, Fix $ Group $2] }
 
-Include :: { TextNode }
-Include
-:	preprocInclude						{ $1 }
-|	includeBlock						{ $1 }
+LocalInclude :: { NonTerm }
+LocalInclude
+:	localInclude						{ $1 }
+|	localIncludeBlock					{ $1 }
 
-Decls :: { [TextNode] }
+SysInclude :: { NonTerm }
+SysInclude
+:	sysInclude						{ $1 }
+|	sysIncludeBlock						{ $1 }
+
+Decls :: { [NonTerm] }
 Decls
-:	DeclList						{ reverse $1 }
+:	List(Decl)						{ $1 }
 
-DeclList :: { [TextNode] }
-DeclList
-:								{ [] }
-|	DeclList Decl						{ $2 : $1 }
-
-Decl :: { TextNode }
+Decl :: { NonTerm }
 Decl
 :	comment							{ $1 }
-|	commentSectionEnd					{ $1 }
+|	commentSectionStart Decls commentSectionEnd		{ Fix $ CommentSection $1 $2 $3 }
 |	CommentableDecl						{ $1 }
 |	docComment CommentableDecl				{ Fix $ Commented $1 $2 }
 
-CommentableDecl :: { TextNode }
+CommentableDecl :: { NonTerm }
 CommentableDecl
 :	functionDecl						{ $1 }
 |	functionDefn						{ $1 }
@@ -200,9 +209,20 @@ CommentableDecl
 |	typedefFunction						{ $1 }
 |	IfDefine						{ $1 }
 
+List(x)
+:								{ [] }
+|	NonEmptyList(x)						{ $1 }
+
+NonEmptyList(x)
+:	NonEmptyList_(x)					{ reverse $1 }
+
+NonEmptyList_(x)
+:	x							{ [$1] }
+|	NonEmptyList_(x) x					{ $2 : $1 }
+
 {
 type TextLexeme = Lexeme Text
-type TextNode = Node TextLexeme
+type NonTerm = Node TextLexeme
 
 newtype TreeParser a = TreeParser { toEither :: Either String a }
     deriving (Functor, Applicative, Monad)
@@ -216,19 +236,19 @@ mapHead _ [] = []
 mapHead f (x:xs) = f x : xs
 
 
-isDefine :: [TextNode] -> Bool
+isDefine :: [NonTerm] -> Bool
 isDefine (Fix PreprocUndef{}:d)     = isDefine d
 isDefine [Fix PreprocDefine{}]      = True
 isDefine [Fix PreprocDefineConst{}] = True
 isDefine _                          = False
 
-isIncludeBlock :: TextNode -> Bool
-isIncludeBlock tk@(Fix PreprocIfndef{}) = isPreproc tk && hasInclude tk
-isIncludeBlock tk@(Fix PreprocIfdef{})  = isPreproc tk && hasInclude tk
-isIncludeBlock tk@(Fix PreprocIf{})     = isPreproc tk && hasInclude tk
-isIncludeBlock _                        = False
+isIncludeBlock :: LexemeClass -> NonTerm -> Bool
+isIncludeBlock style tk@(Fix PreprocIfndef{}) = isPreproc tk && hasInclude style tk
+isIncludeBlock style tk@(Fix PreprocIfdef{})  = isPreproc tk && hasInclude style tk
+isIncludeBlock style tk@(Fix PreprocIf{})     = isPreproc tk && hasInclude style tk
+isIncludeBlock _ _                            = False
 
-isPreproc :: TextNode -> Bool
+isPreproc :: NonTerm -> Bool
 isPreproc (Fix PreprocInclude{})        = True
 isPreproc (Fix PreprocUndef{})          = True
 isPreproc (Fix PreprocDefine{})         = True
@@ -239,29 +259,32 @@ isPreproc (Fix (PreprocIfndef _ td ed)) = all isPreproc td && isPreproc ed
 isPreproc (Fix (PreprocElse ed))        = all isPreproc ed
 isPreproc _                             = False
 
-hasInclude :: TextNode -> Bool
-hasInclude (Fix PreprocInclude{})        = True
-hasInclude (Fix (PreprocIf _ td ed))     = any hasInclude td || hasInclude ed
-hasInclude (Fix (PreprocIfdef _ td ed))  = any hasInclude td || hasInclude ed
-hasInclude (Fix (PreprocIfndef _ td ed)) = any hasInclude td || hasInclude ed
-hasInclude (Fix (PreprocElse ed))        = any hasInclude ed
-hasInclude _                             = False
+hasInclude :: LexemeClass -> NonTerm -> Bool
+hasInclude style (Fix (PreprocInclude (L _ c _))) = c == style
+hasInclude style (Fix (PreprocIf _ td ed))        = any (hasInclude style) td || (hasInclude style) ed
+hasInclude style (Fix (PreprocIfdef _ td ed))     = any (hasInclude style) td || (hasInclude style) ed
+hasInclude style (Fix (PreprocIfndef _ td ed))    = any (hasInclude style) td || (hasInclude style) ed
+hasInclude style (Fix (PreprocElse ed))           = any (hasInclude style) ed
+hasInclude _ _                                    = False
 
 
-recurse :: ([TextNode] -> TreeParser [TextNode]) -> TextNode -> TreeParser TextNode
+recurse :: ([NonTerm] -> TreeParser [NonTerm]) -> NonTerm -> TreeParser NonTerm
 recurse f (Fix (ExternC ds))          = Fix <$> (ExternC <$> f ds)
-recurse f (Fix (PreprocIf c t e))     = Fix <$> (PreprocIf c <$> f t <*> recurse f e)
-recurse f (Fix (PreprocIfdef c t e))  = Fix <$> (PreprocIfdef c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocIf     c t e)) = Fix <$> (PreprocIf     c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocIfdef  c t e)) = Fix <$> (PreprocIfdef  c <$> f t <*> recurse f e)
 recurse f (Fix (PreprocIfndef c t e)) = Fix <$> (PreprocIfndef c <$> f t <*> recurse f e)
 recurse f (Fix (PreprocIfndef c t e)) = Fix <$> (PreprocIfndef c <$> f t <*> recurse f e)
-recurse f (Fix (PreprocElif c t e))   = Fix <$> (PreprocElif c <$> f t <*> recurse f e)
-recurse f (Fix (PreprocElse []))      = return $ Fix $ PreprocElse []
-recurse f (Fix (PreprocElse e))       = Fix <$> (PreprocElse <$> f e)
+recurse f (Fix (PreprocElif   c t e)) = Fix <$> (PreprocElif   c <$> f t <*> recurse f e)
+recurse f (Fix (PreprocElse      [])) = Fix <$> pure (PreprocElse [])
+recurse f (Fix (PreprocElse       e)) = Fix <$> (PreprocElse     <$>                 f e)
 recurse _ ns                          = fail $ "TreeParser.recurse: " <> show ns
 
+failAt :: NonTerm -> String -> TreeParser a
+failAt n msg =
+    fail $ Text.unpack (sloc "" n) <> ": unexpected " <> describeNode n <> msg
 
-parseError :: ([TextNode], [String]) -> TreeParser a
-parseError ([], options)  = fail $ "end of file; expected one of " <> show options
-parseError (n:_, [])      = fail $ show n <> "; expected end of file"
-parseError (n:_, options) = fail $ show n <> "; expected one of " <> show options
+parseError :: ([NonTerm], [String]) -> TreeParser a
+parseError ([], options)  = fail $ " end of file; expected one of " <> show options
+parseError (n:_, [])      = failAt n "; expected end of file"
+parseError (n:_, options) = failAt n $ "; expected one of " <> show options
 }

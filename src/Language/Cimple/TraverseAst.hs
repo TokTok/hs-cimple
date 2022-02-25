@@ -23,6 +23,8 @@ import           Data.Foldable         (traverse_)
 import           Language.Cimple.Ast   (Node, NodeF (..))
 import           Language.Cimple.Lexer (Lexeme (..))
 
+{-# ANN module "HLint: ignore Reduce duplication" #-}
+
 class TraverseAst text a where
     traverseFileAst
         :: Applicative f
@@ -151,6 +153,11 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse contents
             _ <- recurse end
             pure ()
+        CommentSection start decls end -> do
+            _ <- recurse start
+            _ <- recurse decls
+            _ <- recurse end
+            pure ()
         CommentSectionEnd comment -> do
             _ <- recurse comment
             pure ()
@@ -159,6 +166,8 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse subject
             pure ()
         ExternC decls ->
+            recurse decls
+        Group decls ->
             recurse decls
         CompoundStmt stmts ->
             recurse stmts

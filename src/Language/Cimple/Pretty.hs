@@ -1,7 +1,6 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections     #-}
 module Language.Cimple.Pretty
     ( plain
     , render
@@ -134,7 +133,7 @@ ppInitialiserList :: [Doc] -> Doc
 ppInitialiserList l = lbrace <+> commaSep l <+> rbrace
 
 ppParamList :: [Doc] -> Doc
-ppParamList = parens . commaSep
+ppParamList = parens . indent 0 . commaSep
 
 ppFunctionPrototype
     :: Doc
@@ -226,7 +225,14 @@ ppIntList :: [Lexeme Text] -> Doc
 ppIntList = parens . commaSep . map (dullred . ppLexeme)
 
 ppMacroBody :: Doc -> Doc
-ppMacroBody = vcat . punctuate (text " \\") . map text . List.splitOn "\n" . renderS . plain
+ppMacroBody =
+    vcat
+    . map dullmagenta
+    . punctuate (text " \\")
+    . map text
+    . List.splitOn "\n"
+    . renderS
+    . plain
 
 ppNode :: Node (Lexeme Text) -> Doc
 ppNode = foldFix go
@@ -244,8 +250,10 @@ ppNode = foldFix go
         text " * Copyright © " <> ppLexeme from <+>
         ppCommentBody owner
 
-    Comment style _ cs e ->
-        ppComment style cs e
+    Comment style _ cs end ->
+        ppComment style cs end
+    CommentSection start decls end ->
+        start <$> line <> ppToplevel decls <> line <$> end
     CommentSectionEnd cs ->
         dullyellow $ ppLexeme cs
     Commented c d ->
@@ -294,11 +302,13 @@ ppNode = foldFix go
         text "}" <$>
         dullmagenta (text "#endif")
 
+    Group decls -> vcat decls
+
     MacroParam l -> ppLexeme l
 
     MacroBodyFunCall e -> e
     MacroBodyStmt body ->
-        ppMacroBody $ kwDo <+> body <+> kwWhile <+> text "(0)"
+        kwDo <+> body <+> kwWhile <+> text "(0)"
 
     PreprocScopedDefine def stmts undef ->
         def <$> ppToplevel stmts <$> undef
@@ -310,7 +320,7 @@ ppNode = foldFix go
     PreprocDefineConst name value ->
         dullmagenta $ text "#define" <+> ppLexeme name <+> value
     PreprocDefineMacro name params body ->
-        dullmagenta $ text "#define" <+> ppLexeme name <> ppParamList params <+> body
+        ppMacroBody $ text "#define" <+> ppLexeme name <> ppParamList params <+> body
     PreprocUndef name ->
         dullmagenta $ text "#undef" <+> ppLexeme name
 
@@ -437,7 +447,7 @@ showNode  :: Node (Lexeme Text) -> Text
 showNode = Text.pack . show . ppNode
 
 renderS :: Doc -> String
-renderS = flip displayS "" . renderSmart 0.4 200
+renderS = flip displayS "" . renderSmart 1 100
 
 render :: Doc -> Text
 render = Text.pack . renderS
