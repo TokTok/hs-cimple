@@ -427,7 +427,7 @@ ppNode = foldFix go
     IfStmt cond t e               -> ppIfStmt cond t e
     ForStmt i c n body            -> ppForStmt i c n body
     Default s                     -> kwDefault <> colon <+> s
-    Label l s                     -> ppLexeme l <> colon <$> s
+    Label l s                     -> indent (-99) (line <> ppLexeme l <> colon) <$> s
     ExprStmt e                    -> e <> semi
     Goto l                        -> kwGoto <+> ppLexeme l <> semi
     Case e s                      -> kwCase <+> e <> colon <+> s

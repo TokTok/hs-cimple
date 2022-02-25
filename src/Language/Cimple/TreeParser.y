@@ -8,6 +8,7 @@ module Language.Cimple.TreeParser
     ) where
 
 import           Data.Fix                    (Fix (..))
+import           Data.Maybe                  (maybeToList)
 import           Data.Text                   (Text)
 import qualified Data.Text                   as Text
 import           Language.Cimple.Ast         (CommentStyle (..), Node,
@@ -145,12 +146,12 @@ HeaderBody
 
 Source :: { [NonTerm] }
 Source
-:	Features localInclude Includes Decls			{ [Fix (Group $1), $2] ++ $3 ++ $4 }
+:	Features localInclude Includes Decls			{ maybeToList $1 ++ [$2] ++ $3 ++ $4 }
 
-Features :: { [NonTerm] }
+Features :: { Maybe NonTerm }
 Features
-:								{ [] }
-|	Features IfDefine					{ $2 : $1 }
+:								{ Nothing }
+|	NonEmptyList(IfDefine)					{ Just $ Fix $ Group $1 }
 
 IfDefine :: { NonTerm }
 IfDefine
