@@ -153,21 +153,21 @@ import           Language.Cimple.Tokens (LexemeClass (..))
 
 %%
 
-TranslationUnit :: { [StringNode] }
+TranslationUnit :: { [NonTerm] }
 TranslationUnit
 :	ToplevelDecls						{ reverse $1 }
 |	LicenseDecl ToplevelDecls				{ $1 : reverse $2 }
 
-LicenseDecl :: { StringNode }
+LicenseDecl :: { NonTerm }
 LicenseDecl
 :	'/*' 'License' CMT_WORD '\n' CopyrightDecls '*/'	{ Fix $ LicenseDecl $3 (reverse $5) }
 
-CopyrightDecls :: { [StringNode] }
+CopyrightDecls :: { [NonTerm] }
 CopyrightDecls
 :	CopyrightDecl						{ [$1] }
 |	CopyrightDecls CopyrightDecl				{ $2 : $1 }
 
-CopyrightDecl :: { StringNode }
+CopyrightDecl :: { NonTerm }
 CopyrightDecl
 :	' * ' 'Copyright' CopyrightDates CopyrightOwner '\n'	{ Fix $ CopyrightDecl (fst $3) (snd $3) $4 }
 
@@ -180,12 +180,12 @@ CopyrightOwner :: { [StringLexeme] }
 CopyrightOwner
 :	CMT_WORD CommentWords					{ $1 : reverse $2 }
 
-ToplevelDecls :: { [StringNode] }
+ToplevelDecls :: { [NonTerm] }
 ToplevelDecls
 :	ToplevelDecl						{ [$1] }
 |	ToplevelDecls ToplevelDecl				{ $2 : $1 }
 
-ToplevelDecl :: { StringNode }
+ToplevelDecl :: { NonTerm }
 ToplevelDecl
 :	AggregateDecl						{ $1 }
 |	Comment							{ $1 }
@@ -201,11 +201,11 @@ ToplevelDecl
 |	StaticAssert						{ $1 }
 |	TypedefDecl						{ $1 }
 
-StaticAssert :: { StringNode }
+StaticAssert :: { NonTerm }
 StaticAssert
 :	static_assert '(' ConstExpr ',' LIT_STRING ')' ';'	{ Fix $ StaticAssert $3 $5 }
 
-Comment :: { StringNode }
+Comment :: { NonTerm }
 Comment
 :	'/*' CommentTokens '*/'					{ Fix $ Comment Regular $1 (reverse $2) $3 }
 |	'/**' CommentTokens '*/'				{ Fix $ Comment Doxygen $1 (reverse $2) $3 }
@@ -253,7 +253,7 @@ CommentWord
 |	'-'							{ $1 }
 |	'='							{ $1 }
 
-Ignore :: { StringNode }
+Ignore :: { NonTerm }
 Ignore
 :	IGN_START IgnoreBody IGN_END				{ Fix $ Comment Ignore $1 (reverse $2) $3 }
 
@@ -277,47 +277,47 @@ PreprocElse(decls)
 :								{ Fix $ PreprocElse [] }
 |	'#else' decls						{ Fix $ PreprocElse (reverse $2) }
 
-PreprocInclude :: { StringNode }
+PreprocInclude :: { NonTerm }
 PreprocInclude
 :	'#include' LIT_STRING					{ Fix $ PreprocInclude $2 }
 |	'#include' LIT_SYS_INCLUDE				{ Fix $ PreprocInclude $2 }
 
-PreprocDefine :: { StringNode }
+PreprocDefine :: { NonTerm }
 PreprocDefine
 :	'#define' ID_CONST '\n'					{ Fix $ PreprocDefine $2 }
 |	'#define' ID_CONST PreprocSafeExpr(ConstExpr) '\n'	{ Fix $ PreprocDefineConst $2 $3 }
 |	'#define' ID_CONST MacroParamList MacroBody '\n'	{ Fix $ PreprocDefineMacro $2 $3 $4 }
 
-PreprocUndef :: { StringNode }
+PreprocUndef :: { NonTerm }
 PreprocUndef
 :	'#undef' ID_CONST					{ Fix $ PreprocUndef $2 }
 
-PreprocConstExpr :: { StringNode }
+PreprocConstExpr :: { NonTerm }
 PreprocConstExpr
 :	PureExpr(PreprocConstExpr)				{ $1 }
 |	'defined' '(' ID_CONST ')'				{ Fix $ PreprocDefined $3 }
 
-MacroParamList :: { [StringNode] }
+MacroParamList :: { [NonTerm] }
 MacroParamList
 :	'(' ')'							{ [] }
 |	'(' MacroParams ')'					{ reverse $2 }
 |	'(' MacroParams ',' '...' ')'				{ reverse $ Fix Ellipsis : $2 }
 
-MacroParams :: { [StringNode] }
+MacroParams :: { [NonTerm] }
 MacroParams
 :	MacroParam						{ [$1] }
 |	MacroParams ',' MacroParam				{ $3 : $1 }
 
-MacroParam :: { StringNode }
+MacroParam :: { NonTerm }
 MacroParam
 :	ID_VAR							{ Fix $ MacroParam $1 }
 
-MacroBody :: { StringNode }
+MacroBody :: { NonTerm }
 MacroBody
 :	do CompoundStmt while '(' LIT_INTEGER ')'		{% macroBodyStmt $2 $5 }
 |	FunctionCall						{ Fix $ MacroBodyFunCall $1 }
 
-ExternC :: { StringNode }
+ExternC :: { NonTerm }
 ExternC
 :	'#ifdef' ID_CONST
 	extern LIT_STRING '{'
@@ -327,12 +327,12 @@ ExternC
 	'}'
 	'#endif'						{% externC $2 $4 (reverse $7) $9 }
 
-Stmts :: { [StringNode] }
+Stmts :: { [NonTerm] }
 Stmts
 :	Stmt							{ [$1] }
 |	Stmts Stmt						{ $2 : $1 }
 
-Stmt :: { StringNode }
+Stmt :: { NonTerm }
 Stmt
 :	PreprocIfdef(Stmts)					{ $1 }
 |	PreprocIf(Stmts)					{ $1 }
@@ -356,96 +356,96 @@ Stmt
 |	switch '(' Expr ')' '{' SwitchCases '}'			{ Fix $ SwitchStmt $3 (reverse $6) }
 |	Comment							{ $1 }
 
-IfStmt :: { StringNode }
+IfStmt :: { NonTerm }
 IfStmt
 :	if '(' Expr ')' CompoundStmt				{ Fix $ IfStmt $3 $5 Nothing }
 |	if '(' Expr ')' CompoundStmt else IfStmt		{ Fix $ IfStmt $3 $5 (Just $7) }
 |	if '(' Expr ')' CompoundStmt else CompoundStmt		{ Fix $ IfStmt $3 $5 (Just $7) }
 
-ForStmt :: { StringNode }
+ForStmt :: { NonTerm }
 ForStmt
 :	for '(' ForInit Expr ';' ForNext ')' CompoundStmt	{ Fix $ ForStmt $3 $4 $6 $8 }
 
-ForInit :: { StringNode }
+ForInit :: { NonTerm }
 ForInit
 :	AssignExpr ';'						{ Fix $ ExprStmt $1 }
 |	VarDeclStmt						{ $1 }
 
-ForNext :: { StringNode }
+ForNext :: { NonTerm }
 ForNext
 :	ExprStmt						{ $1 }
 |	AssignExpr						{ $1 }
 
-WhileStmt :: { StringNode }
+WhileStmt :: { NonTerm }
 WhileStmt
 :	while '(' Expr ')' CompoundStmt				{ Fix $ WhileStmt $3 $5 }
 
-DoWhileStmt :: { StringNode }
+DoWhileStmt :: { NonTerm }
 DoWhileStmt
 :	do CompoundStmt while '(' Expr ')' ';'			{ Fix $ DoWhileStmt $2 $5 }
 
-SwitchCases :: { [StringNode] }
+SwitchCases :: { [NonTerm] }
 SwitchCases
 :	SwitchCase						{ [$1] }
 |	SwitchCases SwitchCase					{ $2 : $1 }
 
-SwitchCase :: { StringNode }
+SwitchCase :: { NonTerm }
 SwitchCase
 :	case Expr ':' SwitchCaseBody				{ Fix $ Case $2 $4 }
 |	default ':' SwitchCaseBody				{ Fix $ Default $3 }
 
-SwitchCaseBody :: { StringNode }
+SwitchCaseBody :: { NonTerm }
 SwitchCaseBody
 :	CompoundStmt						{ $1 }
 |	SwitchCase						{ $1 }
 |	return Expr ';'						{ Fix $ Return (Just $2) }
 
-DeclStmt :: { StringNode }
+DeclStmt :: { NonTerm }
 DeclStmt
 :	VarDeclStmt						{ $1 }
 |	VLA '(' QualType ',' ID_VAR ',' Expr ')' ';'		{ Fix $ VLA $3 $5 $7 }
 
-VarDeclStmt :: { StringNode }
+VarDeclStmt :: { NonTerm }
 VarDeclStmt
 :	VarDecl '=' InitialiserExpr ';'				{ Fix $ VarDeclStmt $1 (Just $3) }
 |	VarDecl ';'						{ Fix $ VarDeclStmt $1 Nothing }
 
-VarDecl :: { StringNode }
+VarDecl :: { NonTerm }
 VarDecl
 :	QualType ID_VAR DeclSpecArrays				{ Fix $ VarDecl $1 $2 $3 }
 |	ID_FUNC_TYPE '*' ID_VAR DeclSpecArrays			{ Fix $ VarDecl (Fix $ TyPointer $ Fix $ TyFunc $1) $3 $4 }
 
-DeclSpecArrays :: { [StringNode] }
+DeclSpecArrays :: { [NonTerm] }
 DeclSpecArrays
 :								{ [] }
 |	DeclSpecArrays DeclSpecArray				{ $2 : $1 }
 
-DeclSpecArray :: { StringNode }
+DeclSpecArray :: { NonTerm }
 DeclSpecArray
 :	'[' ']'							{ Fix $ DeclSpecArray Nothing }
 |	'[' Expr ']'						{ Fix $ DeclSpecArray (Just $2) }
 
-InitialiserExpr :: { StringNode }
+InitialiserExpr :: { NonTerm }
 InitialiserExpr
 :	InitialiserList						{ Fix $ InitialiserList $1 }
 |	Expr							{ $1 }
 
-InitialiserList :: { [StringNode] }
+InitialiserList :: { [NonTerm] }
 InitialiserList
 :	'{' Initialisers '}'					{ reverse $2 }
 |	'{' Initialisers ',' '}'				{ reverse $2 }
 
-Initialisers :: { [StringNode] }
+Initialisers :: { [NonTerm] }
 Initialisers
 :	Initialiser						{ [$1] }
 |	Initialisers ',' Initialiser				{ $3 : $1 }
 
-Initialiser :: { StringNode }
+Initialiser :: { NonTerm }
 Initialiser
 :	Expr							{ $1 }
 |	InitialiserList						{ Fix $ InitialiserList $1 }
 
-CompoundStmt :: { StringNode }
+CompoundStmt :: { NonTerm }
 CompoundStmt
 :	'{' Stmts '}'						{ Fix $ CompoundStmt (reverse $2) }
 
@@ -457,7 +457,7 @@ PreprocSafeExpr(x)
 |	sizeof '(' Expr ')'					{ Fix $ SizeofExpr $3 }
 |	sizeof '(' QualType ')'					{ Fix $ SizeofType $3 }
 
-ConstExpr :: { StringNode }
+ConstExpr :: { NonTerm }
 ConstExpr
 :	PureExpr(ConstExpr)					{ $1 }
 
@@ -487,7 +487,7 @@ PureExpr(x)
 |	'-' x %prec NEG						{ Fix $ UnaryExpr UopMinus $2 }
 |	'&' x %prec ADDRESS					{ Fix $ UnaryExpr UopAddress $2 }
 
-LiteralExpr :: { StringNode }
+LiteralExpr :: { NonTerm }
 LiteralExpr
 :	StringLiteralExpr					{ $1 }
 |	LIT_CHAR						{ Fix $ LiteralExpr Char $1 }
@@ -496,12 +496,12 @@ LiteralExpr
 |	LIT_TRUE						{ Fix $ LiteralExpr Bool $1 }
 |	ID_CONST						{ Fix $ LiteralExpr ConstId $1 }
 
-StringLiteralExpr :: { StringNode }
+StringLiteralExpr :: { NonTerm }
 StringLiteralExpr
 :	LIT_STRING						{ Fix $ LiteralExpr String $1 }
 |	StringLiteralExpr LIT_STRING				{ $1 }
 
-LhsExpr :: { StringNode }
+LhsExpr :: { NonTerm }
 LhsExpr
 :	ID_VAR							{ Fix $ VarExpr $1 }
 |	'*' LhsExpr %prec DEREF					{ Fix $ UnaryExpr UopDeref $2 }
@@ -509,7 +509,7 @@ LhsExpr
 |	LhsExpr '->' ID_VAR					{ Fix $ PointerAccess $1 $3 }
 |	LhsExpr '[' Expr ']'					{ Fix $ ArrayAccess $1 $3 }
 
-Expr :: { StringNode }
+Expr :: { NonTerm }
 Expr
 :	LhsExpr							{ $1 }
 |	ExprStmt						{ $1 }
@@ -518,11 +518,11 @@ Expr
 |	PureExpr(Expr)						{ $1 }
 
 -- Allow `(Type){0}` to set struct values to all-zero.
-CompoundLiteral :: { StringNode }
+CompoundLiteral :: { NonTerm }
 CompoundLiteral
 :	'(' QualType ')' '{' ZeroInitExpr '}'			{ Fix $ CompoundLiteral $2 $5 }
 
-ZeroInitExpr :: { StringNode }
+ZeroInitExpr :: { NonTerm }
 ZeroInitExpr
 :	ID_VAR							{ Fix $ VarExpr $1 }
 |	LIT_CHAR						{ Fix $ LiteralExpr Char $1 }
@@ -531,7 +531,7 @@ ZeroInitExpr
 |	ID_CONST						{ Fix $ LiteralExpr ConstId $1 }
 |	'{' ZeroInitExpr '}'					{ Fix $ InitialiserList [$2] }
 
-AssignExpr :: { StringNode }
+AssignExpr :: { NonTerm }
 AssignExpr
 :	LhsExpr AssignOperator Expr				{ Fix $ AssignExpr $1 $2 $3 }
 
@@ -549,46 +549,46 @@ AssignOperator
 |	'<<='							{ AopLsh     }
 |	'>>='							{ AopRsh     }
 
-ExprStmt :: { StringNode }
+ExprStmt :: { NonTerm }
 ExprStmt
 :	'++' Expr						{ Fix $ UnaryExpr UopIncr $2 }
 |	'--' Expr						{ Fix $ UnaryExpr UopDecr $2 }
 
-FunctionCall :: { StringNode }
+FunctionCall :: { NonTerm }
 FunctionCall
 :	Expr ArgList						{ Fix $ FunctionCall $1 $2 }
 
-ArgList :: { [StringNode] }
+ArgList :: { [NonTerm] }
 ArgList
 :	'(' ')'							{ [] }
 |	'(' Args ')'						{ reverse $2 }
 
-Args :: { [StringNode] }
+Args :: { [NonTerm] }
 Args
 :	Arg							{ [$1] }
 |	Args ',' Arg						{ $3 : $1 }
 
-Arg :: { StringNode }
+Arg :: { NonTerm }
 Arg
 :	Expr							{ $1 }
 |	Comment Expr						{ Fix $ CommentExpr $1 $2 }
 
-EnumDecl :: { StringNode }
+EnumDecl :: { NonTerm }
 EnumDecl
 :	enum ID_SUE_TYPE EnumeratorList ';'			{ Fix $ EnumConsts (Just $2) $3 }
 |	enum             EnumeratorList ';'			{ Fix $ EnumConsts Nothing $2 }
 |	typedef enum ID_SUE_TYPE EnumeratorList ID_SUE_TYPE ';'	{ Fix $ EnumDecl $3 $4 $5 }
 
-EnumeratorList :: { [StringNode] }
+EnumeratorList :: { [NonTerm] }
 EnumeratorList
 :	'{' Enumerators '}'					{ reverse $2 }
 
-Enumerators :: { [StringNode] }
+Enumerators :: { [NonTerm] }
 Enumerators
 :	Enumerator						{ [$1] }
 |	Enumerators Enumerator					{ $2 : $1 }
 
-Enumerator :: { StringNode }
+Enumerator :: { NonTerm }
 Enumerator
 :	EnumeratorName ','					{ Fix $ Enumerator $1 Nothing }
 |	EnumeratorName '=' ConstExpr ','			{ Fix $ Enumerator $1 (Just $3) }
@@ -599,38 +599,38 @@ EnumeratorName
 :	ID_CONST						{ $1 }
 |	ID_SUE_TYPE						{ $1 }
 
-AggregateDecl :: { StringNode }
+AggregateDecl :: { NonTerm }
 AggregateDecl
 :	AggregateType ';'					{ Fix $ AggregateDecl $1 }
 |	typedef AggregateType ID_SUE_TYPE ';'			{ Fix $ Typedef $2 $3 }
 
-AggregateType :: { StringNode }
+AggregateType :: { NonTerm }
 AggregateType
 :	struct ID_SUE_TYPE '{' MemberDeclList '}'		{ Fix $ Struct $2 $4 }
 |	union ID_SUE_TYPE '{' MemberDeclList '}'		{ Fix $ Union $2 $4 }
 
-MemberDeclList :: { [StringNode] }
+MemberDeclList :: { [NonTerm] }
 MemberDeclList
 :	MemberDecls						{ reverse $1 }
 
-MemberDecls :: { [StringNode] }
+MemberDecls :: { [NonTerm] }
 MemberDecls
 :	MemberDecl						{ [$1] }
 |	MemberDecls MemberDecl					{ $2 : $1 }
 
-MemberDecl :: { StringNode }
+MemberDecl :: { NonTerm }
 MemberDecl
 :	VarDecl ';'						{ Fix $ MemberDecl $1 Nothing }
 |	VarDecl ':' LIT_INTEGER ';'				{ Fix $ MemberDecl $1 (Just $3) }
 |	PreprocIfdef(MemberDeclList)				{ $1 }
 |	Comment							{ $1 }
 
-TypedefDecl :: { StringNode }
+TypedefDecl :: { NonTerm }
 TypedefDecl
 :	typedef QualType ID_SUE_TYPE ';'			{ Fix $ Typedef $2 $3 }
 |	typedef FunctionPrototype(ID_FUNC_TYPE) ';'		{ Fix $ TypedefFunction $2 }
 
-QualType :: { StringNode }
+QualType :: { NonTerm }
 QualType
 :	LeafType						{                               $1 }
 |	LeafType '*'						{                     tyPointer $1 }
@@ -646,14 +646,14 @@ QualType
 |	const LeafType '*' const				{            tyConst (tyPointer (tyConst $2)) }
 |	const LeafType '*' const '*'				{ tyPointer (tyConst (tyPointer (tyConst $2))) }
 
-LeafType :: { StringNode }
+LeafType :: { NonTerm }
 LeafType
 :	struct ID_SUE_TYPE					{ Fix $ TyStruct $2 }
 |	void							{ Fix $ TyStd $1 }
 |	ID_STD_TYPE						{ Fix $ TyStd $1 }
 |	ID_SUE_TYPE						{ Fix $ TyUserDefined $1 }
 
-FunctionDecl :: { StringNode }
+FunctionDecl :: { NonTerm }
 FunctionDecl
 :	FunctionDeclarator					{ $1 Global }
 |	static FunctionDeclarator				{ $2 Static }
@@ -661,11 +661,11 @@ FunctionDecl
 |	NonNull static FunctionDeclarator			{ $1 $ $3 Static }
 |	NonNull Attrs FunctionDeclarator			{ $1 . $2 . $3 $ Global }
 
-Attrs :: { StringNode -> StringNode }
+Attrs :: { NonTerm -> NonTerm }
 Attrs
 :	GNU_PRINTF '(' LIT_INTEGER ',' LIT_INTEGER ')'		{ Fix . AttrPrintf $3 $5 }
 
-NonNull :: { StringNode -> StringNode }
+NonNull :: { NonTerm -> NonTerm }
 NonNull
 :	non_null '(' ')'					{ Fix . NonNull [] [] }
 |	nullable '(' Ints ')'					{ Fix . NonNull [] $3 }
@@ -680,13 +680,13 @@ IntList
 :	LIT_INTEGER						{ [$1] }
 |	IntList ',' LIT_INTEGER					{ $3 : $1 }
 
-FunctionDeclarator :: { Scope -> StringNode }
+FunctionDeclarator :: { Scope -> NonTerm }
 FunctionDeclarator
 :	FunctionPrototype(ID_VAR) ';'				{ \s -> Fix $ FunctionDecl s $1 }
 |	FunctionPrototype(ID_VAR) CompoundStmt			{ \s -> Fix $ FunctionDefn s $1 $2 }
 |	CallbackDecl ';'					{ \s -> Fix $ FunctionDecl s $1 }
 
-CallbackDecl :: { StringNode }
+CallbackDecl :: { NonTerm }
 CallbackDecl
 :	ID_FUNC_TYPE ID_VAR					{ Fix $ CallbackDecl $1 $2 }
 
@@ -694,23 +694,23 @@ FunctionPrototype(id)
 :	QualType id FunctionParamList				{ Fix $ FunctionPrototype $1 $2 $3 }
 |	ID_FUNC_TYPE '*' id FunctionParamList			{ Fix $ FunctionPrototype (Fix $ TyPointer $ Fix $ TyFunc $1) $3 $4 }
 
-FunctionParamList :: { [StringNode] }
+FunctionParamList :: { [NonTerm] }
 FunctionParamList
 :	'(' ')'							{ [] }
 |	'(' void ')'						{ [Fix $ TyStd $2] }
 |	'(' FunctionParams ')'					{ reverse $2 }
 |	'(' FunctionParams ',' '...' ')'			{ reverse $ Fix Ellipsis : $2 }
 
-FunctionParams :: { [StringNode] }
+FunctionParams :: { [NonTerm] }
 FunctionParams
 :	FunctionParam						{ [$1] }
 |	FunctionParams ',' FunctionParam			{ $3 : $1 }
 
-FunctionParam :: { StringNode }
+FunctionParam :: { NonTerm }
 FunctionParam
 :	VarDecl							{ $1 }
 
-ConstDecl :: { StringNode }
+ConstDecl :: { NonTerm }
 ConstDecl
 :	extern const LeafType ID_VAR ';'			{ Fix $ ConstDecl $3 $4 }
 |	const LeafType ID_VAR '=' InitialiserExpr ';'		{ Fix $ ConstDefn Global $2 $3 $5 }
@@ -718,15 +718,15 @@ ConstDecl
 
 {
 type StringLexeme = Lexeme String
-type StringNode = Node StringLexeme
+type NonTerm = Node StringLexeme
 
-tyPointer, tyConst :: StringNode -> StringNode
+tyPointer, tyConst :: NonTerm -> NonTerm
 tyPointer = Fix . TyPointer
 tyConst = Fix . TyConst
 
 parseError :: Show text => (Lexeme text, [String]) -> Alex a
 parseError (L (AlexPn _ line col) c t, options) =
-    alexError $ show line <> ":" <> show col <> ": Parse error near " <> show c <> ": "
+    alexError $ ":" <> show line <> ":" <> show col <> ": Parse error near " <> show c <> ": "
         <> show t <> "; expected one of " <> show options
 
 lexwrap :: (Lexeme String -> Alex a) -> Alex a
@@ -735,9 +735,9 @@ lexwrap = (alexMonadScan >>=)
 externC
     :: Lexeme String
     -> Lexeme String
-    -> [StringNode]
+    -> [NonTerm]
     -> Lexeme String
-    -> Alex StringNode
+    -> Alex NonTerm
 externC (L _ _ "__cplusplus") (L _ _ "\"C\"") decls (L _ _ "__cplusplus") =
     return $ Fix $ ExternC decls
 externC _ lang _ _ =
@@ -745,9 +745,9 @@ externC _ lang _ _ =
         <> ": extern \"C\" declaration invalid (did you spell __cplusplus right?)"
 
 macroBodyStmt
-    :: StringNode
+    :: NonTerm
     -> Lexeme String
-    -> Alex StringNode
+    -> Alex NonTerm
 macroBodyStmt decls (L _ _ "0") =
     return $ Fix $ MacroBodyStmt decls
 macroBodyStmt _ cond =

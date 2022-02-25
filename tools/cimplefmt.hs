@@ -31,7 +31,7 @@ processFile flags source = do
     putStrLn $ "Processing " ++ source
     ast <- parseFile source
     case ast of
-        Left err -> fail err
+        Left err -> putStrLn err >> fail "aborting after parse error"
         Right (_, ok) ->
             if "--reparse" `elem` flags
                then reparseText $ format False ok

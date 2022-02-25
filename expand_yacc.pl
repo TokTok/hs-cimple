@@ -223,8 +223,9 @@ sub instantiate_prod_defn {
 
 sub type {
    my ($funcname) = @_;
-   return "Maybe StringNode" if $funcname eq "Opt";
-   'StringNode'
+   return "Maybe NonTerm" if $funcname =~ /Opt/;
+   return "[NonTerm]" if $funcname =~ /List_?$/;
+   "NonTerm"
 }
 
 sub instantiate_func {

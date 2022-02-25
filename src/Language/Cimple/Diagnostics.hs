@@ -9,14 +9,10 @@ module Language.Cimple.Diagnostics
   , sloc
   ) where
 
-import           Control.Monad.State.Strict (State)
-import qualified Control.Monad.State.Strict as State
-import           Data.Fix                   (foldFix)
-import           Data.Text                  (Text)
-import qualified Data.Text                  as Text
-import           Language.Cimple.Ast        (Node)
-import qualified Language.Cimple.Flatten    as Flatten
-import           Language.Cimple.Lexer      (Lexeme (..), lexemeLine)
+import           Control.Monad.State.Strict  (State)
+import qualified Control.Monad.State.Strict  as State
+import           Data.Text                   (Text)
+import           Language.Cimple.DescribeAst (HasLocation (..))
 
 type DiagnosticsT diags a = State diags a
 type Diagnostics a = DiagnosticsT [Text] a
@@ -32,16 +28,3 @@ class HasDiagnostics a where
 
 instance HasDiagnostics [Text] where
     addDiagnostic = (:)
-
-
-class HasLocation a where
-    sloc :: FilePath -> a -> Text
-
-instance HasLocation (Lexeme text) where
-    sloc file l = Text.pack file <> ":" <> Text.pack (show (lexemeLine l))
-
-instance HasLocation lexeme => HasLocation (Node lexeme) where
-    sloc file n =
-        case foldFix Flatten.lexemes n of
-            []  -> Text.pack file <> ":0:0"
-            l:_ -> sloc file l

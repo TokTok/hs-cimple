@@ -59,7 +59,7 @@ parseFile source =
     addSource . parseTextPedantic . Text.decodeUtf8 <$> BS.readFile source
   where
     -- Add source filename to the error message, if any.
-    addSource (Left err) = Left $ source <> ":" <> err
+    addSource (Left err) = Left $ source <> err
     -- If there's no error message, record the source filename in the returned
     -- TranslationUnit.
     addSource (Right ok) = Right (source, ok)
