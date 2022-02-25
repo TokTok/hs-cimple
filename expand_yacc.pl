@@ -126,7 +126,7 @@ sub parse {
                $type = $2;
                next;
             }
-            
+
             if ($line =~ m/^(\w+)(\((\w+)\))?$/) {
                if ($3) {
                   $nonterm = $funcs{$1} = { param => $3 };
