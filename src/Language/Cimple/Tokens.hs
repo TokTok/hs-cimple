@@ -104,6 +104,7 @@ data LexemeClass
     | PpUndef
     | CmtBlock
     | CmtCommand
+    | CmtAttr
     | CmtEndDocSection
     | CmtIndent
     | CmtStart

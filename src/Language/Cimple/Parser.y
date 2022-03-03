@@ -127,6 +127,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '*/'			{ L _ CmtEnd			_ }
     'Copyright'			{ L _ CmtSpdxCopyright		_ }
     'License'			{ L _ CmtSpdxLicense		_ }
+    CMT_ATTR			{ L _ CmtAttr			_ }
     CMT_CODE			{ L _ CmtCode			_ }
     CMT_COMMAND			{ L _ CmtCommand		_ }
     CMT_WORD			{ L _ CmtWord			_ }
@@ -234,6 +235,7 @@ CommentWord :: { StringLexeme }
 CommentWord
 :	CMT_WORD						{ $1 }
 |	CMT_COMMAND						{ $1 }
+|	CMT_ATTR						{ $1 }
 |	CMT_REF							{ $1 }
 |	CMT_CODE						{ $1 }
 |	LIT_INTEGER						{ $1 }
