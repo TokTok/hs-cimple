@@ -13,6 +13,8 @@ module Language.Cimple.Ast
     , Node, NodeF (..)
     , Scope (..)
     , CommentStyle (..)
+    , Comment
+    , CommentF (..)
     ) where
 
 import           Data.Aeson                   (FromJSON, FromJSON1, ToJSON,
@@ -47,6 +49,7 @@ data NodeF lexeme a
     | CommentSection a [a] a
     | CommentSectionEnd lexeme
     | Commented a a
+    | CommentInfo (Comment lexeme)
     -- Namespace-like blocks
     | ExternC [a]
     -- An inferred coherent block of nodes, printed without empty lines
@@ -125,6 +128,40 @@ type Node lexeme = Fix (NodeF lexeme)
 
 instance FromJSON lexeme => FromJSON1 (NodeF lexeme)
 instance ToJSON lexeme => ToJSON1 (NodeF lexeme)
+
+data CommentF lexeme a
+    = DocComment [a]
+    | DocWord lexeme
+    | DocSentence [a] lexeme
+    | DocNewline
+
+    | DocBrief [a]
+    | DocDeprecated [a]
+    | DocParam (Maybe lexeme) lexeme [a]
+    | DocReturn [a]
+    | DocRetval [lexeme] [a]
+    | DocSee lexeme [a]
+
+    | DocLine [a]
+    | DocBullet [a] [a]
+    | DocBulletList [a]
+
+    | DocColon lexeme
+    | DocRef lexeme
+    | DocP lexeme
+    | DocLParen a
+    | DocRParen a
+    | DocAssignOp AssignOp lexeme lexeme
+    | DocBinaryOp BinaryOp lexeme lexeme
+    | DocMinus lexeme a
+    | DocSlash lexeme a
+    deriving (Show, Read, Eq, Ord, Generic, Generic1, Functor, Foldable, Traversable)
+    deriving (Show1, Read1, Eq1, Ord1) via FunctorClassesDefault (CommentF lexeme)
+
+type Comment lexeme = Fix (CommentF lexeme)
+
+instance FromJSON lexeme => FromJSON1 (CommentF lexeme)
+instance ToJSON lexeme => ToJSON1 (CommentF lexeme)
 
 data AssignOp
     = AopEq

@@ -4,6 +4,7 @@
 {-# LANGUAGE StrictData        #-}
 module Language.Cimple.DescribeAst
     ( HasLocation (..)
+    , describeLexeme
     , describeNode
     ) where
 
@@ -37,3 +38,6 @@ describeNode node = case unFix node of
   where
     ellipsis :: String
     ellipsis = "..."
+
+describeLexeme :: Show a => Lexeme a -> String
+describeLexeme = show

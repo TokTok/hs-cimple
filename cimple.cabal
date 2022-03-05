@@ -36,10 +36,12 @@ library
   other-modules:
       Language.Cimple.Annot
     , Language.Cimple.Ast
+    , Language.Cimple.CommentParser
     , Language.Cimple.DescribeAst
     , Language.Cimple.Flatten
     , Language.Cimple.Graph
     , Language.Cimple.Lexer
+    , Language.Cimple.ParseResult
     , Language.Cimple.Parser
     , Language.Cimple.SemCheck.Includes
     , Language.Cimple.Tokens

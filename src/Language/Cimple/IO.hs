@@ -21,6 +21,7 @@ import           Language.Cimple.Lexer           (Lexeme, runAlex)
 import           Language.Cimple.MapAst          (TextActions, mapAst,
                                                   textActions)
 import qualified Language.Cimple.Parser          as Parser
+import qualified Language.Cimple.ParseResult     as ParseResult
 import           Language.Cimple.Program         (Program)
 import qualified Language.Cimple.Program         as Program
 import           Language.Cimple.TranslationUnit (TranslationUnit)
@@ -51,7 +52,7 @@ parseText contents =
 
 parseTextPedantic :: Text -> Either String [TextNode]
 parseTextPedantic =
-    parseText >=> TreeParser.toEither . TreeParser.parseTranslationUnit
+    parseText >=> ParseResult.toEither . TreeParser.parseTranslationUnit
 
 
 parseFile :: FilePath -> IO (Either String (TranslationUnit Text))

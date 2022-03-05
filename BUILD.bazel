@@ -16,6 +16,7 @@ haskell_library(
     name = "lexer",
     srcs = [
         "src/Language/Cimple/Lexer.hs",
+        "src/Language/Cimple/ParseResult.hs",
         "src/Language/Cimple/Tokens.hs",
     ],
     src_strip_prefix = "src",
@@ -33,7 +34,6 @@ haskell_library(
     src_strip_prefix = "src",
     visibility = ["//hs-cimple:__subpackages__"],
     deps = [
-        ":lexer",
         hazel_library("aeson"),
         hazel_library("base"),
         hazel_library("data-fix"),
@@ -82,6 +82,28 @@ haskell_library(
 )
 
 happy_parser(
+    name = "CommentParser",
+    src = "src/Language/Cimple/CommentParser.y",
+    preproc = "expand_yacc.pl",
+)
+
+haskell_library(
+    name = "comment-parser",
+    srcs = [":CommentParser"],
+    src_strip_prefix = "src",
+    visibility = ["//hs-cimple:__subpackages__"],
+    deps = [
+        ":ast",
+        ":describe-ast",
+        ":lexer",
+        hazel_library("array"),
+        hazel_library("base"),
+        hazel_library("data-fix"),
+        hazel_library("text"),
+    ],
+)
+
+happy_parser(
     name = "TreeParser",
     src = "src/Language/Cimple/TreeParser.y",
     preproc = "expand_yacc.pl",
@@ -94,6 +116,7 @@ haskell_library(
     visibility = ["//hs-cimple:__subpackages__"],
     deps = [
         ":ast",
+        ":comment-parser",
         ":describe-ast",
         ":lexer",
         hazel_library("array"),
@@ -111,6 +134,7 @@ haskell_library(
             "src/Language/Cimple/Ast.hs",
             "src/Language/Cimple/DescribeAst.hs",
             "src/Language/Cimple/Flatten.hs",
+            "src/Language/Cimple/ParseResult.hs",
             "src/Language/Cimple/Tokens.hs",
         ],
     ),

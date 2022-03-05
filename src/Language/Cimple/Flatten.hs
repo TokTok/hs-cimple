@@ -7,10 +7,12 @@
 {-# LANGUAGE TypeOperators         #-}
 module Language.Cimple.Flatten (lexemes) where
 
+import           Data.Fix            (Fix (..))
 import           Data.Maybe          (maybeToList)
 import           GHC.Generics
-import           Language.Cimple.Ast (AssignOp, BinaryOp, CommentStyle,
-                                      LiteralType, NodeF (..), Scope, UnaryOp)
+import           Language.Cimple.Ast (AssignOp, BinaryOp, CommentF,
+                                      CommentStyle, LiteralType, NodeF (..),
+                                      Scope, UnaryOp)
 
 class Concats t a where
     concats :: t -> [a]
@@ -53,11 +55,15 @@ instance {-# OVERLAPPING #-} GenConcatsFlatten a a where
 instance {-# OVERLAPPABLE #-} GenConcatsFlatten b a => GenConcatsFlatten [b] a where
     gconcatsFlatten = concatMap gconcatsFlatten
 
+instance GenConcatsFlatten (Fix (CommentF a)) a where
+    gconcatsFlatten = error "TODO: gconcatsFlatten for CommentF"
+
 instance GenConcatsFlatten t a => GenConcats (Rec0 t) a where
     gconcats (K1 x) = gconcatsFlatten x
 
 -- Uses the default signature, which delegates to the generic stuff
 instance Concats (NodeF a [a]) a
+instance Concats (CommentF a [a]) a
 
 lexemes :: NodeF lexeme [lexeme] -> [lexeme]
 lexemes = concats

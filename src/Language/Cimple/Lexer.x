@@ -189,7 +189,7 @@ tokens :-
 <0,ppSC>	[0-9]+"."[0-9]+f?			{ mkL LitInteger }
 <0,ppSC>	0x[0-9a-fA-F]+[LU]*			{ mkL LitInteger }
 <0,ppSC,cmtSC>	"="					{ mkL PctEq }
-<0,ppSC>	"=="					{ mkL PctEqEq }
+<0,ppSC,cmtSC>	"=="					{ mkL PctEqEq }
 <0,ppSC>	"&"					{ mkL PctAmpersand }
 <0,ppSC>	"&&"					{ mkL PctAmpersandAmpersand }
 <0,ppSC>	"&="					{ mkL PctAmpersandEq }
@@ -205,7 +205,7 @@ tokens :-
 <0,ppSC,cmtSC>	"/"					{ mkL PctSlash }
 <0,ppSC>	"/="					{ mkL PctSlashEq }
 <0,ppSC,cmtSC>	"."					{ mkL PctPeriod }
-<0,ppSC>	"..."					{ mkL PctEllipsis }
+<0,ppSC,cmtSC>	"..."					{ mkL PctEllipsis }
 <0,ppSC>	"%"					{ mkL PctPercent }
 <0,ppSC>	"%="					{ mkL PctPercentEq }
 <0,ppSC,cmtSC>	";"					{ mkL PctSemicolon }
@@ -217,7 +217,7 @@ tokens :-
 <0,ppSC,cmtSC>	">"					{ mkL PctGreater }
 <0,ppSC>	">>"					{ mkL PctGreaterGreater }
 <0,ppSC>	">>="					{ mkL PctGreaterGreaterEq }
-<0,ppSC>	">="					{ mkL PctGreaterEq }
+<0,ppSC,cmtSC>	">="					{ mkL PctGreaterEq }
 <0,ppSC>	"|"					{ mkL PctPipe }
 <0,ppSC>	"||"					{ mkL PctPipePipe }
 <0,ppSC>	"|="					{ mkL PctPipeEq }
@@ -229,7 +229,7 @@ tokens :-
 <0,ppSC,cmtSC>	")"					{ mkL PctRParen }
 <0,ppSC,cmtSC>	"?"					{ mkL PctQMark }
 <0,ppSC,cmtSC>	"!"					{ mkL PctEMark }
-<0,ppSC>	"!="					{ mkL PctEMarkEq }
+<0,ppSC,cmtSC>	"!="					{ mkL PctEMarkEq }
 <0,ppSC>	"*"					{ mkL PctAsterisk }
 <0,ppSC>	"*="					{ mkL PctAsteriskEq }
 <0,ppSC>	"^"					{ mkL PctCaret }
@@ -240,6 +240,11 @@ tokens :-
 <cmtSC>		"SPDX-License-Identifier:"		{ mkL CmtSpdxLicense }
 <cmtSC>		"GPL-3.0-or-later"			{ mkL CmtWord }
 <cmtSC>		"TODO("[^\)]+"):"			{ mkL CmtWord }
+<cmtSC>		"E.g."					{ mkL CmtWord }
+<cmtSC>		"e.g."					{ mkL CmtWord }
+<cmtSC>		"I.e."					{ mkL CmtWord }
+<cmtSC>		"i.e."					{ mkL CmtWord }
+<cmtSC>		"v"?[0-9]"."[0-9]"."[0-9]		{ mkL CmtWord }
 <cmtSC>		"@code"					{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"["[^\]]+"]"				{ mkL CmtAttr }
@@ -258,17 +263,21 @@ tokens :-
 <cmtSC>		" "+					;
 
 <cmtNewlineSC>	" "+"*"+"/"				{ mkL CmtEnd `andBegin` 0 }
-<cmtNewlineSC>	" "+"*"					{ mkL CmtIndent `andBegin` cmtSC }
+<cmtNewlineSC>	" "+"*"					{ begin cmtStartSC }
+
+<cmtStartSC>	" "+					{ mkL CmtIndent `andBegin` cmtSC }
+<cmtStartSC>	\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
 
 -- <code></code> blocks in comments.
-<codeSC>	"@endcode"				{ mkL CmtCode `andBegin` cmtSC }
+<codeSC>	" @endcode"				{ mkL CmtCode `andBegin` cmtSC }
 <codeSC>	"</code>"				{ mkL CmtCode `andBegin` cmtSC }
-<codeSC>	\n					{ mkL PpNewline }
-<codeSC>	\n" "+"*"				{ mkL PpNewline }
+<codeSC>	\n					{ mkL PpNewline `andBegin` codeNewlineSC }
 <codeSC>	[^@\<]+					{ mkL CmtCode }
 
+<codeNewlineSC>	" "+"*"					{ begin codeSC }
+
 -- Error handling.
-<0,ppSC,cmtSC,codeSC>	.				{ mkL Error }
+<0,ppSC,cmtSC,codeSC>	.				{ mkL ErrorToken }
 
 {
 deriving instance Ord AlexPosn

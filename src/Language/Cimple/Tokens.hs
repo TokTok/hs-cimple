@@ -106,6 +106,7 @@ data LexemeClass
     | CmtCommand
     | CmtAttr
     | CmtEndDocSection
+    | CmtPrefix
     | CmtIndent
     | CmtStart
     | CmtStartBlock
@@ -121,7 +122,7 @@ data LexemeClass
     | IgnBody
     | IgnEnd
 
-    | Error
+    | ErrorToken
     | Eof
     deriving (Enum, Bounded, Ord, Eq, Show, Generic)
 

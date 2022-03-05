@@ -1,21 +1,20 @@
 {
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE ViewPatterns               #-}
-module Language.Cimple.TreeParser
-    ( TreeParser
-    , parseTranslationUnit
-    , toEither
-    ) where
+module Language.Cimple.TreeParser (parseTranslationUnit) where
 
-import           Data.Fix                    (Fix (..))
-import           Data.Maybe                  (maybeToList)
-import           Data.Text                   (Text)
-import qualified Data.Text                   as Text
-import           Language.Cimple.Ast         (CommentStyle (..), Node,
-                                              NodeF (..))
-import           Language.Cimple.DescribeAst (describeNode, sloc)
-import           Language.Cimple.Lexer       (Lexeme (..))
-import           Language.Cimple.Tokens      (LexemeClass (..))
+import Debug.Trace(traceShow)
+import           Data.Fix                      (Fix (..))
+import           Data.Maybe                    (maybeToList)
+import           Data.Text                     (Text)
+import qualified Data.Text                     as Text
+import           Language.Cimple.Ast           (CommentStyle (..), Node,
+                                                NodeF (..))
+import           Language.Cimple.CommentParser (parseComment)
+import           Language.Cimple.DescribeAst   (describeNode, sloc)
+import           Language.Cimple.Lexer         (Lexeme (..))
+import           Language.Cimple.ParseResult   (ParseResult)
+import           Language.Cimple.Tokens        (LexemeClass (..))
 }
 
 %name parseTranslationUnit TranslationUnit
@@ -24,7 +23,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
 
 %error {parseError}
 %errorhandlertype explist
-%monad {TreeParser}
+%monad {ParseResult}
 %tokentype {NonTerm}
 %token
     ifndefDefine	{ Fix (PreprocIfndef _ (isDefine -> True) (Fix (PreprocElse []))) }
@@ -185,7 +184,7 @@ Decl
 :	comment							{ $1 }
 |	commentSectionStart Decls commentSectionEnd		{ Fix $ CommentSection $1 $2 $3 }
 |	CommentableDecl						{ $1 }
-|	docComment CommentableDecl				{ Fix $ Commented $1 $2 }
+|	docComment CommentableDecl				{% fmap (\c -> Fix $ Commented c $2) $ parseDocComment $1 }
 
 CommentableDecl :: { NonTerm }
 CommentableDecl
@@ -225,12 +224,6 @@ NonEmptyList_(x)
 type TextLexeme = Lexeme Text
 type NonTerm = Node TextLexeme
 
-newtype TreeParser a = TreeParser { toEither :: Either String a }
-    deriving (Functor, Applicative, Monad)
-
-instance MonadFail TreeParser where
-    fail = TreeParser . Left
-
 
 mapHead :: (a -> a) -> [a] -> [a]
 mapHead _ [] = []
@@ -269,7 +262,7 @@ hasInclude style (Fix (PreprocElse ed))           = any (hasInclude style) ed
 hasInclude _ _                                    = False
 
 
-recurse :: ([NonTerm] -> TreeParser [NonTerm]) -> NonTerm -> TreeParser NonTerm
+recurse :: ([NonTerm] -> ParseResult [NonTerm]) -> NonTerm -> ParseResult NonTerm
 recurse f (Fix (ExternC ds))          = Fix <$> (ExternC <$> f ds)
 recurse f (Fix (PreprocIf     c t e)) = Fix <$> (PreprocIf     c <$> f t <*> recurse f e)
 recurse f (Fix (PreprocIfdef  c t e)) = Fix <$> (PreprocIfdef  c <$> f t <*> recurse f e)
@@ -280,11 +273,16 @@ recurse f (Fix (PreprocElse      [])) = Fix <$> pure (PreprocElse [])
 recurse f (Fix (PreprocElse       e)) = Fix <$> (PreprocElse     <$>                 f e)
 recurse _ ns                          = fail $ "TreeParser.recurse: " <> show ns
 
-failAt :: NonTerm -> String -> TreeParser a
+parseDocComment :: NonTerm -> ParseResult NonTerm
+parseDocComment (Fix (Comment Doxygen start body end)) =
+    Fix . CommentInfo <$> parseComment (start : body ++ [end])
+parseDocComment n = return n
+
+failAt :: NonTerm -> String -> ParseResult a
 failAt n msg =
     fail $ Text.unpack (sloc "" n) <> ": unexpected " <> describeNode n <> msg
 
-parseError :: ([NonTerm], [String]) -> TreeParser a
+parseError :: ([NonTerm], [String]) -> ParseResult a
 parseError ([], options)  = fail $ " end of file; expected one of " <> show options
 parseError (n:_, [])      = failAt n "; expected end of file"
 parseError (n:_, options) = failAt n $ "; expected one of " <> show options

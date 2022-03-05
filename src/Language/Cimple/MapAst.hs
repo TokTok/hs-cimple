@@ -11,6 +11,7 @@ module Language.Cimple.MapAst
 
     , doFiles, doFile
     , doNodes, doNode
+    , doComment, doComments
     , doLexemes, doLexeme
     , doText
 
@@ -20,7 +21,8 @@ module Language.Cimple.MapAst
     ) where
 
 import           Data.Fix              (Fix (..))
-import           Language.Cimple.Ast   (Node, NodeF (..))
+import           Language.Cimple.Ast   (Comment, CommentF (..), Node,
+                                        NodeF (..))
 import           Language.Cimple.Lexer (Lexeme (..))
 
 class MapAst itext otext a where
@@ -39,13 +41,15 @@ mapAst
 mapAst = flip mapFileAst "<stdin>"
 
 data AstActions f itext otext = AstActions
-    { doFiles     :: [(FilePath, [Node (Lexeme itext)])] -> f [(FilePath, [Node (Lexeme otext)])] -> f [(FilePath, [Node (Lexeme otext)])]
-    , doFile      ::  (FilePath, [Node (Lexeme itext)])  -> f  (FilePath, [Node (Lexeme otext)])  -> f  (FilePath, [Node (Lexeme otext)])
-    , doNodes     :: FilePath -> [Node (Lexeme itext)]   -> f             [Node (Lexeme otext)]   -> f             [Node (Lexeme otext)]
-    , doNode      :: FilePath ->  Node (Lexeme itext)    -> f             (Node (Lexeme otext))   -> f             (Node (Lexeme otext))
-    , doLexemes   :: FilePath ->       [Lexeme itext]    -> f                   [Lexeme otext]    -> f                   [Lexeme otext]
-    , doLexeme    :: FilePath ->        Lexeme itext     -> f                   (Lexeme otext)    -> f                   (Lexeme otext)
-    , doText      :: FilePath ->               itext                                              -> f                           otext
+    { doFiles     :: [(FilePath, [Node    (Lexeme itext)])] -> f [(FilePath, [Node    (Lexeme otext)])] -> f [(FilePath, [Node    (Lexeme otext)])]
+    , doFile      ::  (FilePath, [Node    (Lexeme itext)])  -> f  (FilePath, [Node    (Lexeme otext)])  -> f  (FilePath, [Node    (Lexeme otext)])
+    , doNodes     :: FilePath -> [Node    (Lexeme itext)]   -> f             [Node    (Lexeme otext)]   -> f             [Node    (Lexeme otext)]
+    , doNode      :: FilePath ->  Node    (Lexeme itext)    -> f             (Node    (Lexeme otext))   -> f             (Node    (Lexeme otext))
+    , doComment   :: FilePath ->  Comment (Lexeme itext)    -> f             (Comment (Lexeme otext))   -> f             (Comment (Lexeme otext))
+    , doComments  :: FilePath -> [Comment (Lexeme itext)]   -> f             [Comment (Lexeme otext)]   -> f             [Comment (Lexeme otext)]
+    , doLexemes   :: FilePath ->          [Lexeme itext]    -> f                      [Lexeme otext]    -> f                      [Lexeme otext]
+    , doLexeme    :: FilePath ->           Lexeme itext     -> f                      (Lexeme otext)    -> f                      (Lexeme otext)
+    , doText      :: FilePath ->                  itext                                                 -> f                              otext
     }
 
 instance MapAst itext otext        a
@@ -64,6 +68,8 @@ astActions ft = AstActions
     , doFile      = const id
     , doNodes     = const $ const id
     , doNode      = const $ const id
+    , doComment   = const $ const id
+    , doComments  = const $ const id
     , doLexeme    = const $ const id
     , doLexemes   = const $ const id
     , doText      = const ft
@@ -91,6 +97,74 @@ instance MapAst itext otext [Lexeme itext] where
                           = [Lexeme otext]
     mapFileAst actions@AstActions{..} currentFile = doLexemes currentFile <*>
         traverse (mapFileAst actions currentFile)
+
+instance MapAst itext otext (Comment (Lexeme itext)) where
+    type Mapped itext otext (Comment (Lexeme itext))
+                          =  Comment (Lexeme otext)
+    mapFileAst
+        :: forall f . Applicative f
+        => AstActions f itext otext
+        -> FilePath
+        ->    Comment (Lexeme itext)
+        -> f (Comment (Lexeme otext))
+    mapFileAst actions@AstActions{..} currentFile = doComment currentFile <*> \comment -> case unFix comment of
+        DocComment docs ->
+            Fix <$> (DocComment <$> recurse docs)
+        DocWord word ->
+            Fix <$> (DocWord <$> recurse word)
+        DocSentence docs ending ->
+            Fix <$> (DocSentence <$> recurse docs <*> recurse ending)
+        DocNewline -> pure $ Fix DocNewline
+
+        DocBrief docs ->
+            Fix <$> (DocBrief <$> recurse docs)
+        DocDeprecated docs ->
+            Fix <$> (DocDeprecated <$> recurse docs)
+        DocParam attr name docs ->
+            Fix <$> (DocParam <$> recurse attr <*> recurse name <*> recurse docs)
+        DocReturn docs ->
+            Fix <$> (DocReturn <$> recurse docs)
+        DocRetval expr docs ->
+            Fix <$> (DocRetval <$> recurse expr <*> recurse docs)
+        DocSee ref docs ->
+            Fix <$> (DocSee <$> recurse ref <*> recurse docs)
+
+        DocLine docs ->
+            Fix <$> (DocLine <$> recurse docs)
+        DocBullet docs sublist ->
+            Fix <$> (DocBullet <$> recurse docs <*> recurse sublist)
+        DocBulletList docs ->
+            Fix <$> (DocBulletList <$> recurse docs)
+
+        DocColon docs ->
+            Fix <$> (DocColon <$> recurse docs)
+        DocRef doc ->
+            Fix <$> (DocRef <$> recurse doc)
+        DocP doc ->
+            Fix <$> (DocP <$> recurse doc)
+        DocLParen docs ->
+            Fix <$> (DocLParen <$> recurse docs)
+        DocRParen docs ->
+            Fix <$> (DocRParen <$> recurse docs)
+        DocAssignOp op lhs rhs ->
+            Fix <$> (DocAssignOp op <$> recurse lhs <*> recurse rhs)
+        DocBinaryOp op lhs rhs ->
+            Fix <$> (DocBinaryOp op <$> recurse lhs <*> recurse rhs)
+        DocMinus lhs rhs ->
+            Fix <$> (DocMinus <$> recurse lhs <*> recurse rhs)
+        DocSlash lhs rhs ->
+            Fix <$> (DocSlash <$> recurse lhs <*> recurse rhs)
+
+      where
+        recurse :: MapAst itext otext a => a -> f (Mapped itext otext a)
+        recurse = mapFileAst actions currentFile
+
+instance MapAst itext otext [Comment (Lexeme itext)] where
+    type Mapped itext otext [Comment (Lexeme itext)]
+                          = [Comment (Lexeme otext)]
+    mapFileAst actions@AstActions{..} currentFile = doComments currentFile <*>
+        traverse (mapFileAst actions currentFile)
+
 
 instance MapAst itext otext (Node (Lexeme itext)) where
     type Mapped itext otext (Node (Lexeme itext))
@@ -146,6 +220,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (CommentSectionEnd <$> recurse comment)
         Commented comment subject ->
             Fix <$> (Commented <$> recurse comment <*> recurse subject)
+        CommentInfo comment ->
+            Fix <$> (CommentInfo <$> recurse comment)
         ExternC decls ->
             Fix <$> (ExternC <$> recurse decls)
         Group decls ->

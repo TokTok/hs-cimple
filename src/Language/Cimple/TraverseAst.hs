@@ -12,6 +12,7 @@ module Language.Cimple.TraverseAst
 
     , doFiles, doFile
     , doNodes, doNode
+    , doComment, doComments
     , doLexemes, doLexeme
     , doText
 
@@ -20,7 +21,8 @@ module Language.Cimple.TraverseAst
 
 import           Data.Fix              (Fix (..))
 import           Data.Foldable         (traverse_)
-import           Language.Cimple.Ast   (Node, NodeF (..))
+import           Language.Cimple.Ast   (Comment, CommentF (..), Node,
+                                        NodeF (..))
 import           Language.Cimple.Lexer (Lexeme (..))
 
 {-# ANN module "HLint: ignore Reduce duplication" #-}
@@ -40,13 +42,15 @@ traverseAst
 traverseAst = flip traverseFileAst "<stdin>"
 
 data AstActions f text = AstActions
-    { doFiles   :: [(FilePath, [Node (Lexeme text)])] -> f () -> f ()
-    , doFile    ::  (FilePath, [Node (Lexeme text)])  -> f () -> f ()
-    , doNodes   :: FilePath -> [Node (Lexeme text)]   -> f () -> f ()
-    , doNode    :: FilePath ->  Node (Lexeme text)    -> f () -> f ()
-    , doLexemes :: FilePath ->       [Lexeme text]    -> f () -> f ()
-    , doLexeme  :: FilePath ->        Lexeme text     -> f () -> f ()
-    , doText    :: FilePath ->               text             -> f ()
+    { doFiles    :: [(FilePath, [Node    (Lexeme text)])] -> f () -> f ()
+    , doFile     ::  (FilePath, [Node    (Lexeme text)])  -> f () -> f ()
+    , doNodes    :: FilePath -> [Node    (Lexeme text)]   -> f () -> f ()
+    , doNode     :: FilePath ->  Node    (Lexeme text)    -> f () -> f ()
+    , doComment  :: FilePath ->  Comment (Lexeme text)    -> f () -> f ()
+    , doComments :: FilePath -> [Comment (Lexeme text)]   -> f () -> f ()
+    , doLexemes  :: FilePath ->          [Lexeme text]    -> f () -> f ()
+    , doLexeme   :: FilePath ->           Lexeme text     -> f () -> f ()
+    , doText     :: FilePath ->                  text             -> f ()
     }
 
 instance TraverseAst text        a
@@ -61,6 +65,8 @@ astActions = AstActions
     , doFile      = const id
     , doNodes     = const $ const id
     , doNode      = const $ const id
+    , doComment   = const $ const id
+    , doComments  = const $ const id
     , doLexeme    = const $ const id
     , doLexemes   = const $ const id
     , doText      = const $ const $ pure ()
@@ -75,6 +81,88 @@ instance TraverseAst text (Lexeme text) where
 
 instance TraverseAst text [Lexeme text] where
     traverseFileAst actions@AstActions{..} currentFile = doLexemes currentFile <*>
+        traverse_ (traverseFileAst actions currentFile)
+
+instance TraverseAst text (Comment (Lexeme text)) where
+    traverseFileAst
+        :: forall f . Applicative f
+        => AstActions f text
+        -> FilePath
+        -> Comment (Lexeme text)
+        -> f ()
+    traverseFileAst actions@AstActions{..} currentFile = doComment currentFile <*> \comment -> case unFix comment of
+        DocComment docs ->
+            recurse docs
+        DocWord word ->
+            recurse word
+        DocSentence docs ending -> do
+            _ <- recurse docs
+            _ <- recurse ending
+            pure ()
+        DocNewline -> pure ()
+
+        DocBrief docs ->
+            recurse docs
+        DocDeprecated docs ->
+            recurse docs
+        DocParam attr name docs -> do
+            _ <- recurse attr
+            _ <- recurse name
+            _ <- recurse docs
+            pure ()
+        DocReturn docs ->
+            recurse docs
+        DocRetval expr docs -> do
+            _ <- recurse expr
+            _ <- recurse docs
+            pure ()
+        DocSee ref docs -> do
+            _ <- recurse ref
+            _ <- recurse docs
+            pure ()
+
+        DocLine docs ->
+            recurse docs
+        DocBullet docs sublist -> do
+            _ <- recurse docs
+            _ <- recurse sublist
+            pure ()
+        DocBulletList docs ->
+            recurse docs
+
+        DocColon docs ->
+            recurse docs
+        DocRef doc ->
+            recurse doc
+        DocP doc ->
+            recurse doc
+        DocLParen docs ->
+            recurse docs
+        DocRParen docs ->
+            recurse docs
+        DocAssignOp _ lhs rhs -> do
+            _ <- recurse lhs
+            _ <- recurse rhs
+            pure ()
+        DocBinaryOp _ lhs rhs -> do
+            _ <- recurse lhs
+            _ <- recurse rhs
+            pure ()
+        DocMinus lhs rhs -> do
+            _ <- recurse lhs
+            _ <- recurse rhs
+            pure ()
+        DocSlash lhs rhs -> do
+            _ <- recurse lhs
+            _ <- recurse rhs
+            pure ()
+
+      where
+        recurse :: TraverseAst text a => a -> f ()
+        recurse = traverseFileAst actions currentFile
+
+instance TraverseAst text [Comment (Lexeme text)] where
+    traverseFileAst actions@AstActions{..} currentFile = doComments currentFile <*>
         traverse_ (traverseFileAst actions currentFile)
 
 instance TraverseAst text (Node (Lexeme text)) where
@@ -165,6 +253,8 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse comment
             _ <- recurse subject
             pure ()
+        CommentInfo comment ->
+            recurse comment
         ExternC decls ->
             recurse decls
         Group decls ->

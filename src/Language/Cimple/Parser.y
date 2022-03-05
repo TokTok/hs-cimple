@@ -123,7 +123,8 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '/** @{'			{ L _ CmtStartDocSection	_ }
     '/** @} */'			{ L _ CmtEndDocSection		_ }
     '/***'			{ L _ CmtStartBlock		_ }
-    ' * '			{ L _ CmtIndent			_ }
+    ' * '			{ L _ CmtPrefix			_ }
+    ' '				{ L _ CmtIndent			_ }
     '*/'			{ L _ CmtEnd			_ }
     'Copyright'			{ L _ CmtSpdxCopyright		_ }
     'License'			{ L _ CmtSpdxLicense		_ }
@@ -170,7 +171,7 @@ CopyrightDecls
 
 CopyrightDecl :: { NonTerm }
 CopyrightDecl
-:	' * ' 'Copyright' CopyrightDates CopyrightOwner '\n'	{ Fix $ CopyrightDecl (fst $3) (snd $3) $4 }
+:	' ' 'Copyright' CopyrightDates CopyrightOwner '\n'	{ Fix $ CopyrightDecl (fst $3) (snd $3) $4 }
 
 CopyrightDates :: { (StringLexeme, Maybe StringLexeme) }
 CopyrightDates
@@ -225,6 +226,7 @@ CommentToken
 :	CommentWord						{ $1 }
 |	'\n'							{ $1 }
 |	' * '							{ $1 }
+|	' '							{ $1 }
 
 CommentWords :: { [StringLexeme] }
 CommentWords
@@ -241,6 +243,7 @@ CommentWord
 |	LIT_INTEGER						{ $1 }
 |	LIT_STRING						{ $1 }
 |	'.'							{ $1 }
+|	'...'							{ $1 }
 |	'?'							{ $1 }
 |	'!'							{ $1 }
 |	','							{ $1 }
@@ -254,6 +257,9 @@ CommentWord
 |	'+'							{ $1 }
 |	'-'							{ $1 }
 |	'='							{ $1 }
+|	'=='							{ $1 }
+|	'!='							{ $1 }
+|	'>='							{ $1 }
 
 Ignore :: { NonTerm }
 Ignore

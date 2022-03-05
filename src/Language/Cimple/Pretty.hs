@@ -13,12 +13,16 @@ import qualified Data.List.Split              as List
 import           Data.Text                    (Text)
 import qualified Data.Text                    as Text
 import           Language.Cimple              (AssignOp (..), BinaryOp (..),
+                                               Comment, CommentF (..),
                                                CommentStyle (..), Lexeme (..),
                                                LexemeClass (..), Node,
                                                NodeF (..), Scope (..),
                                                UnaryOp (..), lexemeText)
 import           Prelude                      hiding ((<$>))
 import           Text.PrettyPrint.ANSI.Leijen
+
+indentWidth :: Int
+indentWidth = 2
 
 kwBreak         = dullred   $ text "break"
 kwCase          = dullred   $ text "case"
@@ -44,6 +48,18 @@ kwSwitch        = dullred   $ text "switch"
 kwTypedef       = dullgreen $ text "typedef"
 kwUnion         = dullgreen $ text "union"
 kwWhile         = dullred   $ text "while"
+
+kwDocBrief      = dullcyan $ text "@brief"
+kwDocDeprecated = dullcyan $ text "@deprecated"
+kwDocParam      = dullcyan $ text "@param"
+kwDocRef        = dullcyan $ text "@ref"
+kwDocReturn     = dullcyan $ text "@return"
+kwDocRetval     = dullcyan $ text "@retval"
+kwDocP          = dullcyan $ text "@p"
+kwDocSee        = dullcyan $ text "@see"
+
+cmtPrefix :: Doc
+cmtPrefix = dullyellow (char '*')
 
 ppText :: Text -> Doc
 ppText = text . Text.unpack
@@ -113,13 +129,14 @@ ppCommentStart = dullyellow . \case
     Ignore  -> text "//!TOKSTYLE-"
 
 ppCommentBody :: [Lexeme Text] -> Doc
-ppCommentBody = vsep . map (hsep . map ppWord) . groupLines
+ppCommentBody = vsep . prefixStars . map (hsep . map ppWord) . groupLines
   where
+    prefixStars xs = zipWith (<>) (empty : replicate (length xs - 2) cmtPrefix ++ [empty]) xs
     groupLines = List.splitWhen $ \case
         L _ PpNewline _ -> True
         _               -> False
 
-ppWord (L _ CmtIndent  _) = dullyellow $ char '*'
+ppWord (L _ CmtIndent  _) = empty
 ppWord (L _ CmtCommand t) = dullcyan   $ ppText t
 ppWord (L _ _          t) = dullyellow $ ppText t
 
@@ -185,7 +202,7 @@ ppSwitchStmt
     -> [Doc]
     -> Doc
 ppSwitchStmt c body =
-    nest 2 (
+    nest indentWidth (
         kwSwitch <+> parens c <+> lbrace <$>
         vcat body
     ) <$> rbrace
@@ -202,7 +219,7 @@ ppVLA ty n sz =
 
 ppCompoundStmt :: [Doc] -> Doc
 ppCompoundStmt body =
-    nest 2 (
+    nest indentWidth (
         lbrace <$>
         ppToplevel body
     ) <$> rbrace
@@ -234,6 +251,57 @@ ppMacroBody =
     . renderS
     . plain
 
+ppVerbatimComment :: Doc -> Doc
+ppVerbatimComment =
+    vcat
+    . map dullyellow
+    . zipWith (<>) (empty : repeat (text " * "))
+    . map text
+    . List.splitOn "\n"
+    . renderS
+    . plain
+
+ppCommentInfo :: Comment (Lexeme Text) -> Doc
+ppCommentInfo = foldFix go
+  where
+  ppBody     = vcat . zipWith (<>) (        repeat (dullyellow (text " * "  )))
+  ppIndented = vcat . zipWith (<>) (empty : repeat (dullyellow (text " *   ")))
+  ppRef      = underline . cyan . ppLexeme
+  ppAttr     = maybe empty (blue . ppLexeme)
+
+  go :: CommentF (Lexeme Text) Doc -> Doc
+  go = dullyellow . \case
+    DocComment docs ->
+        text "/**" <$>
+        ppBody docs <$>
+        dullyellow (text " */")
+    DocWord w -> ppLexeme w
+    DocSentence docs ending -> fillSep docs <> ppLexeme ending
+    DocNewline -> empty
+
+    DocParam attr name docs ->
+        kwDocParam <> ppAttr attr <+> underline (cyan (ppLexeme name)) <+> ppIndented docs
+
+    DocBrief docs       -> kwDocBrief      <+> ppIndented docs
+    DocDeprecated docs  -> kwDocDeprecated <+> ppIndented docs
+    DocReturn docs      -> kwDocReturn     <+> ppIndented docs
+    DocRetval expr docs -> kwDocRetval     <+> dullred (hcat (map ppLexeme expr)) <+> ppIndented docs
+    DocSee name docs    -> kwDocSee        <+> ppRef name <+> ppIndented docs
+    DocRef name         -> kwDocRef        <+> ppRef name
+    DocP name           -> kwDocP          <+> ppRef name
+
+    DocBullet docs sublist -> char '-' <+> nest 2 (vsep $ fillSep docs : sublist)
+    DocBulletList l -> ppVerbatimComment $ vcat l
+    DocLine docs -> fillSep docs
+
+    DocLParen doc -> lparen <> doc
+    DocRParen doc -> doc <> rparen
+    DocColon doc -> ppLexeme doc <> char ':'
+    DocAssignOp op l r -> ppLexeme l <+> ppAssignOp op <+> ppLexeme r
+    DocBinaryOp op l r -> ppLexeme l <+> ppBinaryOp op <+> ppLexeme r
+    DocMinus l r -> ppLexeme l <> char '-' <> r
+    DocSlash l r -> ppLexeme l <> char '/' <> r
+
 ppNode :: Node (Lexeme Text) -> Doc
 ppNode = foldFix go
   where
@@ -258,6 +326,8 @@ ppNode = foldFix go
         dullyellow $ ppLexeme cs
     Commented c d ->
         c <$> d
+    CommentInfo docs ->
+        ppCommentInfo docs
 
     VarExpr var          -> ppLexeme var
     LiteralExpr _ l      -> dullred $ ppLexeme l
@@ -293,13 +363,13 @@ ppNode = foldFix go
 
     ExternC decls ->
         dullmagenta (text "#ifdef __cplusplus") <$>
-        text "extern \"C\" {" <$>
+        kwExtern <+> dullred (text "\"C\"") <+> lbrace <$>
         dullmagenta (text "#endif") <$>
         line <>
         ppToplevel decls <$>
         line <>
         dullmagenta (text "#ifdef __cplusplus") <$>
-        text "}" <$>
+        rbrace <$>
         dullmagenta (text "#endif")
 
     Group decls -> vcat decls
@@ -333,12 +403,12 @@ ppNode = foldFix go
         dullmagenta (text "#ifdef" <+> ppLexeme name) <$>
         ppToplevel decls <>
         elseBranch <$>
-        dullmagenta (text "#endif")
+        dullmagenta (text "#endif  //" <+> ppLexeme name)
     PreprocIfndef name decls elseBranch ->
         dullmagenta (text "#ifndef" <+> ppLexeme name) <$>
         ppToplevel decls <>
         elseBranch <$>
-        dullmagenta (text "#endif")
+        dullmagenta (text "#endif  //" <+> ppLexeme name)
     PreprocElse [] -> empty
     PreprocElse decls ->
         linebreak <>
@@ -368,12 +438,12 @@ ppNode = foldFix go
 
     AggregateDecl struct -> struct <> semi
     Struct name members ->
-        nest 2 (
+        nest indentWidth (
             kwStruct <+> ppLexeme name <+> lbrace <$>
             vcat members
         ) <$> rbrace
     Union name members ->
-        nest 2 (
+        nest indentWidth (
             kwUnion <+> ppLexeme name <+> lbrace <$>
             vcat members
         ) <$> rbrace
@@ -393,17 +463,17 @@ ppNode = foldFix go
         ppLexeme name <+> equals <+> value <> comma
 
     EnumConsts Nothing enums ->
-        nest 2 (
+        nest indentWidth (
             kwEnum <+> lbrace <$>
             vcat enums
         ) <$> text "};"
     EnumConsts (Just name) enums ->
-        nest 2 (
+        nest indentWidth (
             kwEnum <+> ppLexeme name <+> lbrace <$>
             vcat enums
         ) <$> text "};"
     EnumDecl name enums ty ->
-        nest 2 (
+        nest indentWidth (
             kwTypedef <+> kwEnum <+> dullgreen (ppLexeme name) <+> lbrace <$>
             vcat enums
         ) <$> rbrace <+> dullgreen (ppLexeme ty) <> semi
