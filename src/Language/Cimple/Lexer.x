@@ -240,6 +240,7 @@ tokens :-
 <cmtSC>		"SPDX-License-Identifier:"		{ mkL CmtSpdxLicense }
 <cmtSC>		"GPL-3.0-or-later"			{ mkL CmtWord }
 <cmtSC>		"TODO("[^\)]+"):"			{ mkL CmtWord }
+<cmtSC>		[A-Z][A-Za-z]+"::"[a-z_]+		{ mkL CmtWord }
 <cmtSC>		"E.g."					{ mkL CmtWord }
 <cmtSC>		"e.g."					{ mkL CmtWord }
 <cmtSC>		"I.e."					{ mkL CmtWord }
@@ -271,7 +272,7 @@ tokens :-
 -- <code></code> blocks in comments.
 <codeSC>	" @endcode"				{ mkL CmtCode `andBegin` cmtSC }
 <codeSC>	"</code>"				{ mkL CmtCode `andBegin` cmtSC }
-<codeSC>	\n					{ mkL PpNewline `andBegin` codeNewlineSC }
+<codeSC>	\n					{ mkL CmtCode `andBegin` codeNewlineSC }
 <codeSC>	[^@\<]+					{ mkL CmtCode }
 
 <codeNewlineSC>	" "+"*"					{ begin codeSC }

@@ -9,8 +9,7 @@ import           Data.Text                   (Text)
 import qualified Data.Text                   as Text
 
 import           Language.Cimple.Ast         (AssignOp (..), BinaryOp (..),
-                                              Comment, CommentF (..), Node,
-                                              NodeF (..))
+                                              Comment, CommentF (..))
 import           Language.Cimple.DescribeAst (describeLexeme, sloc)
 import           Language.Cimple.Lexer       (Lexeme (..))
 import           Language.Cimple.ParseResult (ParseResult)
@@ -18,6 +17,8 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
 }
 
 %name parseComment Comment
+
+%expect 1
 
 %error {parseError}
 %errorhandlertype explist
@@ -106,12 +107,18 @@ Command(x)
 
 BulletListI :: { [NonTerm] }
 BulletListI
-:	BulletI							{ [$1] }
-|	BulletListI BulletI					{ $2 : $1 }
+:	' ' '-' WordsWithoutNewlines '\n' BulletICont		{ [Fix $ DocBullet $3 $5] }
 
-BulletI :: { NonTerm }
-BulletI
-:	' ' '-' WordsWithoutNewlines '\n' BulletListII		{ Fix $ DocBullet $3 (reverse $5) }
+BulletICont :: { [NonTerm] }
+BulletICont
+:								{ [] }
+|	BulletListI						{ $1 }
+|	'INDENT1' BulletIContCont				{ $2 }
+
+BulletIContCont :: { [NonTerm] }
+BulletIContCont
+:	WordsWithoutNewlines					{ $1 }
+|	BulletIICont BulletListII				{ $1 : reverse $2 }
 
 BulletListII :: { [NonTerm] }
 BulletListII
@@ -120,15 +127,19 @@ BulletListII
 
 BulletII :: { NonTerm }
 BulletII
-:	'INDENT1' '-' WordsWithoutNewlines '\n' BulletIIConts	{ Fix $ DocBullet ($3 ++ $5) [] }
+:	'INDENT1' BulletIICont					{ $2 }
+
+BulletIICont :: { NonTerm }
+BulletIICont
+:	'-' WordsWithoutNewlines '\n' BulletIIConts		{ Fix $ DocBullet ($2 ++ $4) [] }
 
 BulletIIConts :: { [NonTerm] }
 BulletIIConts
 :								{ [] }
-|	BulletIIConts BulletIICont				{ $1 ++ $2 }
+|	BulletIIConts BulletIIContCont				{ $1 ++ $2 }
 
-BulletIICont :: { [NonTerm] }
-BulletIICont
+BulletIIContCont :: { [NonTerm] }
+BulletIIContCont
 :	'INDENT2' WordsWithoutNewlines '\n'			{ $2 }
 
 IndentedSentence :: { [NonTerm] }
