@@ -245,6 +245,7 @@ tokens :-
 <cmtSC>		"e.g."					{ mkL CmtWord }
 <cmtSC>		"I.e."					{ mkL CmtWord }
 <cmtSC>		"i.e."					{ mkL CmtWord }
+<cmtSC>		[0-2][0-9](":"[0-5][0-9]){2}"."[0-9]{3}	{ mkL CmtWord }
 <cmtSC>		"v"?[0-9]"."[0-9]"."[0-9]		{ mkL CmtWord }
 <cmtSC>		"@code"					{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
@@ -274,13 +275,16 @@ tokens :-
 <cmtStartSC>	" "+					{ mkL CmtIndent `andBegin` cmtSC }
 <cmtStartSC>	\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
 
--- <code></code> blocks in comments.
-<codeSC>	" @endcode"				{ mkL CmtCode `andBegin` cmtSC }
-<codeSC>	"</code>"				{ mkL CmtCode `andBegin` cmtSC }
-<codeSC>	\n					{ mkL CmtCode `andBegin` codeNewlineSC }
-<codeSC>	[^@\<]+					{ mkL CmtCode }
+<codeStartSC>	" "+					{ mkL CmtIndent `andBegin` codeSC }
+<codeStartSC>	\n					{ mkL PpNewline `andBegin` codeNewlineSC }
 
-<codeNewlineSC>	" "+"*"					{ begin codeSC }
+<codeNewlineSC>	" "+"*"					{ begin codeStartSC }
+
+-- <code></code> blocks in comments.
+<codeSC>	"@endcode"				{ mkL CmtCode `andBegin` cmtSC }
+<codeSC>	"</code>"				{ mkL CmtCode `andBegin` cmtSC }
+<codeSC>	\n					{ mkL PpNewline `andBegin` codeNewlineSC }
+<codeSC>	[^@\<]+					{ mkL CmtCode }
 
 -- Error handling.
 <0,ppSC,cmtSC,codeSC>	.				{ mkL ErrorToken }

@@ -3,7 +3,6 @@
 {-# LANGUAGE ViewPatterns               #-}
 module Language.Cimple.TreeParser (parseTranslationUnit) where
 
-import Debug.Trace(traceShow)
 import           Data.Fix                      (Fix (..))
 import           Data.Maybe                    (maybeToList)
 import           Data.Text                     (Text)

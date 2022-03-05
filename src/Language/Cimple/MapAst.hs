@@ -131,12 +131,16 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
         DocSee ref docs ->
             Fix <$> (DocSee <$> recurse ref <*> recurse docs)
 
+        DocParagraph docs ->
+            Fix <$> (DocParagraph <$> recurse docs)
         DocLine docs ->
             Fix <$> (DocLine <$> recurse docs)
-        DocBullet docs sublist ->
-            Fix <$> (DocBullet <$> recurse docs <*> recurse sublist)
-        DocBulletList docs ->
-            Fix <$> (DocBulletList <$> recurse docs)
+        DocList docs ->
+            Fix <$> (DocList <$> recurse docs)
+        DocOLItem docs sublist ->
+            Fix <$> (DocOLItem <$> recurse docs <*> recurse sublist)
+        DocULItem docs sublist ->
+            Fix <$> (DocULItem <$> recurse docs <*> recurse sublist)
 
         DocColon docs ->
             Fix <$> (DocColon <$> recurse docs)

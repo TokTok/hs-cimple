@@ -123,14 +123,20 @@ instance TraverseAst text (Comment (Lexeme text)) where
             _ <- recurse docs
             pure ()
 
+        DocParagraph docs ->
+            recurse docs
         DocLine docs ->
             recurse docs
-        DocBullet docs sublist -> do
+        DocList docs ->
+            recurse docs
+        DocOLItem docs sublist -> do
             _ <- recurse docs
             _ <- recurse sublist
             pure ()
-        DocBulletList docs ->
-            recurse docs
+        DocULItem docs sublist -> do
+            _ <- recurse docs
+            _ <- recurse sublist
+            pure ()
 
         DocColon docs ->
             recurse docs

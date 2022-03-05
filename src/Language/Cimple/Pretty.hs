@@ -17,7 +17,8 @@ import           Language.Cimple              (AssignOp (..), BinaryOp (..),
                                                CommentStyle (..), Lexeme (..),
                                                LexemeClass (..), Node,
                                                NodeF (..), Scope (..),
-                                               UnaryOp (..), lexemeText)
+                                               UnaryOp (..), lexemeLine,
+                                               lexemeText)
 import           Prelude                      hiding ((<$>))
 import           Text.PrettyPrint.ANSI.Leijen
 
@@ -130,9 +131,15 @@ ppCommentStart = dullyellow . \case
     Ignore  -> text "//!TOKSTYLE-"
 
 ppCommentBody :: [Lexeme Text] -> Doc
-ppCommentBody = vsep . prefixStars . map (hsep . map ppWord) . groupLines
+ppCommentBody body = vsep . prefixStars . map (hsep . map ppWord) . groupLines $ body
   where
-    prefixStars xs = zipWith (<>) (empty : replicate (length xs - 2) cmtPrefix ++ [empty]) xs
+    -- If the "*/" is on a separate line, don't add an additional "*" before
+    -- it. If "*/" is on the same line, then do add a "*" prefix on the last line.
+    stars =
+        case reverse body of
+          e:c:_ | lexemeLine e > lexemeLine c -> 2
+          _                                   -> 1
+    prefixStars xs = zipWith (<>) (empty : replicate (length xs - stars) cmtPrefix ++ [empty]) xs
     groupLines = List.splitWhen $ \case
         L _ PpNewline _ -> True
         _               -> False
@@ -292,9 +299,11 @@ ppCommentInfo = foldFix go
     DocRef name         -> kwDocRef        <+> ppRef name
     DocP name           -> kwDocP          <+> ppRef name
 
-    DocBullet docs sublist -> char '-' <+> nest 2 (vsep $ fillSep docs : sublist)
-    DocBulletList l -> ppVerbatimComment $ vcat l
+    DocParagraph docs -> ppIndented docs
     DocLine docs -> fillSep docs
+    DocList l -> ppVerbatimComment $ vcat l
+    DocOLItem num docs -> ppLexeme num <> char '.' <+> nest 3 (fillSep docs)
+    DocULItem docs sublist -> char '-' <+> nest 2 (vsep $ fillSep docs : sublist)
 
     DocLParen doc -> lparen <> doc
     DocRParen doc -> doc <> rparen
@@ -519,7 +528,7 @@ showNode  :: Node (Lexeme Text) -> Text
 showNode = Text.pack . show . ppNode
 
 renderS :: Doc -> String
-renderS = flip displayS "" . renderSmart 1 100
+renderS = flip displayS "" . renderSmart 1 120
 
 render :: Doc -> Text
 render = Text.pack . renderS
