@@ -140,7 +140,7 @@ data CommentF lexeme a
     | DocDeprecated [a]
     | DocParam (Maybe lexeme) lexeme [a]
     | DocReturn [a]
-    | DocRetval [lexeme] [a]
+    | DocRetval lexeme [a]
     | DocSee lexeme [a]
 
     | DocLine [a]

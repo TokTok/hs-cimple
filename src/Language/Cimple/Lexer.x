@@ -186,7 +186,7 @@ tokens :-
 <0,ppSC>	[a-z][a-z0-9_]*_cb			{ mkL IdFuncType }
 <0,ppSC>	[a-z][A-Za-z0-9_]*			{ mkL IdVar }
 <0,ppSC,cmtSC>	[0-9]+[LU]*				{ mkL LitInteger }
-<0,ppSC>	[0-9]+"."[0-9]+f?			{ mkL LitInteger }
+<0,ppSC,cmtSC>	[0-9]+"."[0-9]+f?			{ mkL LitInteger }
 <0,ppSC>	0x[0-9a-fA-F]+[LU]*			{ mkL LitInteger }
 <0,ppSC,cmtSC>	"="					{ mkL PctEq }
 <0,ppSC,cmtSC>	"=="					{ mkL PctEqEq }
@@ -249,19 +249,24 @@ tokens :-
 <cmtSC>		"@code"					{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"["[^\]]+"]"				{ mkL CmtAttr }
+<cmtSC>		"@retval"				{ mkL CmtCommand `andBegin` retvalSC }
 <cmtSC>		[@\\][a-z]+				{ mkL CmtCommand }
 <cmtSC>		"*"[A-Za-z][A-Za-z0-9_']*"*"		{ mkL CmtWord }
 <cmtSC>		"#"[A-Za-z][A-Za-z0-9_]*		{ mkL CmtRef }
 <cmtSC>		[A-Za-z][A-Za-z0-9_']*			{ mkL CmtWord }
 <cmtSC>		"#"[0-9]+				{ mkL CmtWord }
-<cmtSC>		"http://"[^ ]+				{ mkL CmtWord }
+<cmtSC>		"http://"[^\ ]+				{ mkL CmtWord }
 <cmtSC>		[0-9]+"%"				{ mkL LitInteger }
+<cmtSC>		"-1"					{ mkL LitInteger }
 <cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
 <cmtSC>		"${"([^\}])+"}"				{ mkL CmtCode }
 <cmtSC>		"–"					{ mkL CmtWord }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
 <cmtSC>		\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
 <cmtSC>		" "+					;
+
+<retvalSC>	[^\ ]+					{ mkL CmtWord `andBegin` cmtSC }
+<retvalSC>	" "+					;
 
 <cmtNewlineSC>	" "+"*"+"/"				{ mkL CmtEnd `andBegin` 0 }
 <cmtNewlineSC>	" "+"*"					{ begin cmtStartSC }

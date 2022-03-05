@@ -287,7 +287,7 @@ ppCommentInfo = foldFix go
     DocBrief docs       -> kwDocBrief      <+> ppIndented docs
     DocDeprecated docs  -> kwDocDeprecated <+> ppIndented docs
     DocReturn docs      -> kwDocReturn     <+> ppIndented docs
-    DocRetval expr docs -> kwDocRetval     <+> dullred (hcat (map ppLexeme expr)) <+> ppIndented docs
+    DocRetval expr docs -> kwDocRetval     <+> dullred (ppLexeme expr) <+> ppIndented docs
     DocSee name docs    -> kwDocSee        <+> ppRef name <+> ppIndented docs
     DocRef name         -> kwDocRef        <+> ppRef name
     DocP name           -> kwDocP          <+> ppRef name
