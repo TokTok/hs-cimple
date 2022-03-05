@@ -17,7 +17,8 @@ import           Language.Cimple              (AssignOp (..), BinaryOp (..),
                                                CommentStyle (..), Lexeme (..),
                                                LexemeClass (..), Node,
                                                NodeF (..), Scope (..),
-                                               UnaryOp (..), lexemeLine, lexemeText)
+                                               UnaryOp (..), lexemeLine,
+                                               lexemeText)
 import           Prelude                      hiding ((<$>))
 import           Text.PrettyPrint.ANSI.Leijen
 
