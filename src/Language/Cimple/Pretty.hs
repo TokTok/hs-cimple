@@ -49,6 +49,7 @@ kwTypedef       = dullgreen $ text "typedef"
 kwUnion         = dullgreen $ text "union"
 kwWhile         = dullred   $ text "while"
 
+kwDocAttention  = dullcyan $ text "@attention"
 kwDocBrief      = dullcyan $ text "@brief"
 kwDocDeprecated = dullcyan $ text "@deprecated"
 kwDocParam      = dullcyan $ text "@param"
@@ -282,6 +283,7 @@ ppCommentInfo = foldFix go
     DocParam attr name docs ->
         kwDocParam <> ppAttr attr <+> underline (cyan (ppLexeme name)) <+> ppIndented docs
 
+    DocAttention docs   -> kwDocAttention  <+> ppIndented docs
     DocBrief docs       -> kwDocBrief      <+> ppIndented docs
     DocDeprecated docs  -> kwDocDeprecated <+> ppIndented docs
     DocReturn docs      -> kwDocReturn     <+> ppIndented docs
@@ -297,10 +299,10 @@ ppCommentInfo = foldFix go
     DocLParen doc -> lparen <> doc
     DocRParen doc -> doc <> rparen
     DocColon doc -> ppLexeme doc <> char ':'
-    DocAssignOp op l r -> ppLexeme l <+> ppAssignOp op <+> ppLexeme r
-    DocBinaryOp op l r -> ppLexeme l <+> ppBinaryOp op <+> ppLexeme r
-    DocMinus l r -> ppLexeme l <> char '-' <> r
-    DocSlash l r -> ppLexeme l <> char '/' <> r
+    DocBinaryOp BopMinus l r -> l <>  char '-'      <>  r
+    DocBinaryOp BopDiv   l r -> l <>  char '/'      <>  r
+    DocAssignOp op       l r -> l <+> ppAssignOp op <+> r
+    DocBinaryOp op       l r -> l <+> ppBinaryOp op <+> r
 
 ppNode :: Node (Lexeme Text) -> Doc
 ppNode = foldFix go

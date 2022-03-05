@@ -116,6 +116,8 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
             Fix <$> (DocSentence <$> recurse docs <*> recurse ending)
         DocNewline -> pure $ Fix DocNewline
 
+        DocAttention docs ->
+            Fix <$> (DocAttention <$> recurse docs)
         DocBrief docs ->
             Fix <$> (DocBrief <$> recurse docs)
         DocDeprecated docs ->
@@ -150,10 +152,6 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
             Fix <$> (DocAssignOp op <$> recurse lhs <*> recurse rhs)
         DocBinaryOp op lhs rhs ->
             Fix <$> (DocBinaryOp op <$> recurse lhs <*> recurse rhs)
-        DocMinus lhs rhs ->
-            Fix <$> (DocMinus <$> recurse lhs <*> recurse rhs)
-        DocSlash lhs rhs ->
-            Fix <$> (DocSlash <$> recurse lhs <*> recurse rhs)
 
       where
         recurse :: MapAst itext otext a => a -> f (Mapped itext otext a)

@@ -135,6 +135,7 @@ data CommentF lexeme a
     | DocSentence [a] lexeme
     | DocNewline
 
+    | DocAttention [a]
     | DocBrief [a]
     | DocDeprecated [a]
     | DocParam (Maybe lexeme) lexeme [a]
@@ -151,10 +152,8 @@ data CommentF lexeme a
     | DocP lexeme
     | DocLParen a
     | DocRParen a
-    | DocAssignOp AssignOp lexeme lexeme
-    | DocBinaryOp BinaryOp lexeme lexeme
-    | DocMinus lexeme a
-    | DocSlash lexeme a
+    | DocAssignOp AssignOp a a
+    | DocBinaryOp BinaryOp a a
     deriving (Show, Read, Eq, Ord, Generic, Generic1, Functor, Foldable, Traversable)
     deriving (Show1, Read1, Eq1, Ord1) via FunctorClassesDefault (CommentF lexeme)
 

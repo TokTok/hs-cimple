@@ -101,6 +101,8 @@ instance TraverseAst text (Comment (Lexeme text)) where
             pure ()
         DocNewline -> pure ()
 
+        DocAttention docs ->
+            recurse docs
         DocBrief docs ->
             recurse docs
         DocDeprecated docs ->
@@ -145,14 +147,6 @@ instance TraverseAst text (Comment (Lexeme text)) where
             _ <- recurse rhs
             pure ()
         DocBinaryOp _ lhs rhs -> do
-            _ <- recurse lhs
-            _ <- recurse rhs
-            pure ()
-        DocMinus lhs rhs -> do
-            _ <- recurse lhs
-            _ <- recurse rhs
-            pure ()
-        DocSlash lhs rhs -> do
             _ <- recurse lhs
             _ <- recurse rhs
             pure ()
