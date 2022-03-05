@@ -18,7 +18,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
 
 %name parseComment Comment
 
-%expect 1
+%expect 0
 
 %error {parseError}
 %errorhandlertype explist
@@ -80,9 +80,9 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
 Comment :: { NonTerm }
 Comment
 :	'/**' '\n' Blocks '*/'					{ Fix $ DocComment $3 }
-|	'/**' WordsWithoutNewlines '*/'				{ Fix $ DocComment [Fix $ DocLine $2] }
-|	'/**' Command(WordsWithoutNewlines) '*/'		{ Fix $ DocComment [$2] }
-|	'/**' Command(WordsWithoutNewlines) '\n' Blocks '*/'	{ Fix $ DocComment ($2 : $4) }
+|	'/**' DocLine '*/'					{ Fix $ DocComment $2 }
+|	'/**' Command(DocLine) '*/'				{ Fix $ DocComment [$2] }
+|	'/**' Command(IndentedSentence) Blocks '*/'		{ Fix $ DocComment ($2 : $3) }
 
 Blocks :: { [NonTerm] }
 Blocks
@@ -97,14 +97,14 @@ Block :: { NonTerm }
 Block
 :	'\n'							{ Fix DocNewline }
 |	' ' Command(IndentedSentence)				{ $2 }
-|	' ' Paragraph '\n'					{ Fix $ DocLine $2 }
-|	' ' LIT_INTEGER '.' IndentedSentenceII			{ Fix $ DocLine $4 }
-|	' ' '-' BulletListI					{ Fix $ DocBulletList (reverse $3) }
+|	' ' Paragraph						{ Fix $ DocParagraph $2 }
+|	' ' NumberedListItem					{ Fix $ DocList [$2] }
+|	' ' BulletListItem					{ Fix $ DocList [$2] }
 
 Paragraph :: { [NonTerm] }
 Paragraph
-:	Word(NonInt) Punctuation Words				{ Fix (DocSentence [$1] $2) : $3 }
-|	Word(NonInt) Words					{ $1 : $2 }
+:	Word(NonInt) Punctuation MaybeWords			{ Fix (DocSentence [$1] $2) : $3 }
+|	Word(NonInt) MaybeWords					{ prepend $1 $2 }
 
 Punctuation :: { Term }
 Punctuation
@@ -113,10 +113,19 @@ Punctuation
 |	';'							{ $1 }
 |	'?'							{ $1 }
 
-Words :: { [NonTerm] }
-Words
+MaybeWords :: { [NonTerm] }
+MaybeWords
 :								{ [] }
-|	SentenceList(WordList)					{ $1 }
+|	IndentedSentence					{ $1 }
+
+IndentedSentence :: { [NonTerm] }
+IndentedSentence
+:	DocLine '\n'						{ $1 }
+|	DocLine '\n' 'INDENT1' IndentedSentence			{ $1 ++ $4 }
+
+DocLine :: { [NonTerm] }
+DocLine
+:	Words							{ [Fix $ DocLine $1] }
 
 Command(x)
 :	'@attention' x						{ Fix $ DocAttention $2 }
@@ -125,66 +134,41 @@ Command(x)
 |	'@param' CMT_ATTR CMT_WORD x				{ Fix $ DocParam (Just $2) $3 $4 }
 |	'@retval' Atom x					{ Fix $ DocRetval $2 $3 }
 |	'@return' x						{ Fix $ DocReturn $2 }
-|	'@return' '\n' BulletListII				{ Fix $ DocReturn (Fix (DocLine []) : $3) }
+|	'@return' '\n' BulletListItemII				{ Fix $ DocReturn (Fix (DocLine []) : $3) }
 |	'@see' CMT_WORD x					{ Fix $ DocSee $2 $3 }
 |	'@deprecated' x						{ Fix $ DocDeprecated $2 }
 
-BulletListI :: { [NonTerm] }
-BulletListI
-:	WordsWithoutNewlines '\n' BulletICont			{ [Fix $ DocBullet $1 $3] }
+BulletListItem :: { NonTerm }
+BulletListItem
+:	'-' Words '\n' BulletICont				{ Fix $ DocULItem $2 $4 }
 
 BulletICont :: { [NonTerm] }
 BulletICont
 :								{ [] }
-|	' ' '-' BulletListI					{ $3 }
-|	'INDENT1' BulletIContCont				{ $2 }
+|	'INDENT1' DocLine '\n' BulletICont			{ $2 ++ $4 }
+|	BulletListItemII					{ $1 }
 
-BulletIContCont :: { [NonTerm] }
-BulletIContCont
-:	WordsWithoutNewlines					{ $1 }
-|	BulletIICont BulletListII				{ $1 : reverse $2 }
+BulletListItemII :: { [NonTerm] }
+BulletListItemII
+:	'INDENT1' '-' Words '\n' BulletIICont			{ Fix (DocULItem ($3 ++ snd $5) []) : fst $5 }
 
-BulletListII :: { [NonTerm] }
-BulletListII
-:								{ [] }
-|	BulletListII BulletII					{ $2 : $1 }
-
-BulletII :: { NonTerm }
-BulletII
-:	'INDENT1' BulletIICont					{ $2 }
-
-BulletIICont :: { NonTerm }
+BulletIICont :: { ([NonTerm], [NonTerm]) }
 BulletIICont
-:	'-' WordsWithoutNewlines '\n' BulletIIConts		{ Fix $ DocBullet ($2 ++ $4) [] }
+:								{ ([], []) }
+|	BulletListItemII					{ ($1, []) }
+|	'INDENT3' DocLine '\n' BulletIICont			{ ([], $2) <> $4 }
 
-BulletIIConts :: { [NonTerm] }
-BulletIIConts
-:								{ [] }
-|	BulletIIConts BulletIIContCont				{ $1 ++ $2 }
-
-BulletIIContCont :: { [NonTerm] }
-BulletIIContCont
-:	'INDENT3' WordsWithoutNewlines '\n'			{ $2 }
-
-IndentedSentence :: { [NonTerm] }
-IndentedSentence
-:	WordsWithoutNewlines '\n'				{ [Fix $ DocLine $1] }
-|	WordsWithoutNewlines '\n' 'INDENT1' IndentedSentence	{ Fix (DocLine $1) : $4 }
+NumberedListItem :: { NonTerm }
+NumberedListItem
+:	LIT_INTEGER '.' IndentedSentenceII			{ Fix (DocOLItem $1 $3) }
 
 IndentedSentenceII :: { [NonTerm] }
 IndentedSentenceII
-:	WordsWithoutNewlines '\n'				{ [Fix $ DocLine $1] }
-|	WordsWithoutNewlines '\n' 'INDENT2' IndentedSentenceII	{ Fix (DocLine $1) : $4 }
+:	DocLine '\n'						{ $1 }
+|	DocLine '\n' 'INDENT2' IndentedSentenceII		{ $1 ++ $4 }
 
-DocLine :: { [NonTerm] }
-DocLine
-:	CMT_WORD						{ [Fix (DocWord $1)] }
-|	CMT_WORD '.'						{ [Fix (DocSentence [Fix (DocWord $1)] $2)] }
-|	CMT_WORD WordsWithoutNewlines				{ Fix (DocWord $1) : $2 }
-|	CMT_CODE WordsWithoutNewlines				{ Fix (DocWord $1) : $2 }
-
-WordsWithoutNewlines :: { [NonTerm] }
-WordsWithoutNewlines
+Words :: { [NonTerm] }
+Words
 :	SentenceList(WordList)					{ $1 }
 
 WordList :: { [NonTerm] }
@@ -235,6 +219,10 @@ NonInt
 {
 type Term = Lexeme Text
 type NonTerm = Comment Term
+
+prepend :: NonTerm -> [NonTerm] -> [NonTerm]
+prepend x [] = [x]
+prepend x (Fix (DocLine xs):rest) = Fix (DocLine (x:xs)) : rest
 
 failAt :: Lexeme Text -> String -> ParseResult a
 failAt n msg =

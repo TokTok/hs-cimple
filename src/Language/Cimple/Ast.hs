@@ -143,9 +143,11 @@ data CommentF lexeme a
     | DocRetval lexeme [a]
     | DocSee lexeme [a]
 
+    | DocParagraph [a]
     | DocLine [a]
-    | DocBullet [a] [a]
-    | DocBulletList [a]
+    | DocList [a]
+    | DocULItem [a] [a]
+    | DocOLItem lexeme [a]
 
     | DocColon lexeme
     | DocRef lexeme
