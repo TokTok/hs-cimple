@@ -640,19 +640,23 @@ TypedefDecl
 
 QualType :: { NonTerm }
 QualType
-:	LeafType						{                               $1 }
-|	LeafType '*'						{                     tyPointer $1 }
-|	LeafType '*' '*'					{ tyPointer          (tyPointer $1) }
-|	LeafType '*' const					{            tyConst (tyPointer $1) }
-|	LeafType '*' const '*'					{ tyPointer (tyConst (tyPointer $1)) }
-|	LeafType const						{                                tyConst $1 }
-|	LeafType const '*'					{                     tyPointer (tyConst $1) }
-|	LeafType const '*' const				{            tyConst (tyPointer (tyConst $1)) }
-|	LeafType const '*' const '*'				{ tyPointer (tyConst (tyPointer (tyConst $1))) }
-|	const LeafType						{                                tyConst $2 }
-|	const LeafType '*'					{                     tyPointer (tyConst $2) }
-|	const LeafType '*' const				{            tyConst (tyPointer (tyConst $2)) }
-|	const LeafType '*' const '*'				{ tyPointer (tyConst (tyPointer (tyConst $2))) }
+:	LeafType						{                                        $1 }
+|	LeafType '*'						{                              tyPointer $1 }
+|	LeafType '*' '*'					{          tyPointer          (tyPointer $1) }
+|	LeafType '*' '*' const					{ tyConst (tyPointer          (tyPointer $1)) }
+|	LeafType '*' const					{                     tyConst (tyPointer $1) }
+|	LeafType '*' const '*'					{          tyPointer (tyConst (tyPointer $1)) }
+|	LeafType '*' const '*' const				{ tyConst (tyPointer (tyConst (tyPointer $1))) }
+|	LeafType const						{                                         tyConst $1 }
+|	LeafType const '*'					{                              tyPointer (tyConst $1) }
+|	LeafType const '*' const				{                     tyConst (tyPointer (tyConst $1)) }
+|	LeafType const '*' const '*'				{          tyPointer (tyConst (tyPointer (tyConst $1))) }
+|	LeafType const '*' const '*' const			{ tyConst (tyPointer (tyConst (tyPointer (tyConst $1)))) }
+|	const LeafType						{                                         tyConst $2 }
+|	const LeafType '*'					{                              tyPointer (tyConst $2) }
+|	const LeafType '*' const				{                     tyConst (tyPointer (tyConst $2)) }
+|	const LeafType '*' const '*'				{          tyPointer (tyConst (tyPointer (tyConst $2))) }
+|	const LeafType '*' const '*' const			{ tyConst (tyPointer (tyConst (tyPointer (tyConst $2)))) }
 
 LeafType :: { NonTerm }
 LeafType
