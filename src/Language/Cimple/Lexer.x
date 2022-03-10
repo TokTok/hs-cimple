@@ -243,6 +243,7 @@ tokens :-
 <cmtSC>		[A-Z][A-Za-z]+"::"[a-z_]+		{ mkL CmtWord }
 <cmtSC>		"E.g."					{ mkL CmtWord }
 <cmtSC>		"e.g."					{ mkL CmtWord }
+<cmtSC>		"etc."					{ mkL CmtWord }
 <cmtSC>		"I.e."					{ mkL CmtWord }
 <cmtSC>		"i.e."					{ mkL CmtWord }
 <cmtSC>		[0-2][0-9](":"[0-5][0-9]){2}"."[0-9]{3}	{ mkL CmtWord }
