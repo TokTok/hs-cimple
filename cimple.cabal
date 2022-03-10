@@ -56,7 +56,6 @@ library
     , containers
     , data-fix
     , filepath
-    , groom
     , monad-parallel
     , mtl
     , recursion-schemes

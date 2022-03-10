@@ -155,7 +155,6 @@ haskell_library(
         hazel_library("containers"),
         hazel_library("data-fix"),
         hazel_library("filepath"),
-        hazel_library("groom"),
         hazel_library("monad-parallel"),
         hazel_library("mtl"),
         hazel_library("split"),
