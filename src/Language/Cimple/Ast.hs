@@ -138,10 +138,14 @@ data CommentF lexeme a
     | DocAttention [a]
     | DocBrief [a]
     | DocDeprecated [a]
+    | DocExtends lexeme
+    | DocImplements lexeme
     | DocParam (Maybe lexeme) lexeme [a]
     | DocReturn [a]
     | DocRetval lexeme [a]
     | DocSee lexeme [a]
+
+    | DocPrivate
 
     | DocParagraph [a]
     | DocLine [a]

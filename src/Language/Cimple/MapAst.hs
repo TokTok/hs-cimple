@@ -122,6 +122,10 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
             Fix <$> (DocBrief <$> recurse docs)
         DocDeprecated docs ->
             Fix <$> (DocDeprecated <$> recurse docs)
+        DocExtends feat ->
+            Fix <$> (DocExtends <$> recurse feat)
+        DocImplements feat ->
+            Fix <$> (DocImplements <$> recurse feat)
         DocParam attr name docs ->
             Fix <$> (DocParam <$> recurse attr <*> recurse name <*> recurse docs)
         DocReturn docs ->
@@ -130,6 +134,8 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
             Fix <$> (DocRetval <$> recurse expr <*> recurse docs)
         DocSee ref docs ->
             Fix <$> (DocSee <$> recurse ref <*> recurse docs)
+
+        DocPrivate -> pure $ Fix DocPrivate
 
         DocParagraph docs ->
             Fix <$> (DocParagraph <$> recurse docs)

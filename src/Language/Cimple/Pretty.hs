@@ -53,7 +53,10 @@ kwWhile         = dullred   $ text "while"
 kwDocAttention  = dullcyan $ text "@attention"
 kwDocBrief      = dullcyan $ text "@brief"
 kwDocDeprecated = dullcyan $ text "@deprecated"
+kwDocExtends    = dullcyan $ text "@extends"
+kwDocImplements = dullcyan $ text "@implements"
 kwDocParam      = dullcyan $ text "@param"
+kwDocPrivate    = dullcyan $ text "@private"
 kwDocRef        = dullcyan $ text "@ref"
 kwDocReturn     = dullcyan $ text "@return"
 kwDocRetval     = dullcyan $ text "@retval"
@@ -298,6 +301,9 @@ ppCommentInfo = foldFix go
     DocSee name docs    -> kwDocSee        <+> ppRef name <+> ppIndented docs
     DocRef name         -> kwDocRef        <+> ppRef name
     DocP name           -> kwDocP          <+> ppRef name
+    DocExtends feat     -> kwDocExtends    <+> ppLexeme feat
+    DocImplements feat  -> kwDocImplements <+> ppLexeme feat
+    DocPrivate          -> kwDocPrivate
 
     DocParagraph docs -> ppIndented docs
     DocLine docs -> fillSep docs

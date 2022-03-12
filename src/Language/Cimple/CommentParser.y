@@ -28,8 +28,10 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     '@attention'		{ L _ CmtCommand "@attention"	}
     '@brief'			{ L _ CmtCommand "@brief"	}
     '@deprecated'		{ L _ CmtCommand "@deprecated"	}
+    '@extends'			{ L _ CmtCommand "@extends"	}
     '@implements'		{ L _ CmtCommand "@implements"	}
     '@param'			{ L _ CmtCommand "@param"	}
+    '@private'			{ L _ CmtCommand "@private"	}
     '@ref'			{ L _ CmtCommand "@ref"		}
     '@p'			{ L _ CmtCommand "@p"		}
     '@return'			{ L _ CmtCommand "@return"	}
@@ -137,6 +139,9 @@ Command(x)
 |	'@return' '\n' BulletListItemII				{ Fix $ DocReturn (Fix (DocLine []) : $3) }
 |	'@see' CMT_WORD x					{ Fix $ DocSee $2 $3 }
 |	'@deprecated' x						{ Fix $ DocDeprecated $2 }
+|	'@implements' CMT_WORD					{ Fix $ DocImplements $2 }
+|	'@extends' CMT_WORD					{ Fix $ DocExtends $2 }
+|	'@private'						{ Fix DocPrivate }
 
 BulletListItem :: { NonTerm }
 BulletListItem

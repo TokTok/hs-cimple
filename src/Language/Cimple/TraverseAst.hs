@@ -107,6 +107,10 @@ instance TraverseAst text (Comment (Lexeme text)) where
             recurse docs
         DocDeprecated docs ->
             recurse docs
+        DocExtends feat ->
+            recurse feat
+        DocImplements feat ->
+            recurse feat
         DocParam attr name docs -> do
             _ <- recurse attr
             _ <- recurse name
@@ -122,6 +126,8 @@ instance TraverseAst text (Comment (Lexeme text)) where
             _ <- recurse ref
             _ <- recurse docs
             pure ()
+
+        DocPrivate -> pure ()
 
         DocParagraph docs ->
             recurse docs
