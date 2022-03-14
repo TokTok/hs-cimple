@@ -55,7 +55,9 @@ data AstActions f text = AstActions
 
 instance TraverseAst text        a
       => TraverseAst text (Maybe a) where
-    traverseFileAst _ _ _ = pure ()
+    traverseFileAst _ _ Nothing = pure ()
+    traverseFileAst actions currentFile (Just x) =
+        traverseFileAst actions currentFile x
 
 astActions
     :: Applicative f
