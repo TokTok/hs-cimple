@@ -10,7 +10,7 @@ module Language.Cimple.Flatten (lexemes) where
 import           Data.Fix            (Fix (..))
 import           Data.Maybe          (maybeToList)
 import           GHC.Generics
-import           Language.Cimple.Ast (AssignOp, BinaryOp, CommentF,
+import           Language.Cimple.Ast (AssignOp, BinaryOp, CommentF (..),
                                       CommentStyle, LiteralType, NodeF (..),
                                       Scope, UnaryOp)
 
@@ -56,7 +56,33 @@ instance {-# OVERLAPPABLE #-} GenConcatsFlatten b a => GenConcatsFlatten [b] a w
     gconcatsFlatten = concatMap gconcatsFlatten
 
 instance GenConcatsFlatten (Fix (CommentF a)) a where
-    gconcatsFlatten = error "TODO: gconcatsFlatten for CommentF"
+    -- TODO(iphydf): Figure out how to write this using Generics.
+    gconcatsFlatten (Fix DocNewline) = []
+    gconcatsFlatten (Fix DocPrivate) = []
+    gconcatsFlatten (Fix (DocAssignOp _ l r)) = concatMap gconcatsFlatten [l, r]
+    gconcatsFlatten (Fix (DocAttention x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocBinaryOp _ l r)) = concatMap gconcatsFlatten [l, r]
+    gconcatsFlatten (Fix (DocBrief x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocColon x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocComment x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocDeprecated x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocExtends x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocImplements x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocLine x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocList x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocLParen x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocOLItem i x)) = i : gconcatsFlatten x
+    gconcatsFlatten (Fix (DocParagraph x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocParam a p x)) = concat [gconcatsFlatten a, gconcatsFlatten p, gconcatsFlatten x]
+    gconcatsFlatten (Fix (DocP x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocRef x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocReturn x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocRetval r x)) = r : gconcatsFlatten x
+    gconcatsFlatten (Fix (DocRParen x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocSee r x)) = r : gconcatsFlatten x
+    gconcatsFlatten (Fix (DocSentence x p)) = gconcatsFlatten x ++ [p]
+    gconcatsFlatten (Fix (DocULItem i x)) = concat [gconcatsFlatten i, gconcatsFlatten x]
+    gconcatsFlatten (Fix (DocWord x)) = [x]
 
 instance GenConcatsFlatten t a => GenConcats (Rec0 t) a where
     gconcats (K1 x) = gconcatsFlatten x
