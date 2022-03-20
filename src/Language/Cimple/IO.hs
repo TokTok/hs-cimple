@@ -10,11 +10,10 @@ module Language.Cimple.IO
 import           Control.Monad                   ((>=>))
 import qualified Control.Monad.Parallel          as P
 import           Control.Monad.State.Strict      (State, evalState, get, put)
-import qualified Data.ByteString                 as BS
+import qualified Data.ByteString.Lazy            as LBS
 import           Data.Map.Strict                 (Map)
 import qualified Data.Map.Strict                 as Map
 import           Data.Text                       (Text)
-import qualified Data.Text                       as Text
 import qualified Data.Text.Encoding              as Text
 import           Language.Cimple.Ast             (Node)
 import           Language.Cimple.Lexer           (Lexeme, runAlex)
@@ -27,37 +26,36 @@ import qualified Language.Cimple.Program         as Program
 import           Language.Cimple.TranslationUnit (TranslationUnit)
 import qualified Language.Cimple.TreeParser      as TreeParser
 
-type StringNode = Node (Lexeme String)
 type TextNode = Node (Lexeme Text)
 
-toTextAst :: [StringNode] -> [TextNode]
-toTextAst stringAst =
-    evalState (mapAst cacheActions stringAst) Map.empty
+cacheText :: [TextNode] -> [TextNode]
+cacheText textAst =
+    evalState (mapAst cacheActions textAst) Map.empty
   where
-    cacheActions :: TextActions (State (Map String Text)) String Text
+    cacheActions :: TextActions (State (Map Text Text)) Text Text
     cacheActions = textActions $ \s -> do
         m <- get
         case Map.lookup s m of
             Nothing -> do
-                let text = Text.pack s
-                put $ Map.insert s text m
-                return text
+                put $ Map.insert s s m
+                return s
             Just text ->
                 return text
 
 
 parseText :: Text -> Either String [TextNode]
-parseText contents =
-    toTextAst <$> runAlex (Text.unpack contents) Parser.parseTranslationUnit
+parseText = fmap cacheText . flip runAlex Parser.parseTranslationUnit . LBS.fromStrict . Text.encodeUtf8
 
-parseTextPedantic :: Text -> Either String [TextNode]
-parseTextPedantic =
-    parseText >=> ParseResult.toEither . TreeParser.parseTranslationUnit
+parseBytes :: LBS.ByteString -> Either String [TextNode]
+parseBytes = flip runAlex Parser.parseTranslationUnit
+
+parseBytesPedantic :: LBS.ByteString -> Either String [TextNode]
+parseBytesPedantic = parseBytes >=> ParseResult.toEither . TreeParser.parseTranslationUnit
 
 
 parseFile :: FilePath -> IO (Either String (TranslationUnit Text))
 parseFile source =
-    addSource . parseTextPedantic . Text.decodeUtf8 <$> BS.readFile source
+    addSource . parseBytesPedantic <$> LBS.readFile source
   where
     -- Add source filename to the error message, if any.
     addSource (Left err) = Left $ source <> err

@@ -1,9 +1,12 @@
 {
+{-# LANGUAGE OverloadedStrings #-}
 module Language.Cimple.Parser
     ( parseTranslationUnit
     ) where
 
 import           Data.Fix               (Fix (..))
+import           Data.Text              (Text)
+import qualified Data.Text              as Text
 import           Language.Cimple.Ast    (AssignOp (..), BinaryOp (..),
                                          CommentStyle (..), LiteralType (..),
                                          Node, NodeF (..), Scope (..),
@@ -22,7 +25,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
 %errorhandlertype explist
 %lexer {lexwrap} {L _ Eof _}
 %monad {Alex}
-%tokentype {StringLexeme}
+%tokentype {Term}
 %token
     ID_CONST			{ L _ IdConst			_ }
     ID_FUNC_TYPE		{ L _ IdFuncType		_ }
@@ -173,12 +176,12 @@ CopyrightDecl :: { NonTerm }
 CopyrightDecl
 :	' ' 'Copyright' CopyrightDates CopyrightOwner '\n'	{ Fix $ CopyrightDecl (fst $3) (snd $3) $4 }
 
-CopyrightDates :: { (StringLexeme, Maybe StringLexeme) }
+CopyrightDates :: { (Term, Maybe Term) }
 CopyrightDates
 :	LIT_INTEGER						{ ($1, Nothing) }
 |	LIT_INTEGER '-' LIT_INTEGER				{ ($1, Just $3) }
 
-CopyrightOwner :: { [StringLexeme] }
+CopyrightOwner :: { [Term] }
 CopyrightOwner
 :	CMT_WORD CommentWords					{ $1 : reverse $2 }
 
@@ -216,24 +219,24 @@ Comment
 |	'/** @} */'						{ Fix $ CommentSectionEnd $1 }
 |	Ignore							{ $1 }
 
-CommentTokens :: { [StringLexeme] }
+CommentTokens :: { [Term] }
 CommentTokens
 :	CommentToken						{ [$1] }
 |	CommentTokens CommentToken				{ $2 : $1 }
 
-CommentToken :: { StringLexeme }
+CommentToken :: { Term }
 CommentToken
 :	CommentWord						{ $1 }
 |	'\n'							{ $1 }
 |	' * '							{ $1 }
 |	' '							{ $1 }
 
-CommentWords :: { [StringLexeme] }
+CommentWords :: { [Term] }
 CommentWords
 :								{ [] }
 |	CommentWords CommentWord				{ $2 : $1 }
 
-CommentWord :: { StringLexeme }
+CommentWord :: { Term }
 CommentWord
 :	CMT_WORD						{ $1 }
 |	CMT_COMMAND						{ $1 }
@@ -265,7 +268,7 @@ Ignore :: { NonTerm }
 Ignore
 :	IGN_START IgnoreBody IGN_END				{ Fix $ Comment Ignore $1 (reverse $2) $3 }
 
-IgnoreBody :: { [StringLexeme] }
+IgnoreBody :: { [Term] }
 IgnoreBody
 :	IGN_BODY						{ [$1] }
 |	IgnoreBody IGN_BODY					{ $2 : $1 }
@@ -602,7 +605,7 @@ Enumerator
 |	EnumeratorName '=' ConstExpr ','			{ Fix $ Enumerator $1 (Just $3) }
 |	Comment							{ $1 }
 
-EnumeratorName :: { StringLexeme }
+EnumeratorName :: { Term }
 EnumeratorName
 :	ID_CONST						{ $1 }
 |	ID_SUE_TYPE						{ $1 }
@@ -683,11 +686,11 @@ NonNull
 |	nullable '(' Ints ')'					{ Fix . NonNull [] $3 }
 |	non_null '(' Ints ')' nullable '(' Ints ')'		{ Fix . NonNull $3 $7 }
 
-Ints :: { [StringLexeme] }
+Ints :: { [Term] }
 Ints
 :	IntList							{ reverse $1 }
 
-IntList :: { [StringLexeme] }
+IntList :: { [Term] }
 IntList
 :	LIT_INTEGER						{ [$1] }
 |	IntList ',' LIT_INTEGER					{ $3 : $1 }
@@ -729,8 +732,8 @@ ConstDecl
 |	static const LeafType ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Static $3 $4 $6 }
 
 {
-type StringLexeme = Lexeme String
-type NonTerm = Node StringLexeme
+type Term = Lexeme Text
+type NonTerm = Node Term
 
 tyPointer, tyConst :: NonTerm -> NonTerm
 tyPointer = Fix . TyPointer
@@ -741,14 +744,14 @@ parseError (L (AlexPn _ line col) c t, options) =
     alexError $ ":" <> show line <> ":" <> show col <> ": Parse error near " <> show c <> ": "
         <> show t <> "; expected one of " <> show options
 
-lexwrap :: (Lexeme String -> Alex a) -> Alex a
+lexwrap :: (Lexeme Text -> Alex a) -> Alex a
 lexwrap = (alexMonadScan >>=)
 
 externC
-    :: Lexeme String
-    -> Lexeme String
+    :: Term
+    -> Term
     -> [NonTerm]
-    -> Lexeme String
+    -> Term
     -> Alex NonTerm
 externC (L _ _ "__cplusplus") (L _ _ "\"C\"") decls (L _ _ "__cplusplus") =
     return $ Fix $ ExternC decls
@@ -758,7 +761,7 @@ externC _ lang _ _ =
 
 macroBodyStmt
     :: NonTerm
-    -> Lexeme String
+    -> Term
     -> Alex NonTerm
 macroBodyStmt decls (L _ _ "0") =
     return $ Fix $ MacroBodyStmt decls

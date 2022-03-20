@@ -25,6 +25,8 @@ haskell_library(
         hazel_library("aeson"),
         hazel_library("array"),
         hazel_library("base"),
+        hazel_library("bytestring"),
+        hazel_library("text"),
     ],
 )
 
@@ -77,6 +79,7 @@ haskell_library(
         hazel_library("base"),
         hazel_library("data-fix"),
         hazel_library("recursion-schemes"),
+        hazel_library("text"),
         hazel_library("transformers-compat"),
     ],
 )
@@ -139,7 +142,7 @@ haskell_library(
         ],
     ),
     src_strip_prefix = "src",
-    version = "0.0.16",
+    version = "0.0.17",
     visibility = ["//visibility:public"],
     deps = [
         ":ast",

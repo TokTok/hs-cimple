@@ -4,6 +4,7 @@
 {-# LANGUAGE DeriveTraversable  #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE StrictData         #-}
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 module Language.Cimple.Lexer
     ( Alex
     , AlexPosn (..)
@@ -15,16 +16,20 @@ module Language.Cimple.Lexer
     , lexemePosn
     , lexemeText
     , lexemeLine
-    , mkL
     , runAlex
     ) where
 
 import           Data.Aeson             (FromJSON, ToJSON)
+import qualified Data.ByteString        as BS
+import qualified Data.ByteString.Lazy   as LBS
+import           Data.Text              (Text)
+import qualified Data.Text              as Text
+import qualified Data.Text.Encoding     as Text
 import           GHC.Generics           (Generic)
 import           Language.Cimple.Tokens (LexemeClass (..))
 }
 
-%wrapper "monad"
+%wrapper "monad-bytestring"
 
 tokens :-
 
@@ -302,8 +307,9 @@ data Lexeme text = L AlexPosn LexemeClass text
 instance FromJSON text => FromJSON (Lexeme text)
 instance ToJSON text => ToJSON (Lexeme text)
 
-mkL :: Applicative m => LexemeClass -> AlexInput -> Int -> m (Lexeme String)
-mkL c (p, _, _, str) len = pure $ L p c (take len str)
+mkL :: LexemeClass -> AlexInput -> Int64 -> Alex (Lexeme Text)
+mkL c (p, _, str, _) len = pure $ L p c (piece str)
+  where piece = Text.decodeUtf8 . LBS.toStrict . LBS.take len
 
 lexemePosn :: Lexeme text -> AlexPosn
 lexemePosn (L p _ _) = p
@@ -317,15 +323,10 @@ lexemeText (L _ _ s) = s
 lexemeLine :: Lexeme text -> Int
 lexemeLine (L (AlexPn _ l _) _ _) = l
 
-start :: Int -> AlexInput -> Int -> Alex (Lexeme String)
-start code _ _ = do
-    alexSetStartCode code
-    alexMonadScan
+alexEOF :: Alex (Lexeme Text)
+alexEOF = return (L (AlexPn 0 0 0) Eof Text.empty)
 
-alexEOF :: Alex (Lexeme String)
-alexEOF = return (L (AlexPn 0 0 0) Eof "")
-
-alexScanTokens :: String -> Either String [Lexeme String]
+alexScanTokens :: LBS.ByteString -> Either String [Lexeme Text]
 alexScanTokens str =
     runAlex str $ loop []
   where
