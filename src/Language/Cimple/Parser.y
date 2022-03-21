@@ -347,7 +347,7 @@ Stmt :: { NonTerm }
 Stmt
 :	PreprocIfdef(Stmts)					{ $1 }
 |	PreprocIf(Stmts)					{ $1 }
-|	PreprocDefine Stmts PreprocUndef			{ Fix $ PreprocScopedDefine $1 $2 $3 }
+|	PreprocDefine Stmts PreprocUndef			{ Fix $ PreprocScopedDefine $1 (reverse $2) $3 }
 |	DeclStmt						{ $1 }
 |	CompoundStmt						{ $1 }
 |	IfStmt							{ $1 }
