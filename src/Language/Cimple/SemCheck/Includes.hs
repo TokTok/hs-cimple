@@ -8,6 +8,7 @@ module Language.Cimple.SemCheck.Includes
 import           Control.Monad.State.Strict      (State)
 import qualified Control.Monad.State.Strict      as State
 import           Data.Fix                        (Fix (..))
+import           Data.List                       (isInfixOf)
 import           Data.Text                       (Text)
 import qualified Data.Text                       as Text
 import           Language.Cimple.Ast             (NodeF (..))
@@ -25,9 +26,11 @@ collectIncludes
   -> [FilePath]
   -> Either String ((), FilePath, [FilePath])
 collectIncludes sources (file, _) includes =
-    case filter (not . (`elem` sources)) includes of
+    case filter (not . exempt) . filter (not . (`elem` sources)) $ includes of
         []        -> Right ((), file, includes)
         missing:_ -> Left $ file <> " includes missing " <> missing
+  where
+    exempt = ("/third_party/" `isInfixOf`)
 
 
 relativeTo :: FilePath -> FilePath -> FilePath
