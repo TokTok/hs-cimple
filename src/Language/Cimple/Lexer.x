@@ -296,13 +296,12 @@ tokens :-
 <0,ppSC,cmtSC,codeSC>	.				{ mkL ErrorToken }
 
 {
-deriving instance Ord AlexPosn
 deriving instance Generic AlexPosn
 instance FromJSON AlexPosn
 instance ToJSON AlexPosn
 
 data Lexeme text = L AlexPosn LexemeClass text
-    deriving (Ord, Eq, Show, Generic, Functor, Foldable, Traversable)
+    deriving (Eq, Show, Generic, Functor, Foldable, Traversable)
 
 instance FromJSON text => FromJSON (Lexeme text)
 instance ToJSON text => ToJSON (Lexeme text)
