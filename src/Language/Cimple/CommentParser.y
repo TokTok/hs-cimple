@@ -30,6 +30,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     '@deprecated'		{ L _ CmtCommand "@deprecated"	}
     '@extends'			{ L _ CmtCommand "@extends"	}
     '@implements'		{ L _ CmtCommand "@implements"	}
+    '@note'			{ L _ CmtCommand "@note"	}
     '@param'			{ L _ CmtCommand "@param"	}
     '@private'			{ L _ CmtCommand "@private"	}
     '@ref'			{ L _ CmtCommand "@ref"		}
