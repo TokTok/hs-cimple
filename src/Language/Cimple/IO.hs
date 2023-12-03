@@ -64,13 +64,9 @@ parseFile source =
     addSource (Right ok) = Right (source, ok)
 
 
-parseFiles' :: [FilePath] -> IO (Either String [TranslationUnit Text])
-parseFiles' sources = sequenceA <$> P.mapM parseFile sources
-
-
 parseFiles :: [FilePath] -> IO (Either String [TranslationUnit Text])
-parseFiles sources = fmap Program.toList . (>>= Program.fromList) <$> parseFiles' sources
+parseFiles sources = sequenceA <$> P.mapM parseFile sources
 
 
 parseProgram :: [FilePath] -> IO (Either String (Program Text))
-parseProgram sources = (>>= Program.fromList) <$> parseFiles' sources
+parseProgram sources = (>>= Program.fromList) <$> parseFiles sources

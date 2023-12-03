@@ -116,14 +116,16 @@ tokens :-
 <ppSC>		\"[^\"]*\"				{ mkL LitString }
 <ppSC>		\n					{ mkL PpNewline `andBegin` 0 }
 <ppSC>		\\\n					;
-<ppSC>		$white					;
+<ppSC>		" "					;
+<ppSC>		$white					{ mkE ErrorToken }
 
 <ignoreSC>	"//!TOKSTYLE+"				{ mkL IgnEnd `andBegin` 0 }
 <ignoreSC>	([^\/]+|.|\n)				{ mkL IgnBody }
 
 <0,ppSC>	"//"\n					;
 <0,ppSC>	"// ".*					;
-<0>		$white+					;
+<0>		[\ \n]+					;
+<0>		$white					{ mkE ErrorToken }
 <0>		"//!TOKSTYLE-"				{ mkL IgnStart `andBegin` ignoreSC }
 <0>		"/*"					{ mkL CmtStart `andBegin` cmtSC }
 <0>		"/**"					{ mkL CmtStartDoc `andBegin` cmtSC }
@@ -308,6 +310,10 @@ instance ToJSON text => ToJSON (Lexeme text)
 
 mkL :: LexemeClass -> AlexInput -> Int64 -> Alex (Lexeme Text)
 mkL c (p, _, str, _) len = pure $ L p c (piece str)
+  where piece = Text.decodeUtf8 . LBS.toStrict . LBS.take len
+
+mkE :: LexemeClass -> AlexInput -> Int64 -> Alex (Lexeme Text)
+mkE c (p, _, str, _) len = alexError $ ": " <> show (L p c (piece str))
   where piece = Text.decodeUtf8 . LBS.toStrict . LBS.take len
 
 lexemePosn :: Lexeme text -> AlexPosn

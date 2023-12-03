@@ -81,10 +81,8 @@ executable dump-ast
   main-is:          dump-ast.hs
   build-depends:
       base        <5
-    , bytestring
     , cimple
     , groom
-    , text
 
 executable dump-tokens
   default-language: Haskell2010
@@ -96,7 +94,6 @@ executable dump-tokens
     , bytestring
     , cimple
     , groom
-    , text
 
 executable include-graph
   default-language: Haskell2010
