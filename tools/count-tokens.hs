@@ -1,6 +1,7 @@
 {-# LANGUAGE Strict #-}
 module Main (main) where
 
+import           Data.Bifunctor       (bimap)
 import qualified Data.ByteString.Lazy as LBS
 import qualified Data.Text            as Text
 import           Data.Time.Clock      (diffUTCTime, getCurrentTime)
@@ -27,7 +28,7 @@ processFile source = do
         Right ok -> return ok
 
 processFiles :: [FilePath] -> IO (Int, Int)
-processFiles = fmap ((\(a, b) -> (sum a, sum b)) . unzip) . mapM processFile
+processFiles = fmap (bimap sum sum . unzip) . mapM processFile
 
 main :: IO ()
 main = do

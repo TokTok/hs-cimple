@@ -4,7 +4,6 @@
 {-# LANGUAGE RecordWildCards       #-}
 {-# LANGUAGE ScopedTypeVariables   #-}
 {-# LANGUAGE Strict                #-}
-{-# LANGUAGE StrictData            #-}
 {-# LANGUAGE TypeFamilies          #-}
 module Language.Cimple.MapAst
     ( mapAst

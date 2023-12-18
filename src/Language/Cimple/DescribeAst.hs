@@ -1,7 +1,6 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE Strict            #-}
-{-# LANGUAGE StrictData        #-}
 module Language.Cimple.DescribeAst
     ( HasLocation (..)
     , describeLexeme
@@ -34,7 +33,7 @@ describeNode node = case unFix node of
     PreprocIf{}     -> "#if/#endif block"
     PreprocIfdef{}  -> "#ifdef/#endif block"
     PreprocIfndef{} -> "#ifndef/#endif block"
-    _               -> show $ (const ellipsis) <$> unFix node
+    _               -> show $ ellipsis <$ unFix node
   where
     ellipsis :: String
     ellipsis = "..."

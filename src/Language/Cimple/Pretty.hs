@@ -1,6 +1,8 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
+{- HLINT ignore "Functor law" -}
+{- HLINT ignore "Use <$" -}
 module Language.Cimple.Pretty
     ( plain
     , render
@@ -275,8 +277,9 @@ ppVerbatimComment =
 ppCommentInfo :: Comment (Lexeme Text) -> Doc
 ppCommentInfo = foldFix go
   where
-  ppBody     = vcat . zipWith (<>) (        repeat (dullyellow (text " * "  )))
-  ppIndented = vcat . zipWith (<>) (empty : repeat (dullyellow (text " *   ")))
+  commentStart t = repeat (dullyellow (text t))
+  ppBody     = vcat . zipWith (<>) (        commentStart " * "  )
+  ppIndented = vcat . zipWith (<>) (empty : commentStart " *   ")
   ppRef      = underline . cyan . ppLexeme
   ppAttr     = maybe empty (blue . ppLexeme)
 

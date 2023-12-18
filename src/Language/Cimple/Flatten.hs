@@ -3,7 +3,6 @@
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Strict                #-}
-{-# LANGUAGE StrictData            #-}
 {-# LANGUAGE TypeOperators         #-}
 module Language.Cimple.Flatten (lexemes) where
 
@@ -81,7 +80,7 @@ instance GenConcatsFlatten (Fix (CommentF a)) a where
     gconcatsFlatten (Fix (DocRParen x)) = gconcatsFlatten x
     gconcatsFlatten (Fix (DocSee r x)) = r : gconcatsFlatten x
     gconcatsFlatten (Fix (DocSentence x p)) = gconcatsFlatten x ++ [p]
-    gconcatsFlatten (Fix (DocULItem i x)) = concat [gconcatsFlatten i, gconcatsFlatten x]
+    gconcatsFlatten (Fix (DocULItem i x)) = gconcatsFlatten i ++ gconcatsFlatten x
     gconcatsFlatten (Fix (DocWord x)) = [x]
 
 instance GenConcatsFlatten t a => GenConcats (Rec0 t) a where
