@@ -1,9 +1,11 @@
 {-# LANGUAGE Strict     #-}
 {-# LANGUAGE StrictData #-}
 module Language.Cimple.IO
-    ( parseFile
+    ( parseExpr
+    , parseFile
     , parseFiles
     , parseProgram
+    , parseStmt
     , parseText
     ) where
 
@@ -16,7 +18,7 @@ import qualified Data.Map.Strict                 as Map
 import           Data.Text                       (Text)
 import qualified Data.Text.Encoding              as Text
 import           Language.Cimple.Ast             (Node)
-import           Language.Cimple.Lexer           (Lexeme, runAlex)
+import           Language.Cimple.Lexer           (Alex, Lexeme, runAlex)
 import           Language.Cimple.MapAst          (TextActions, mapAst,
                                                   textActions)
 import qualified Language.Cimple.Parser          as Parser
@@ -43,8 +45,17 @@ cacheText textAst =
                 return text
 
 
+runText :: Alex a -> Text -> Either String a
+runText f = flip runAlex f . LBS.fromStrict . Text.encodeUtf8
+
+parseExpr :: Text -> Either String TextNode
+parseExpr = runText Parser.parseStmt
+
+parseStmt :: Text -> Either String TextNode
+parseStmt = runText Parser.parseStmt
+
 parseText :: Text -> Either String [TextNode]
-parseText = fmap cacheText . flip runAlex Parser.parseTranslationUnit . LBS.fromStrict . Text.encodeUtf8
+parseText = fmap cacheText . runText Parser.parseTranslationUnit
 
 parseBytes :: LBS.ByteString -> Either String [TextNode]
 parseBytes = flip runAlex Parser.parseTranslationUnit

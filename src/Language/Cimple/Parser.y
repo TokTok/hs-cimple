@@ -1,7 +1,9 @@
 {
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Cimple.Parser
-    ( parseTranslationUnit
+    ( parseExpr
+    , parseStmt
+    , parseTranslationUnit
     ) where
 
 import           Data.Fix               (Fix (..))
@@ -20,6 +22,8 @@ import           Language.Cimple.Tokens (LexemeClass (..))
 %expect 2
 
 %name parseTranslationUnit TranslationUnit
+%name parseExpr Expr
+%name parseStmt Stmt
 
 %error {parseError}
 %errorhandlertype explist
