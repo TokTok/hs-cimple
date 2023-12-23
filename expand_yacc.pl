@@ -12,7 +12,6 @@
 
 use strict;
 use warnings FATAL => 'all';
-no warnings 'experimental';
 use utf8;
 use 5.010;
 
@@ -105,15 +104,15 @@ sub parse {
    my $prod;      # Current multi-line production.
 
    for my $line (@lines) {
-      given ($state) {
-         when (PREAMBLE) {
+      for ($state) {
+         ($_ == PREAMBLE) and do {
             if ($line eq "%%") {
                $state = PRODUCTIONS;
                next;
             }
             push @preamble, $line;
-         }
-         when (PRODUCTIONS) {
+         };
+         ($_ == PRODUCTIONS) and do {
             next unless $line;
 
             if ($line eq "{") {
@@ -158,8 +157,8 @@ sub parse {
             }
 
             die "Unhandled: '$line'";
-         }
-         when (MULTILINE_PRODUCTION) {
+         };
+         ($_ == MULTILINE_PRODUCTION) and do {
             if ($line =~ m/^\t([^\t]+)(\t+)(\{%? .* \})/) {
                $prod .= " $1";
                push @{ $nonterm->{productions} }, {
@@ -177,13 +176,10 @@ sub parse {
             }
 
             die "Unhandled: '$line'";
-         }
-         when (POSTAMBLE) {
+         };
+         ($_ == POSTAMBLE) and do {
             push @postamble, $line;
-         }
-         default {
-            die "Invalid state: $state"
-         }
+         };
       }
    }
 

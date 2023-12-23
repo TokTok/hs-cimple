@@ -162,7 +162,7 @@ haskell_library(
         ],
     ),
     src_strip_prefix = "src",
-    version = "0.0.18",
+    version = "0.0.19",
     visibility = ["//visibility:public"],
     deps = [
         ":ast",
