@@ -3,6 +3,7 @@ load("@rules_haskell//haskell:defs.bzl", "haskell_binary")
 haskell_binary(
     name = "cimplefmt",
     srcs = ["cimplefmt.hs"],
+    tags = ["no-cross"],
     visibility = ["//visibility:public"],
     deps = [
         "//hs-cimple",
@@ -15,6 +16,7 @@ haskell_binary(
 haskell_binary(
     name = "dump-ast",
     srcs = ["dump-ast.hs"],
+    tags = ["no-cross"],
     visibility = ["//visibility:public"],
     deps = [
         "//hs-cimple",
@@ -26,6 +28,7 @@ haskell_binary(
 haskell_binary(
     name = "count-tokens",
     srcs = ["count-tokens.hs"],
+    tags = ["no-cross"],
     visibility = ["//visibility:public"],
     deps = [
         "//hs-cimple",
@@ -39,6 +42,7 @@ haskell_binary(
 haskell_binary(
     name = "dump-tokens",
     srcs = ["dump-tokens.hs"],
+    tags = ["no-cross"],
     visibility = ["//visibility:public"],
     deps = [
         "//hs-cimple",
@@ -51,6 +55,7 @@ haskell_binary(
 haskell_binary(
     name = "include-graph",
     srcs = ["include-graph.hs"],
+    tags = ["no-cross"],
     visibility = ["//visibility:public"],
     deps = [
         "//hs-cimple",

@@ -19,6 +19,7 @@ haskell_library(
         "src/Language/Cimple/Tokens.hs",
     ],
     src_strip_prefix = "src",
+    tags = ["no-cross"],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -36,6 +37,7 @@ haskell_library(
     name = "ast",
     srcs = ["src/Language/Cimple/Ast.hs"],
     src_strip_prefix = "src",
+    tags = ["no-cross"],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -55,6 +57,7 @@ haskell_library(
         "src/Language/Cimple/Flatten.hs",
     ],
     src_strip_prefix = "src",
+    tags = ["no-cross"],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -79,6 +82,7 @@ haskell_library(
     name = "parser",
     srcs = [":Parser"],
     src_strip_prefix = "src",
+    tags = ["no-cross"],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -107,6 +111,7 @@ haskell_library(
     name = "comment-parser",
     srcs = [":CommentParser"],
     src_strip_prefix = "src",
+    tags = ["no-cross"],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -133,6 +138,7 @@ haskell_library(
     name = "tree-parser",
     srcs = [":TreeParser"],
     src_strip_prefix = "src",
+    tags = ["no-cross"],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -162,6 +168,7 @@ haskell_library(
         ],
     ),
     src_strip_prefix = "src",
+    tags = ["no-cross"],
     version = "0.0.19",
     visibility = ["//visibility:public"],
     deps = [
