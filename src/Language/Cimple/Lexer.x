@@ -38,24 +38,26 @@ tokens :-
 <0>		"VLA"					{ mkL KwVla }
 
 -- Winapi functions.
-<0>		"WSAAddressToString"			{ mkL IdVar }
-<0>		"LocalFree"				{ mkL IdVar }
 <0>		"FormatMessageA"			{ mkL IdVar }
-<0>		"WSAGetLastError"			{ mkL IdVar }
-<0>		"WSAStringToAddress"			{ mkL IdVar }
-<0>		"WSAStartup"				{ mkL IdVar }
 <0>		"GetAdaptersInfo"			{ mkL IdVar }
-<0>		"WSACleanup"				{ mkL IdVar }
 <0>		"GetSystemTimeAsFileTime"		{ mkL IdVar }
 <0>		"GetTickCount"				{ mkL IdVar }
+<0>		"LocalFree"				{ mkL IdVar }
+<0>		"QueryPerformanceCounter"		{ mkL IdVar }
 <0>		"SecureZeroMemory"			{ mkL IdVar }
+<0>		"WSAAddressToString"			{ mkL IdVar }
+<0>		"WSACleanup"				{ mkL IdVar }
+<0>		"WSAGetLastError"			{ mkL IdVar }
+<0>		"WSAStartup"				{ mkL IdVar }
+<0>		"WSAStringToAddress"			{ mkL IdVar }
 
 -- Winapi struct members.
 <0>		"GatewayList"				{ mkL IdVar }
-<0>		"Next"					{ mkL IdVar }
-<0>		"IpAddress"				{ mkL IdVar }
 <0>		"IpAddressList"				{ mkL IdVar }
+<0>		"IpAddress"				{ mkL IdVar }
 <0>		"IpMask"				{ mkL IdVar }
+<0>		"Next"					{ mkL IdVar }
+<0>		"QuadPart"				{ mkL IdVar }
 <0>		"String"				{ mkL IdVar }
 
 -- Windows typedefs.
@@ -66,6 +68,7 @@ tokens :-
 <0>		"IP_ADAPTER_INFO"			{ mkL IdStdType }
 <0>		"LPTSTR"				{ mkL IdStdType }
 <0>		"u_long"				{ mkL IdStdType }
+<0>		"LARGE_INTEGER"				{ mkL IdStdType }
 <0>		"SOCKET"				{ mkL IdStdType }
 <0>		"WSADATA"				{ mkL IdStdType }
 
