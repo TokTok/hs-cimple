@@ -66,6 +66,7 @@ tokens :-
 <0>		"IP_ADAPTER_INFO"			{ mkL IdStdType }
 <0>		"LPTSTR"				{ mkL IdStdType }
 <0>		"u_long"				{ mkL IdStdType }
+<0>		"SOCKET"				{ mkL IdStdType }
 <0>		"WSADATA"				{ mkL IdStdType }
 
 -- System struct types.
