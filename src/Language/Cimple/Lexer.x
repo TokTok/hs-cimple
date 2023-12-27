@@ -44,6 +44,7 @@ tokens :-
 <0>		"GetTickCount"				{ mkL IdVar }
 <0>		"LocalFree"				{ mkL IdVar }
 <0>		"QueryPerformanceCounter"		{ mkL IdVar }
+<0>		"QueryPerformanceFrequency"		{ mkL IdVar }
 <0>		"SecureZeroMemory"			{ mkL IdVar }
 <0>		"WSAAddressToString"			{ mkL IdVar }
 <0>		"WSACleanup"				{ mkL IdVar }
