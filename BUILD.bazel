@@ -4,7 +4,7 @@ load("//third_party/haskell/happy:build_defs.bzl", "happy_parser")
 load("//third_party/haskell/hspec-discover:build_defs.bzl", "hspec_test")
 load("//tools/project:build_defs.bzl", "project")
 
-project()
+project(license = "gpl3-https")
 
 alex_lexer(
     name = "Lexer",
