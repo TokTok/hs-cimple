@@ -126,6 +126,7 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '#undef'			{ L _ PpUndef			_ }
     '\n'			{ L _ PpNewline			_ }
     '/*'			{ L _ CmtStart			_ }
+    '/*!'			{ L _ CmtStartCode		_ }
     '/**'			{ L _ CmtStartDoc		_ }
     '/** @{'			{ L _ CmtStartDocSection	_ }
     '/** @} */'			{ L _ CmtEndDocSection		_ }
@@ -439,6 +440,7 @@ DeclSpecArray :: { NonTerm }
 DeclSpecArray
 :	'[' ']'							{ Fix $ DeclSpecArray Nothing }
 |	'[' Expr ']'						{ Fix $ DeclSpecArray (Just $2) }
+|	'[' '/*!' Expr '*/' ']'					{ Fix $ DeclSpecArray (Just $3) }
 
 InitialiserExpr :: { NonTerm }
 InitialiserExpr

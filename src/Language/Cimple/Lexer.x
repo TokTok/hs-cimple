@@ -132,6 +132,8 @@ tokens :-
 <0>		[\ \n]+					;
 <0>		$white					{ mkE ErrorToken }
 <0>		"//!TOKSTYLE-"				{ mkL IgnStart `andBegin` ignoreSC }
+<0>		"/*!"					{ mkL CmtStartCode }
+<0>		"*/"					{ mkL CmtEnd }
 <0>		"/*"					{ mkL CmtStart `andBegin` cmtSC }
 <0>		"/**"					{ mkL CmtStartDoc `andBegin` cmtSC }
 <0>		"/** @{"				{ mkL CmtStartDocSection `andBegin` cmtSC }

@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts      #-}
 {-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE InstanceSigs          #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -6,7 +7,7 @@
 {-# LANGUAGE Strict                #-}
 {-# LANGUAGE TypeFamilies          #-}
 module Language.Cimple.MapAst
-    ( mapAst
+    ( mapAst, mapFileAst
 
     , doFiles, doFile
     , doNodes, doNode
@@ -14,12 +15,13 @@ module Language.Cimple.MapAst
     , doLexemes, doLexeme
     , doText
 
-    , astActions
+    , AstActions, astActions
     , TextActions, textActions
     , IdentityActions, identityActions
     ) where
 
 import           Data.Fix              (Fix (..))
+import           GHC.Stack             (HasCallStack)
 import           Language.Cimple.Ast   (Comment, CommentF (..), Node,
                                         NodeF (..))
 import           Language.Cimple.Lexer (Lexeme (..))
@@ -27,14 +29,14 @@ import           Language.Cimple.Lexer (Lexeme (..))
 class MapAst itext otext a where
     type Mapped itext otext a
     mapFileAst
-        :: Applicative f
+        :: (Applicative f, HasCallStack)
         => AstActions f itext otext
         -> FilePath
         -> a
         -> f (Mapped itext otext a)
 
 mapAst
-    :: (MapAst itext otext    a, Applicative f)
+    :: (MapAst itext otext a, Applicative f, HasCallStack)
     => AstActions f itext otext -> a
     -> f    (Mapped itext otext    a)
 mapAst = flip mapFileAst "<stdin>"
@@ -86,7 +88,7 @@ identityActions = astActions pure
 instance MapAst itext otext (Lexeme itext) where
     type Mapped itext otext (Lexeme itext)
                           =  Lexeme otext
-    mapFileAst :: forall f . Applicative f
+    mapFileAst :: (Applicative f, HasCallStack)
                => AstActions f itext otext -> FilePath -> Lexeme itext -> f (Lexeme otext)
     mapFileAst AstActions{..} currentFile = doLexeme currentFile <*>
         \(L p c s) -> L p c <$> doText currentFile s
@@ -101,7 +103,7 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
     type Mapped itext otext (Comment (Lexeme itext))
                           =  Comment (Lexeme otext)
     mapFileAst
-        :: forall f . Applicative f
+        :: forall f. (Applicative f, HasCallStack)
         => AstActions f itext otext
         -> FilePath
         ->    Comment (Lexeme itext)
@@ -177,7 +179,7 @@ instance MapAst itext otext (Node (Lexeme itext)) where
     type Mapped itext otext (Node (Lexeme itext))
                           =  Node (Lexeme otext)
     mapFileAst
-        :: forall f . Applicative f
+        :: forall f . (Applicative f, HasCallStack)
         => AstActions f itext otext
         -> FilePath
         ->    Node (Lexeme itext)
