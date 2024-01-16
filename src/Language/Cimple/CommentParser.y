@@ -38,11 +38,14 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     '@return'			{ L _ CmtCommand "@return"	}
     '@retval'			{ L _ CmtCommand "@retval"	}
     '@see'			{ L _ CmtCommand "@see"		}
+    '@code'			{ L _ CmtCode	 "@code"	}
+    '@endcode'			{ L _ CmtCode	 "@endcode"	}
 
     ' '				{ L _ CmtIndent		" "	}
     'INDENT1'			{ L _ CmtIndent		"   "	}
     'INDENT2'			{ L _ CmtIndent		"    " 	}
     'INDENT3'			{ L _ CmtIndent		"     "	}
+    'INDENT'			{ L _ CmtIndent			_ }
 
     '('				{ L _ PctLParen			_ }
     ')'				{ L _ PctRParen			_ }
@@ -143,6 +146,22 @@ Command(x)
 |	'@implements' CMT_WORD					{ Fix $ DocImplements $2 }
 |	'@extends' CMT_WORD					{ Fix $ DocExtends $2 }
 |	'@private'						{ Fix DocPrivate }
+|	'@code' Code '@endcode'					{ Fix $ DocLine $ Fix (DocWord $1) : (reverse $2) ++ [Fix (DocWord $3)] }
+
+Code :: { [NonTerm] }
+Code
+:	CodeWord						{ [$1] }
+|	Code CodeWord						{ $2 : $1 }
+
+CodeWord :: { NonTerm }
+CodeWord
+:	'\n'							{ Fix $ DocWord $1 }
+|	' '							{ Fix $ DocWord $1 }
+|	'INDENT1'						{ Fix $ DocWord $1 }
+|	'INDENT2'						{ Fix $ DocWord $1 }
+|	'INDENT3'						{ Fix $ DocWord $1 }
+|	'INDENT'						{ Fix $ DocWord $1 }
+|	CMT_CODE						{ Fix $ DocWord $1 }
 
 BulletListItem :: { NonTerm }
 BulletListItem
@@ -232,7 +251,7 @@ prepend x (Fix (DocLine xs):rest) = Fix (DocLine (x:xs)) : rest
 
 failAt :: Lexeme Text -> String -> ParseResult a
 failAt n msg =
-    fail $ Text.unpack (sloc "" n) <> ": unexpected " <> describeLexeme n <> msg
+    fail $ Text.unpack (sloc "" n) <> ": unexpected in comment: " <> describeLexeme n <> msg
 
 parseError :: ([Lexeme Text], [String]) -> ParseResult a
 parseError ([], options)  = fail $ " end of comment; expected one of " <> show options

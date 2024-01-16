@@ -55,10 +55,10 @@ library
     , bytestring
     , containers
     , data-fix
+    , file-embed
     , filepath
     , monad-parallel
     , mtl
-    , recursion-schemes
     , split
     , text
     , transformers-compat

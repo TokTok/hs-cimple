@@ -1,11 +1,16 @@
 {
+{-# LANGUAGE CPP               #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TemplateHaskell   #-}
 module Language.Cimple.Parser
     ( parseExpr
     , parseStmt
     , parseTranslationUnit
+    , source
     ) where
 
+import qualified Data.ByteString        as BS
+import           Data.FileEmbed         (embedFile)
 import           Data.Fix               (Fix (..))
 import           Data.Text              (Text)
 import qualified Data.Text              as Text
@@ -774,4 +779,11 @@ macroBodyStmt decls (L _ _ "0") =
 macroBodyStmt _ cond =
     alexError $ show cond
         <> ": macro do-while body must end in 'while (0)'"
+
+source :: Maybe BS.ByteString
+#ifdef SOURCE
+source = Just $(embedFile SOURCE)
+#else
+source = Nothing
+#endif
 }
