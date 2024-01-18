@@ -11,10 +11,12 @@ module Language.Cimple.Pretty
     , showNodePlain
     ) where
 
-import           Data.Fix                      (foldFix)
+import qualified Data.ByteString.Lazy          as LBS
+import           Data.Fix                      (Fix (..), foldFix)
 import qualified Data.List.Split               as List
 import           Data.Text                     (Text)
 import qualified Data.Text                     as Text
+import qualified Data.Text.Encoding            as Text
 import qualified Data.Text.Lazy                as TL
 import           Language.Cimple               (AssignOp (..), BinaryOp (..),
                                                 Comment, CommentF (..),
@@ -22,6 +24,7 @@ import           Language.Cimple               (AssignOp (..), BinaryOp (..),
                                                 LexemeClass (..), Node,
                                                 NodeF (..), Nullability (..),
                                                 Scope (..), UnaryOp (..),
+                                                alexScanTokens, lexemeClass,
                                                 lexemeLine, lexemeText)
 import           Language.Cimple.PrettyColor   (black, blue, cyan, dullcyan,
                                                 dullgreen, dullmagenta, dullred,
@@ -45,6 +48,19 @@ ppNullability = \case
     NullabilityUnspecified -> mempty
     Nullable               -> kwNullable
     Nonnull                -> kwNonnull
+
+-- | The condition of an @#if@ as a comment after its @#endif@. Cimple needs a
+-- comment there, so if we can't read the condition back as one, it just says
+-- @#if@.
+endifComment :: Doc AnsiStyle -> Doc AnsiStyle
+endifComment cond
+    | readable = pretty "  /*" <+> cond <+> pretty "*/"
+    | otherwise = pretty "  /* #if */"
+  where
+    comment = Text.pack "/* " <> render (plain cond) <> Text.pack " */"
+    readable = case alexScanTokens (LBS.fromStrict (Text.encodeUtf8 comment)) of
+        Right tokens -> ErrorToken `notElem` map lexemeClass tokens && map lexemeClass (take 1 (reverse tokens)) == [CmtEnd]
+        Left _       -> False
 
 ppCommentStart :: CommentStyle -> Doc AnsiStyle
 ppCommentStart = dullyellow . \case
@@ -90,7 +106,8 @@ ppWord l@(L _ _          _) = dullyellow $ lexemeText l
 
 ppComment :: CommentStyle -> [Lexeme (Doc AnsiStyle)] -> Lexeme (Doc AnsiStyle) -> Doc AnsiStyle
 ppComment Ignore cs _ =
-    ppCommentStart Ignore <> hcat (map ppWord cs) <> dullyellow (pretty "//!TOKSTYLE+" <> line)
+    -- The ignored code keeps its own indentation, or every print would add to it.
+    ppCommentStart Ignore <> nesting (\i -> nest (negate i) (hcat (map ppWord cs))) <> dullyellow (pretty "//!TOKSTYLE+" <> line)
 ppComment style cs end =
     nest 1 $ ppCommentStart style <> ppCommentBody (cs ++ [end])
 
@@ -201,7 +218,15 @@ ppMacroBody =
     . plain
 
 ppNode :: Pretty a => Node (Lexeme a) -> Doc AnsiStyle
-ppNode = foldFix ppNodeF
+ppNode = snd . foldFix (\n -> (Fix (fst <$> n), ppNodeWith (fst <$> n) (snd <$> n)))
+
+-- | Like 'ppNodeF', but also sees the children's nodes.
+ppNodeWith :: Pretty a => NodeF (Lexeme a) (Node (Lexeme a)) -> NodeF (Lexeme a) (Doc AnsiStyle) -> Doc AnsiStyle
+ppNodeWith (UnaryExpr outer (Fix (UnaryExpr inner _))) (UnaryExpr _ e)
+    -- Otherwise @& &x@ prints as @&&x@ and @- -x@ as @--x@.
+    | (outer, inner) `elem` [(UopAddress, UopAddress), (UopMinus, UopMinus), (UopMinus, UopDecr)] =
+        ppUnaryOp outer <+> e
+ppNodeWith _ doc = ppNodeF doc
 
 ppNodeF :: Pretty a => NodeF (Lexeme a) (Doc AnsiStyle) -> Doc AnsiStyle
 ppNodeF = \case
@@ -302,7 +327,7 @@ ppNodeF = \case
         dullmagenta (pretty "#if" <+> cond) <> line <>
         ppToplevel decls <>
         elseBranch <> line <>
-        dullmagenta (pretty "#endif  /*" <+> cond <+> pretty "*/")
+        dullmagenta (pretty "#endif" <> endifComment cond)
     PreprocIfdef name decls elseBranch ->
         dullmagenta (pretty "#ifdef" <+> ppLexeme name) <> line <>
         ppToplevel decls <>

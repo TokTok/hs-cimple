@@ -1,3 +1,5 @@
 ---
 packages: [.]
 resolver: lts-23.9
+extra-deps:
+  - happy-arbitrary-0.0.2

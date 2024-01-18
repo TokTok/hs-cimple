@@ -81,8 +81,8 @@ ppAssignOp = \case
     AopBitOr  -> pretty "|="
     AopBitXor -> pretty "^="
     AopMod    -> pretty "%="
-    AopLsh    -> pretty ">>="
-    AopRsh    -> pretty "<<="
+    AopLsh    -> pretty "<<="
+    AopRsh    -> pretty ">>="
 
 ppBinaryOp :: BinaryOp -> Doc AnsiStyle
 ppBinaryOp = \case

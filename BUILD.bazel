@@ -232,13 +232,20 @@ haskell_library(
 hspec_test(
     name = "testsuite",
     size = "small",
+    data = [
+        "src/Language/Cimple/Lexer.x",
+        "src/Language/Cimple/Parser.y",
+    ],
     deps = [
         ":hs-cimple",
         ":parser",
+        "//hs-happy-arbitrary",
         "//third_party/haskell:QuickCheck",
         "//third_party/haskell:base",
+        "//third_party/haskell:bytestring",
         "//third_party/haskell:containers",
         "//third_party/haskell:data-fix",
+        "//third_party/haskell:directory",
         "//third_party/haskell:extra",
         "//third_party/haskell:hspec",
         "//third_party/haskell:mtl",

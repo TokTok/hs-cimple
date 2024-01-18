@@ -144,8 +144,8 @@ tokens :-
 <0>		"/** @{"				{ mkL CmtStartDocSection `andBegin` cmtSC }
 <0>		"/** @} */"				{ mkL CmtEndDocSection }
 <0>		"/**""*"+				{ mkL CmtStartBlock `andBegin` cmtSC }
-<0,cmtSC>	\"(\\.|[^\"])*\"			{ mkL LitString }
-<0>		'(\\|[^'])*'				{ mkL LitChar }
+<0,cmtSC>	\"(\\.|[^\"\\])*\"			{ mkL LitString }
+<0>		'(\\.|[^'\\])*'				{ mkL LitChar }
 <0>		"<"[a-z0-9\.\/_]+">"			{ mkL LitSysInclude }
 <0>		"#if"					{ mkL PpIf `andBegin` ppSC }
 <0>		"#ifdef"				{ mkL PpIfdef }
@@ -282,6 +282,7 @@ tokens :-
 <cmtSC>		"*"[A-Za-z][A-Za-z0-9_']*"*"		{ mkL CmtWord }
 <cmtSC>		"#"[A-Za-z][A-Za-z0-9_]*		{ mkL CmtRef }
 <cmtSC>		"_"*[A-Za-z][A-Za-z0-9_']*		{ mkL CmtWord }
+<cmtSC>		"_"[A-Za-z0-9_']*			{ mkL CmtWord }
 <cmtSC>		"#"[0-9]+				{ mkL CmtWord }
 <cmtSC>		"http://"[^\ ]+				{ mkL CmtWord }
 <cmtSC>		[0-9]+"%"				{ mkL LitInteger }

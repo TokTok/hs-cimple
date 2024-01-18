@@ -449,7 +449,7 @@ VarDeclStmt
 
 VarDecl :: { NonTerm }
 VarDecl
-:	QualType(LocalLeafType) ID_VAR DeclSpecArrays		{ Fix $ VarDecl $1 $2 $3 }
+:	QualType(LocalLeafType) ID_VAR DeclSpecArrays		{ Fix $ VarDecl $1 $2 (reverse $3) }
 
 DeclSpecArrays :: { [NonTerm] }
 DeclSpecArrays
@@ -690,7 +690,7 @@ MemberDecl
 
 TypedefDecl :: { NonTerm }
 TypedefDecl
-:	typedef QualType(GlobalLeafType) ID_SUE_TYPE DeclSpecArrays ';'	{ Fix $ Typedef $2 $3 $4 }
+:	typedef QualType(GlobalLeafType) ID_SUE_TYPE DeclSpecArrays ';'	{ Fix $ Typedef $2 $3 (reverse $4) }
 |	typedef FunctionPrototype(ID_FUNC_TYPE) ';'		{ Fix $ TypedefFunction $2 }
 |	Attrs typedef FunctionPrototype(ID_FUNC_TYPE) ';'	{ $1 $ Fix $ TypedefFunction $3 }
 |	struct ID_SUE_TYPE ';'					{ Fix $ Typedef (Fix (TyStruct $2)) $2 [] }
@@ -707,7 +707,7 @@ PtrType(leafType)
 
 QualList :: { NonTerm -> NonTerm }
 QualList
-:	Qual QualList						{ $1 . $2 }
+:	Qual QualList						{ $2 . $1 }
 |	Qual							{ $1 }
 
 QualMaybe :: { NonTerm -> NonTerm }

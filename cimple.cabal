@@ -120,6 +120,7 @@ test-suite testsuite
   hs-source-dirs:     test
   main-is:            testsuite.hs
   other-modules:
+    Language.Cimple.ArbitrarySpec
     Language.Cimple.AstSpec
     Language.Cimple.CommentParserSpec
     Language.Cimple.ParserSpec
@@ -133,10 +134,13 @@ test-suite testsuite
   build-depends:
       QuickCheck
     , base                 <5
+    , bytestring
     , cimple
     , containers
     , data-fix
+    , directory
     , extra
+    , happy-arbitrary
     , hspec
     , mtl
     , prettyprinter
