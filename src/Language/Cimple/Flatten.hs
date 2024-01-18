@@ -68,6 +68,7 @@ instance GenConcatsFlatten (Fix (CommentF a)) a where
     gconcatsFlatten (Fix (DocExtends x)) = gconcatsFlatten x
     gconcatsFlatten (Fix (DocImplements x)) = gconcatsFlatten x
     gconcatsFlatten (Fix (DocLine x)) = gconcatsFlatten x
+    gconcatsFlatten (Fix (DocCode b x e)) = concat [gconcatsFlatten b, gconcatsFlatten x, gconcatsFlatten e]
     gconcatsFlatten (Fix (DocList x)) = gconcatsFlatten x
     gconcatsFlatten (Fix (DocLParen x)) = gconcatsFlatten x
     gconcatsFlatten (Fix (DocOLItem i x)) = i : gconcatsFlatten x

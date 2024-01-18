@@ -134,6 +134,11 @@ instance TraverseAst text (Comment (Lexeme text)) where
             recurse docs
         DocLine docs ->
             recurse docs
+        DocCode begin docs end -> do
+            _ <- recurse begin
+            _ <- recurse docs
+            _ <- recurse end
+            pure ()
         DocList docs ->
             recurse docs
         DocOLItem docs sublist -> do

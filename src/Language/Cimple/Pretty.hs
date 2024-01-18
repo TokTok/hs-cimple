@@ -136,7 +136,7 @@ ppCommentStart = dullyellow . \case
     Ignore  -> text "//!TOKSTYLE-"
 
 ppCommentBody :: [Lexeme Text] -> Doc
-ppCommentBody body = vsep . prefixStars . map (hsep . map ppWord) . groupLines $ body
+ppCommentBody body = vsep . prefixStars . map (hcat . map ppWord . spaceWords) . groupLines $ body
   where
     -- If the "*/" is on a separate line, don't add an additional "*" before
     -- it. If "*/" is on the same line, then do add a "*" prefix on the last line.
@@ -149,6 +149,21 @@ ppCommentBody body = vsep . prefixStars . map (hsep . map ppWord) . groupLines $
         L _ PpNewline _ -> True
         _               -> False
 
+    spaceWords = \case
+        (L c p s:ws) -> L c p (" "<>s):continue ws
+        [] -> []
+      where
+        continue [] = []
+        continue (w@(L _ CmtEnd _):ws) = w:continue ws
+        continue (w@(L _ PctComma _):ws) = w:continue ws
+        continue (w@(L _ PctPeriod _):ws) = w:continue ws
+        continue (w@(L _ PctEMark _):ws) = w:continue ws
+        continue (w@(L _ PctQMark _):ws) = w:continue ws
+        continue (w@(L _ PctRParen _):ws) = w:continue ws
+        continue [w@(L c p s), end@(L _ CmtEnd _)] | lexemeLine w == lexemeLine end = [L c p (" "<>s<>" "), end]
+        continue (L c PctLParen s:w:ws) = (L c PctLParen (" "<>s)):w:continue ws
+        continue (L c p s:ws) = (L c p (" "<>s)):continue ws
+
 ppWord (L _ CmtIndent  _) = empty
 ppWord (L _ CmtCommand t) = dullcyan   $ ppText t
 ppWord (L _ _          t) = dullyellow $ ppText t
@@ -157,7 +172,7 @@ ppComment :: CommentStyle -> [Lexeme Text] -> Lexeme Text -> Doc
 ppComment Ignore cs _ =
     ppCommentStart Ignore <> hcat (map ppWord cs) <> dullyellow (text "//!TOKSTYLE+" <> line)
 ppComment style cs (L l c _) =
-    nest 1 $ ppCommentStart style <+> ppCommentBody (cs ++ [L l c "*/"])
+    nest 1 $ ppCommentStart style <> ppCommentBody (cs ++ [L l c "*/"])
 
 ppInitialiserList :: [Doc] -> Doc
 ppInitialiserList l = lbrace <+> commaSep l <+> rbrace
@@ -274,10 +289,22 @@ ppVerbatimComment =
     . renderS
     . plain
 
+ppCodeBody :: [Doc] -> Doc
+ppCodeBody =
+    vcat
+    . zipWith (<>) (empty : commentStart " *"  )
+    . map text
+    . List.splitOn "\n"
+    . renderS
+    . plain
+    . hcat
+
+commentStart :: String -> [Doc]
+commentStart = repeat . dullyellow . text
+
 ppCommentInfo :: Comment (Lexeme Text) -> Doc
 ppCommentInfo = foldFix go
   where
-  commentStart t = repeat (dullyellow (text t))
   ppBody     = vcat . zipWith (<>) (        commentStart " * "  )
   ppIndented = vcat . zipWith (<>) (empty : commentStart " *   ")
   ppRef      = underline . cyan . ppLexeme
@@ -310,6 +337,7 @@ ppCommentInfo = foldFix go
 
     DocParagraph docs -> ppIndented docs
     DocLine docs -> fillSep docs
+    DocCode begin code end -> begin <> ppCodeBody code <> end
     DocList l -> ppVerbatimComment $ vcat l
     DocOLItem num docs -> ppLexeme num <> char '.' <+> nest 3 (fillSep docs)
     DocULItem docs sublist -> char '-' <+> nest 2 (vsep $ fillSep docs : sublist)
@@ -332,10 +360,10 @@ ppNode = foldFix go
 
     LicenseDecl l cs -> ppLicenseDecl l cs
     CopyrightDecl from (Just to) owner ->
-        text " * Copyright © " <> ppLexeme from <> char '-' <> ppLexeme to <+>
+        text " * Copyright © " <> ppLexeme from <> char '-' <> ppLexeme to <>
         ppCommentBody owner
     CopyrightDecl from Nothing owner ->
-        text " * Copyright © " <> ppLexeme from <+>
+        text " * Copyright © " <> ppLexeme from <>
         ppCommentBody owner
 
     Comment style _ cs end ->

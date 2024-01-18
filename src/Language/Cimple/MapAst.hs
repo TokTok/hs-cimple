@@ -142,6 +142,8 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
             Fix <$> (DocParagraph <$> recurse docs)
         DocLine docs ->
             Fix <$> (DocLine <$> recurse docs)
+        DocCode begin docs end ->
+            Fix <$> (DocCode <$> recurse begin <*> recurse docs <*> recurse end)
         DocList docs ->
             Fix <$> (DocList <$> recurse docs)
         DocOLItem docs sublist ->

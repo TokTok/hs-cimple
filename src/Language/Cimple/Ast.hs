@@ -147,6 +147,7 @@ data CommentF lexeme a
 
     | DocParagraph [a]
     | DocLine [a]
+    | DocCode a [a] a
     | DocList [a]
     | DocULItem [a] [a]
     | DocOLItem lexeme [a]

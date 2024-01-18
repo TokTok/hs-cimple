@@ -254,14 +254,15 @@ tokens :-
 <cmtSC>		"SPDX-License-Identifier:"		{ mkL CmtSpdxLicense }
 <cmtSC>		"GPL-3.0-or-later"			{ mkL CmtWord }
 <cmtSC>		"TODO("[^\)]+"):"			{ mkL CmtWord }
-<cmtSC>		[A-Z][A-Za-z]+"::"[a-z_]+		{ mkL CmtWord }
-<cmtSC>		"E.g."					{ mkL CmtWord }
-<cmtSC>		"e.g."					{ mkL CmtWord }
+<cmtSC>		[Ee]".g."				{ mkL CmtWord }
 <cmtSC>		"etc."					{ mkL CmtWord }
-<cmtSC>		"I.e."					{ mkL CmtWord }
-<cmtSC>		"i.e."					{ mkL CmtWord }
+<cmtSC>		[Ii]".e."				{ mkL CmtWord }
 <cmtSC>		[0-2][0-9](":"[0-5][0-9]){2}"."[0-9]{3}	{ mkL CmtWord }
-<cmtSC>		"v"?[0-9]"."[0-9]"."[0-9]		{ mkL CmtWord }
+<cmtSC>		"v"?[0-9]+("."[0-9]+)+			{ mkL CmtWord }
+<cmtSC>		[A-Z][A-Za-z]+"::"[a-z_]+		{ mkL CmtWord }
+<cmtSC>		([a-z]+"/")+[A-Za-z]+("."[a-z_]+)+	{ mkL CmtWord }
+<cmtSC>		[a-z]+("."[a-z_]+)+			{ mkL CmtWord }
+<cmtSC>		[a-z]+("-"[a-z_]+)+			{ mkL CmtWord }
 <cmtSC>		"@code"					{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"["[^\]]+"]"				{ mkL CmtAttr }
@@ -276,6 +277,7 @@ tokens :-
 <cmtSC>		"-1"					{ mkL LitInteger }
 <cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
 <cmtSC>		"${"([^\}])+"}"				{ mkL CmtCode }
+<cmtSC>		"-"+					{ mkL CmtWord }
 <cmtSC>		"–"					{ mkL CmtWord }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
 <cmtSC>		\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
