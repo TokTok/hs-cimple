@@ -39,6 +39,7 @@ sub show_nonterm {
    my ($res, $name, $nonterm) = @_;
 
    push @$res, "$name :: { $nonterm->{type} }";
+   push @$res, "$name";
    my @prod_res;
    for my $prod (@{ $nonterm->{productions} }) {
       show_production \@prod_res, $prod;
