@@ -315,8 +315,8 @@ PreprocUndef
 
 PreprocConstExpr :: { NonTerm }
 PreprocConstExpr
-:	PureExpr(PreprocConstExpr)				{ $1 }
-|	'defined' '(' ID_CONST ')'				{ Fix $ PreprocDefined $3 }
+:	'defined' '(' ID_CONST ')'				{ Fix $ PreprocDefined $3 }
+|	PureExpr(PreprocConstExpr)				{ $1 }
 
 MacroParamList :: { [NonTerm] }
 MacroParamList
@@ -355,10 +355,7 @@ Stmts
 
 Stmt :: { NonTerm }
 Stmt
-:	PreprocIfdef(Stmts)					{ $1 }
-|	PreprocIf(Stmts)					{ $1 }
-|	PreprocDefine Stmts PreprocUndef			{ Fix $ PreprocScopedDefine $1 (reverse $2) $3 }
-|	DeclStmt						{ $1 }
+:	DeclStmt						{ $1 }
 |	CompoundStmt						{ $1 }
 |	IfStmt							{ $1 }
 |	ForStmt							{ $1 }
@@ -376,6 +373,9 @@ Stmt
 |	return Expr ';'						{ Fix $ Return (Just $2) }
 |	switch '(' Expr ')' '{' SwitchCases '}'			{ Fix $ SwitchStmt $3 (reverse $6) }
 |	Comment							{ $1 }
+|	PreprocIfdef(Stmts)					{ $1 }
+|	PreprocIf(Stmts)					{ $1 }
+|	PreprocDefine Stmts PreprocUndef			{ Fix $ PreprocScopedDefine $1 (reverse $2) $3 }
 
 IfStmt :: { NonTerm }
 IfStmt
@@ -474,10 +474,10 @@ CompoundStmt
 -- Expressions that are safe for use as macro body without () around it..
 PreprocSafeExpr(x)
 :	LiteralExpr						{ $1 }
-|	'(' x ')'						{ Fix $ ParenExpr $2 }
-|	'(' QualType ')' x %prec CAST				{ Fix $ CastExpr $2 $4 }
-|	sizeof '(' Expr ')'					{ Fix $ SizeofExpr $3 }
 |	sizeof '(' QualType ')'					{ Fix $ SizeofType $3 }
+|	sizeof '(' Expr ')'					{ Fix $ SizeofExpr $3 }
+|	'(' QualType ')' x %prec CAST				{ Fix $ CastExpr $2 $4 }
+|	'(' x ')'						{ Fix $ ParenExpr $2 }
 
 ConstExpr :: { NonTerm }
 ConstExpr
@@ -485,6 +485,10 @@ ConstExpr
 
 PureExpr(x)
 :	PreprocSafeExpr(x)					{ $1 }
+|	'!' x							{ Fix $ UnaryExpr UopNot $2 }
+|	'~' x							{ Fix $ UnaryExpr UopNeg $2 }
+|	'-' x %prec NEG						{ Fix $ UnaryExpr UopMinus $2 }
+|	'&' x %prec ADDRESS					{ Fix $ UnaryExpr UopAddress $2 }
 |	x '!=' x						{ Fix $ BinaryExpr $1 BopNe $3 }
 |	x '==' x						{ Fix $ BinaryExpr $1 BopEq $3 }
 |	x '||' x						{ Fix $ BinaryExpr $1 BopOr $3 }
@@ -504,10 +508,6 @@ PureExpr(x)
 |	x '>=' x						{ Fix $ BinaryExpr $1 BopGe $3 }
 |	x '>>' x						{ Fix $ BinaryExpr $1 BopRsh $3 }
 |	x '?' x ':' x						{ Fix $ TernaryExpr $1 $3 $5 }
-|	'!' x							{ Fix $ UnaryExpr UopNot $2 }
-|	'~' x							{ Fix $ UnaryExpr UopNeg $2 }
-|	'-' x %prec NEG						{ Fix $ UnaryExpr UopMinus $2 }
-|	'&' x %prec ADDRESS					{ Fix $ UnaryExpr UopAddress $2 }
 
 LiteralExpr :: { NonTerm }
 LiteralExpr

@@ -119,9 +119,12 @@ test-suite testsuite
   build-tool-depends: hspec-discover:hspec-discover
   build-depends:
       ansi-wl-pprint
+    , QuickCheck
     , base                 <5
+    , bytestring
     , cimple
     , data-fix
+    , happy-arbitrary
     , hspec
     , text
     , transformers-compat
