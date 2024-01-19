@@ -111,17 +111,21 @@ test-suite testsuite
   hs-source-dirs:     test
   main-is:            testsuite.hs
   other-modules:
+    Language.CimpleSpec
     Language.Cimple.AstSpec
+    Language.Cimple.DescribeAstSpec
     Language.Cimple.ParserSpec
     Language.Cimple.PrettySpec
 
   ghc-options:        -Wall -Wno-unused-imports
   build-tool-depends: hspec-discover:hspec-discover
   build-depends:
-      ansi-wl-pprint
+      QuickCheck
+    , ansi-wl-pprint
     , base                 <5
     , cimple
     , data-fix
+    , extra
     , hspec
     , text
     , transformers-compat

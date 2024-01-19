@@ -106,7 +106,6 @@ data LexemeClass
     | CmtCommand
     | CmtAttr
     | CmtEndDocSection
-    | CmtPrefix
     | CmtIndent
     | CmtStart
     | CmtStartCode

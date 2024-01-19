@@ -91,6 +91,7 @@ haskell_library(
     ],
     deps = [
         ":ast",
+        ":describe-ast",
         ":lexer",
         "//third_party/haskell:aeson",
         "//third_party/haskell:array",
@@ -201,9 +202,11 @@ hspec_test(
     size = "small",
     deps = [
         ":hs-cimple",
+        "//third_party/haskell:QuickCheck",
         "//third_party/haskell:ansi-wl-pprint",
         "//third_party/haskell:base",
         "//third_party/haskell:data-fix",
+        "//third_party/haskell:extra",
         "//third_party/haskell:hspec",
         "//third_party/haskell:text",
         "//third_party/haskell:transformers-compat",
