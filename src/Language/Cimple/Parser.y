@@ -9,18 +9,20 @@ module Language.Cimple.Parser
     , source
     ) where
 
-import qualified Data.ByteString        as BS
-import           Data.FileEmbed         (embedFile)
-import           Data.Fix               (Fix (..))
-import           Data.Text              (Text)
-import qualified Data.Text              as Text
-import           Language.Cimple.Ast    (AssignOp (..), BinaryOp (..),
-                                         CommentStyle (..), LiteralType (..),
-                                         Node, NodeF (..), Scope (..),
-                                         UnaryOp (..))
-import           Language.Cimple.Lexer  (Alex, AlexPosn (..), Lexeme (..),
-                                         alexError, alexMonadScan)
-import           Language.Cimple.Tokens (LexemeClass (..))
+import qualified Data.ByteString             as BS
+import           Data.FileEmbed              (embedFile)
+import           Data.Fix                    (Fix (..))
+import           Data.Text                   (Text)
+import qualified Data.Text                   as Text
+import           Language.Cimple.Ast         (AssignOp (..), BinaryOp (..),
+                                              CommentStyle (..),
+                                              LiteralType (..), Node,
+                                              NodeF (..), Scope (..),
+                                              UnaryOp (..))
+import           Language.Cimple.DescribeAst (describeLexeme)
+import           Language.Cimple.Lexer       (Alex, AlexPosn (..), Lexeme (..),
+                                              alexError, alexMonadScan)
+import           Language.Cimple.Tokens      (LexemeClass (..))
 }
 
 -- Conflict between (static) FunctionDecl and (static) ConstDecl.
@@ -136,7 +138,6 @@ import           Language.Cimple.Tokens (LexemeClass (..))
     '/** @{'			{ L _ CmtStartDocSection	_ }
     '/** @} */'			{ L _ CmtEndDocSection		_ }
     '/***'			{ L _ CmtStartBlock		_ }
-    ' * '			{ L _ CmtPrefix			_ }
     ' '				{ L _ CmtIndent			_ }
     '*/'			{ L _ CmtEnd			_ }
     'Copyright'			{ L _ CmtSpdxCopyright		_ }
@@ -238,7 +239,6 @@ CommentToken :: { Term }
 CommentToken
 :	CommentWord						{ $1 }
 |	'\n'							{ $1 }
-|	' * '							{ $1 }
 |	' '							{ $1 }
 
 CommentWords :: { [Term] }
@@ -751,9 +751,9 @@ tyPointer = Fix . TyPointer
 tyConst = Fix . TyConst
 
 parseError :: Show text => (Lexeme text, [String]) -> Alex a
-parseError (L (AlexPn _ line col) c t, options) =
-    alexError $ ":" <> show line <> ":" <> show col <> ": Parse error near " <> show c <> ": "
-        <> show t <> "; expected one of " <> show options
+parseError (l@(L (AlexPn _ line col) _ _), options) =
+    alexError $ ":" <> show line <> ":" <> show col <> ": Parse error near " <> describeLexeme l
+        <> "; expected one of " <> show options
 
 lexwrap :: (Lexeme Text -> Alex a) -> Alex a
 lexwrap = (alexMonadScan >>=)

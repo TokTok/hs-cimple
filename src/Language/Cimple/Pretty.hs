@@ -337,7 +337,7 @@ ppCommentInfo = foldFix go
 
     DocParagraph docs -> ppIndented docs
     DocLine docs -> fillSep docs
-    DocCode begin code end -> begin <> ppCodeBody code <> end
+    DocCode begin code end -> ppLexeme begin <> ppCodeBody code <> ppLexeme end
     DocList l -> ppVerbatimComment $ vcat l
     DocOLItem num docs -> ppLexeme num <> char '.' <+> nest 3 (fillSep docs)
     DocULItem docs sublist -> char '-' <+> nest 2 (vsep $ fillSep docs : sublist)

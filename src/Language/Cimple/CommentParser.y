@@ -146,12 +146,16 @@ Command(x)
 |	'@implements' CMT_WORD					{ Fix $ DocImplements $2 }
 |	'@extends' CMT_WORD					{ Fix $ DocExtends $2 }
 |	'@private'						{ Fix DocPrivate }
-|	'@code' Code '@endcode'					{ Fix $ DocCode (Fix (DocWord $1)) (reverse $2) (Fix (DocWord $3)) }
+|	Code							{ $1 }
 
-Code :: { [NonTerm] }
+Code :: { NonTerm }
 Code
+:	'@code' CodeWords '@endcode'				{ Fix $ DocCode $1 (reverse $2) $3 }
+
+CodeWords :: { [NonTerm] }
+CodeWords
 :	CodeWord						{ [$1] }
-|	Code CodeWord						{ $2 : $1 }
+|	CodeWords CodeWord					{ $2 : $1 }
 
 CodeWord :: { NonTerm }
 CodeWord

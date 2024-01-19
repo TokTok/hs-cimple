@@ -91,6 +91,7 @@ haskell_library(
     ],
     deps = [
         ":ast",
+        ":describe-ast",
         ":lexer",
         "//third_party/haskell:aeson",
         "//third_party/haskell:array",
