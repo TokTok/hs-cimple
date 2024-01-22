@@ -36,6 +36,9 @@ spec = do
             expected parseText "int a() { int }" `shouldBe`
                 "expected variable name"
 
+            expected parseStmt "(int){" `shouldBe`
+                "expected constant or literal"
+
         it "has suggestions for any sequence of tokens in top level" $ do
             property $ \tokens ->
                 expected parseText (Text.intercalate " " (map sampleToken tokens)) `shouldNotContain`

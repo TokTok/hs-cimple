@@ -148,6 +148,7 @@ describeExpected options
     | wants ["ID_FUNC_TYPE", "non_null", "static", "'#include'"] = "top-level declaration or definition"
     | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "struct", "void"] = "type specifier"
     | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "const", "struct", "void"] = "type specifier"
+    | options == ["ID_CONST", "ID_VAR", "LIT_CHAR", "LIT_FALSE", "LIT_INTEGER", "'{'"] = "constant or literal"
     | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "ID_VAR"] `isPrefixOf` options = "type specifier or variable name"
     | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "const"] `isPrefixOf` options = "type specifier"
     | ["ID_CONST", "sizeof", "LIT_CHAR", "LIT_FALSE", "LIT_TRUE", "LIT_INTEGER"] `isPrefixOf` options = "constant expression"
