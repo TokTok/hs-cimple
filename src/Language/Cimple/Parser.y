@@ -284,11 +284,11 @@ IgnoreBody
 |	IgnoreBody IGN_BODY					{ $2 : $1 }
 
 PreprocIfdef(decls)
-:	'#ifdef' ID_CONST decls PreprocElse(decls) '#endif'	{ Fix $ PreprocIfdef $2 (reverse $3) $4 }
-|	'#ifndef' ID_CONST decls PreprocElse(decls) '#endif'	{ Fix $ PreprocIfndef $2 (reverse $3) $4 }
+:	'#ifdef' ID_CONST decls PreprocElse(decls) Endif	{ Fix $ PreprocIfdef $2 (reverse $3) $4 }
+|	'#ifndef' ID_CONST decls PreprocElse(decls) Endif	{ Fix $ PreprocIfndef $2 (reverse $3) $4 }
 
 PreprocIf(decls)
-:	'#if' PreprocConstExpr '\n' decls PreprocElif(decls) '#endif'	{ Fix $ PreprocIf $2 (reverse $4) $5 }
+:	'#if' PreprocConstExpr '\n' decls PreprocElif(decls) Endif	{ Fix $ PreprocIf $2 (reverse $4) $5 }
 
 PreprocElif(decls)
 :	PreprocElse(decls)					{ $1 }
@@ -297,6 +297,10 @@ PreprocElif(decls)
 PreprocElse(decls)
 :								{ Fix $ PreprocElse [] }
 |	'#else' decls						{ Fix $ PreprocElse (reverse $2) }
+
+Endif :: { [Term] }
+Endif
+:	'#endif' Comment					{ [$1] }
 
 PreprocInclude :: { NonTerm }
 PreprocInclude
@@ -345,7 +349,7 @@ ExternC
 	'#endif'
 	ToplevelDecls
 	'#ifdef' ID_CONST
-	'}'
+	'}' Comment
 	'#endif'						{% externC $2 $4 (reverse $7) $9 }
 
 Stmts :: { [NonTerm] }
@@ -360,7 +364,8 @@ Stmt
 |	PreprocDefine Stmts PreprocUndef			{ Fix $ PreprocScopedDefine $1 (reverse $2) $3 }
 |	DeclStmt						{ $1 }
 |	CompoundStmt						{ $1 }
-|	IfStmt							{ $1 }
+|	IfStmt(ReturnStmt)					{ $1 }
+|	IfStmt(CompoundStmt)					{ $1 }
 |	ForStmt							{ $1 }
 |	WhileStmt						{ $1 }
 |	DoWhileStmt						{ $1 }
@@ -372,16 +377,19 @@ Stmt
 |	goto ID_CONST ';'					{ Fix $ Goto $2 }
 |	ID_CONST ':' Stmt					{ Fix $ Label $1 $3 }
 |	continue ';'						{ Fix $ Continue }
-|	return ';'						{ Fix $ Return Nothing }
-|	return Expr ';'						{ Fix $ Return (Just $2) }
 |	switch '(' Expr ')' '{' SwitchCases '}'			{ Fix $ SwitchStmt $3 (reverse $6) }
+|	ReturnStmt						{ $1 }
 |	Comment							{ $1 }
 
-IfStmt :: { NonTerm }
-IfStmt
-:	if '(' Expr ')' CompoundStmt				{ Fix $ IfStmt $3 $5 Nothing }
-|	if '(' Expr ')' CompoundStmt else IfStmt		{ Fix $ IfStmt $3 $5 (Just $7) }
-|	if '(' Expr ')' CompoundStmt else CompoundStmt		{ Fix $ IfStmt $3 $5 (Just $7) }
+ReturnStmt :: { NonTerm }
+ReturnStmt
+:	return ';'						{ Fix $ Return Nothing }
+|	return Expr ';'						{ Fix $ Return (Just $2) }
+
+IfStmt(x)
+:	if '(' Expr ')' x					{ Fix $ IfStmt $3 $5 Nothing }
+|	if '(' Expr ')' x else x				{ Fix $ IfStmt $3 $5 (Just $7) }
+|	if '(' Expr ')' x else IfStmt(x)			{ Fix $ IfStmt $3 $5 (Just $7) }
 
 ForStmt :: { NonTerm }
 ForStmt
@@ -419,6 +427,7 @@ SwitchCaseBody :: { NonTerm }
 SwitchCaseBody
 :	CompoundStmt						{ $1 }
 |	SwitchCase						{ $1 }
+|	break ';'						{ Fix $ Break }
 |	return Expr ';'						{ Fix $ Return (Just $2) }
 
 DeclStmt :: { NonTerm }
@@ -604,17 +613,20 @@ EnumDecl
 EnumeratorList :: { [NonTerm] }
 EnumeratorList
 :	'{' Enumerators '}'					{ reverse $2 }
+|	'{' Enumerators ',' '}'					{ reverse $2 }
+|	'{' Enumerators Comment '}'				{ reverse $2 }  -- TODO(iphydf): Don't throw away the comment.
+|	'{' Enumerators ',' Comment '}'				{ reverse $2 }  -- TODO(iphydf): Don't throw away the comment.
 
 Enumerators :: { [NonTerm] }
 Enumerators
 :	Enumerator						{ [$1] }
-|	Enumerators Enumerator					{ $2 : $1 }
+|	Enumerators ',' Enumerator				{ $3 : $1 }
 
 Enumerator :: { NonTerm }
 Enumerator
-:	EnumeratorName ','					{ Fix $ Enumerator $1 Nothing }
-|	EnumeratorName '=' ConstExpr ','			{ Fix $ Enumerator $1 (Just $3) }
-|	Comment							{ $1 }
+:	EnumeratorName						{ Fix $ Enumerator $1 Nothing }
+|	EnumeratorName '=' ConstExpr				{ Fix $ Enumerator $1 (Just $3) }
+|	Comment Enumerator					{ Fix $ Commented $1 $2 }
 
 EnumeratorName :: { Term }
 EnumeratorName

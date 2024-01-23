@@ -136,7 +136,12 @@ TranslationUnit
 
 Header :: { NonTerm }
 Header
-:	preprocIfndef						{% recurse parseHeaderBody $1 }
+:	preprocIfndef ModeLine					{% recurse parseHeaderBody $1 }
+
+ModeLine :: { Maybe NonTerm }
+ModeLine
+:								{ Nothing }
+|	comment							{ Just $1 }
 
 HeaderBody :: { [NonTerm] }
 HeaderBody

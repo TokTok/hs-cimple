@@ -196,8 +196,10 @@ tokens :-
 <0,ppSC>	[A-Z][A-Z0-9_]{1,2}			{ mkL IdSueType }
 <0,ppSC>	_*[A-Z][A-Z0-9_]*			{ mkL IdConst }
 <0,ppSC>	[A-Z][A-Za-z0-9_]*[a-z][A-Za-z0-9_]*	{ mkL IdSueType }
+<0,ppSC>	"cmp_"[a-z][a-z0-9_]*_[stu]		{ mkL IdSueType }
 <0,ppSC>	[a-z][a-z0-9_]*_t			{ mkL IdStdType }
 <0,ppSC>	[a-z][a-z0-9_]*_cb			{ mkL IdFuncType }
+<0,ppSC>	"cmp_"("reader"|"writer"|"skipper")	{ mkL IdFuncType }
 <0,ppSC>	[a-z][A-Za-z0-9_]*			{ mkL IdVar }
 <0,ppSC,cmtSC>	[0-9]+[LU]*				{ mkL LitInteger }
 <0,ppSC,cmtSC>	[0-9]+"."[0-9]+[Ff]?			{ mkL LitInteger }
@@ -270,7 +272,7 @@ tokens :-
 <cmtSC>		[@\\][a-z]+				{ mkL CmtCommand }
 <cmtSC>		"*"[A-Za-z][A-Za-z0-9_']*"*"		{ mkL CmtWord }
 <cmtSC>		"#"[A-Za-z][A-Za-z0-9_]*		{ mkL CmtRef }
-<cmtSC>		[A-Za-z][A-Za-z0-9_']*			{ mkL CmtWord }
+<cmtSC>		"_"*[A-Za-z][A-Za-z0-9_']*		{ mkL CmtWord }
 <cmtSC>		"#"[0-9]+				{ mkL CmtWord }
 <cmtSC>		"http://"[^\ ]+				{ mkL CmtWord }
 <cmtSC>		[0-9]+"%"				{ mkL LitInteger }
@@ -278,6 +280,7 @@ tokens :-
 <cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
 <cmtSC>		"${"([^\}])+"}"				{ mkL CmtCode }
 <cmtSC>		"-"+					{ mkL CmtWord }
+<cmtSC>		[&\|]+					{ mkL CmtWord }
 <cmtSC>		"–"					{ mkL CmtWord }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
 <cmtSC>		\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
