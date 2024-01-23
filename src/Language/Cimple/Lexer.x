@@ -192,6 +192,7 @@ tokens :-
 <0,ppSC>	"false"					{ mkL LitFalse }
 <0,ppSC>	"true"					{ mkL LitTrue }
 <0,ppSC>	"__func__"				{ mkL IdVar }
+<0,ppSC>	"nullptr"				{ mkL IdConst }
 <0,ppSC>	"__"[a-zA-Z]+"__"?			{ mkL IdConst }
 <0,ppSC>	[A-Z][A-Z0-9_]{1,2}			{ mkL IdSueType }
 <0,ppSC>	_*[A-Z][A-Z0-9_]*			{ mkL IdConst }

@@ -417,7 +417,7 @@ ppNode = foldFix go
         ppToplevel decls <$>
         line <>
         dullmagenta (text "#ifdef __cplusplus") <$>
-        rbrace <$>
+        rbrace <+> text "/* extern \"C\" */" <$>
         dullmagenta (text "#endif")
 
     Group decls -> vcat decls
@@ -446,17 +446,17 @@ ppNode = foldFix go
         dullmagenta (text "#if" <+> cond) <$>
         ppToplevel decls <>
         elseBranch <$>
-        dullmagenta (text "#endif")
+        dullmagenta (text "#endif  /*" <+> cond <+> text "*/")
     PreprocIfdef name decls elseBranch ->
         dullmagenta (text "#ifdef" <+> ppLexeme name) <$>
         ppToplevel decls <>
         elseBranch <$>
-        dullmagenta (text "#endif  //" <+> ppLexeme name)
+        dullmagenta (text "#endif  /*" <+> ppLexeme name <+> text "*/")
     PreprocIfndef name decls elseBranch ->
         dullmagenta (text "#ifndef" <+> ppLexeme name) <$>
         ppToplevel decls <>
         elseBranch <$>
-        dullmagenta (text "#endif  //" <+> ppLexeme name)
+        dullmagenta (text "#endif  /*" <+> ppLexeme name <+> text "*/")
     PreprocElse [] -> empty
     PreprocElse decls ->
         linebreak <>
