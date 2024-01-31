@@ -16,6 +16,7 @@ data LexemeClass
     | KwBreak
     | KwCase
     | KwConst
+    | KwConstant
     | KwContinue
     | KwDefault
     | KwDo

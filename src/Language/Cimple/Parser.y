@@ -46,6 +46,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     break			{ L _ KwBreak			_ }
     case			{ L _ KwCase			_ }
     const			{ L _ KwConst			_ }
+    constant			{ L _ KwConstant		_ }
     continue			{ L _ KwContinue		_ }
     default			{ L _ KwDefault			_ }
     do				{ L _ KwDo			_ }
@@ -214,8 +215,21 @@ ToplevelDecl
 |	PreprocIf(ToplevelDecls)				{ $1 }
 |	PreprocInclude						{ $1 }
 |	PreprocUndef						{ $1 }
+|	ConstantDefn						{ $1 }
 |	StaticAssert						{ $1 }
 |	TypedefDecl						{ $1 }
+
+ConstantDefn :: { NonTerm }
+ConstantDefn
+:	ConstantType ',' ID_CONST ',' ConstantValue ')' ';'	{ Fix $ PreprocDefineConst $3 $5 }
+
+ConstantType :: { Term }
+ConstantType
+:	constant '(' ID_STD_TYPE				{ $3 }
+
+ConstantValue :: { NonTerm }
+ConstantValue
+:	PreprocSafeExpr(ConstExpr)				{ $1 }
 
 StaticAssert :: { NonTerm }
 StaticAssert
@@ -310,7 +324,7 @@ PreprocInclude
 PreprocDefine :: { NonTerm }
 PreprocDefine
 :	'#define' ID_CONST '\n'					{ Fix $ PreprocDefine $2 }
-|	'#define' ID_CONST PreprocSafeExpr(ConstExpr) '\n'	{ Fix $ PreprocDefineConst $2 $3 }
+|	'#define' ID_CONST ConstantValue '\n'			{ Fix $ PreprocDefineConst $2 $3 }
 |	'#define' ID_CONST MacroParamList MacroBody '\n'	{ Fix $ PreprocDefineMacro $2 $3 $4 }
 
 PreprocUndef :: { NonTerm }

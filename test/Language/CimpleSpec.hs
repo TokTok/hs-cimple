@@ -27,6 +27,7 @@ sampleToken c = case c of
     KwBreak               -> "break"
     KwCase                -> "case"
     KwConst               -> "const"
+    KwConstant            -> "constant"
     KwContinue            -> "continue"
     KwDefault             -> "default"
     KwDo                  -> "do"

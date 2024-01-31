@@ -154,6 +154,7 @@ tokens :-
 <0,ppSC>	"break"					{ mkL KwBreak }
 <0,ppSC>	"case"					{ mkL KwCase }
 <0,ppSC>	"const"					{ mkL KwConst }
+<0,ppSC>	"constant"				{ mkL KwConstant }
 <0,ppSC>	"continue"				{ mkL KwContinue }
 <0,ppSC>	"default"				{ mkL KwDefault }
 <0,ppSC>	"do"					{ mkL KwDo }
