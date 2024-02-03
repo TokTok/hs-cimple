@@ -151,6 +151,7 @@ tokens :-
 <0>		"#define"				{ mkL PpDefine `andBegin` ppSC }
 <0>		"#undef"				{ mkL PpUndef }
 <0>		"#include"				{ mkL PpInclude }
+<0,ppSC>	"bitwise"				{ mkL KwBitwise }
 <0,ppSC>	"break"					{ mkL KwBreak }
 <0,ppSC>	"case"					{ mkL KwCase }
 <0,ppSC>	"const"					{ mkL KwConst }
@@ -161,6 +162,7 @@ tokens :-
 <0,ppSC>	"enum"					{ mkL KwEnum }
 <0,ppSC>	"extern"				{ mkL KwExtern }
 <0,ppSC>	"for"					{ mkL KwFor }
+<0,ppSC>	"force"					{ mkL KwForce }
 <0,ppSC>	"goto"					{ mkL KwGoto }
 <0,ppSC>	"if"					{ mkL KwIf }
 <0,ppSC>	"non_null"				{ mkL KwNonNull }

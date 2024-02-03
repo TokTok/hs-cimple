@@ -27,6 +27,7 @@ import           Text.PrettyPrint.ANSI.Leijen
 indentWidth :: Int
 indentWidth = 2
 
+kwBitwise       = dullgreen $ text "bitwise"
 kwBreak         = dullred   $ text "break"
 kwCase          = dullred   $ text "case"
 kwConst         = dullgreen $ text "const"
@@ -37,6 +38,7 @@ kwElse          = dullred   $ text "else"
 kwEnum          = dullgreen $ text "enum"
 kwExtern        = dullgreen $ text "extern"
 kwFor           = dullred   $ text "for"
+kwForce         = dullgreen $ text "force"
 kwGnuPrintf     = dullgreen $ text "GNU_PRINTF"
 kwGoto          = dullred   $ text "goto"
 kwIf            = dullred   $ text "if"
@@ -402,6 +404,8 @@ ppNode = foldFix go
     DeclSpecArray Nothing     -> text "[]"
     DeclSpecArray (Just dim)  -> brackets dim
 
+    TyBitwise     ty -> kwBitwise <+> ty
+    TyForce       ty -> kwForce <+> ty
     TyPointer     ty -> ty <> char '*'
     TyConst       ty -> ty <+> kwConst
     TyUserDefined l  -> dullgreen $ ppLexeme l

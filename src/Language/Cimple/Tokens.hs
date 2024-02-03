@@ -13,6 +13,7 @@ data LexemeClass
     | IdStdType
     | IdSueType
     | IdVar
+    | KwBitwise
     | KwBreak
     | KwCase
     | KwConst
@@ -23,6 +24,7 @@ data LexemeClass
     | KwEnum
     | KwExtern
     | KwFor
+    | KwForce
     | KwGnuPrintf
     | KwGoto
     | KwIf

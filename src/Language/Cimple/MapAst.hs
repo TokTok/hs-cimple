@@ -327,6 +327,10 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (Union <$> recurse name <*> recurse members)
         MemberDecl decl bits ->
             Fix <$> (MemberDecl <$> recurse decl <*> recurse bits)
+        TyBitwise ty ->
+            Fix <$> (TyBitwise <$> recurse ty)
+        TyForce ty ->
+            Fix <$> (TyForce <$> recurse ty)
         TyConst ty ->
             Fix <$> (TyConst <$> recurse ty)
         TyPointer ty ->

@@ -426,6 +426,10 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse decl
             _ <- recurse bits
             pure ()
+        TyBitwise ty ->
+            recurse ty
+        TyForce ty ->
+            recurse ty
         TyConst ty ->
             recurse ty
         TyPointer ty ->

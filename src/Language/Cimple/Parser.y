@@ -43,6 +43,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     ID_STD_TYPE			{ L _ IdStdType			_ }
     ID_SUE_TYPE			{ L _ IdSueType			_ }
     ID_VAR			{ L _ IdVar			_ }
+    bitwise			{ L _ KwBitwise			_ }
     break			{ L _ KwBreak			_ }
     case			{ L _ KwCase			_ }
     const			{ L _ KwConst			_ }
@@ -53,6 +54,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     enum			{ L _ KwEnum			_ }
     extern			{ L _ KwExtern			_ }
     for				{ L _ KwFor			_ }
+    force			{ L _ KwForce			_ }
     GNU_PRINTF			{ L _ KwGnuPrintf		_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
@@ -666,7 +668,9 @@ TypedefDecl
 
 QualType :: { NonTerm }
 QualType
-:	LeafType						{                                        $1 }
+:	bitwise ID_STD_TYPE					{ Fix (TyBitwise (Fix (TyStd $2))) }
+|	force LeafType						{ Fix (TyForce $2) }
+|	LeafType						{                                        $1 }
 |	LeafType '*'						{                              tyPointer $1 }
 |	LeafType '*' '*'					{          tyPointer          (tyPointer $1) }
 |	LeafType '*' '*' const					{ tyConst (tyPointer          (tyPointer $1)) }

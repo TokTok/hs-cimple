@@ -102,6 +102,8 @@ data NodeF lexeme a
     | Struct lexeme [a]
     | Union lexeme [a]
     | MemberDecl a (Maybe lexeme)
+    | TyBitwise a
+    | TyForce a
     | TyConst a
     | TyPointer a
     | TyStruct lexeme
