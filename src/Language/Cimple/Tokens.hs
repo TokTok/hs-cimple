@@ -30,6 +30,7 @@ data LexemeClass
     | KwIf
     | KwNonNull
     | KwNullable
+    | KwOwner
     | KwReturn
     | KwSizeof
     | KwStatic

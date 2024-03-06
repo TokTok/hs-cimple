@@ -41,6 +41,7 @@ sampleToken c = case c of
     KwIf                  -> "if"
     KwNonNull             -> "non_null"
     KwNullable            -> "nullable"
+    KwOwner               -> "owner"
     KwReturn              -> "return"
     KwSizeof              -> "sizeof"
     KwStatic              -> "static"

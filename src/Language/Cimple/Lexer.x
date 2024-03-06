@@ -167,6 +167,7 @@ tokens :-
 <0,ppSC>	"if"					{ mkL KwIf }
 <0,ppSC>	"non_null"				{ mkL KwNonNull }
 <0,ppSC>	"nullable"				{ mkL KwNullable }
+<0,ppSC>	"owner"					{ mkL KwOwner }
 <0,ppSC>	"return"				{ mkL KwReturn }
 <0,ppSC>	"sizeof"				{ mkL KwSizeof }
 <0,ppSC>	"static"				{ mkL KwStatic }

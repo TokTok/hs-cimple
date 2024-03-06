@@ -60,6 +60,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     if				{ L _ KwIf			_ }
     non_null			{ L _ KwNonNull			_ }
     nullable			{ L _ KwNullable		_ }
+    owner			{ L _ KwOwner			_ }
     return			{ L _ KwReturn			_ }
     sizeof			{ L _ KwSizeof			_ }
     static			{ L _ KwStatic			_ }
@@ -687,6 +688,11 @@ QualType
 |	const LeafType '*' const				{                     tyConst (tyPointer (tyConst $2)) }
 |	const LeafType '*' const '*'				{          tyPointer (tyConst (tyPointer (tyConst $2))) }
 |	const LeafType '*' const '*' const			{ tyConst (tyPointer (tyConst (tyPointer (tyConst $2)))) }
+|	LeafType '*'       owner				{            tyOwner          (tyPointer $1) }
+|	LeafType '*' const owner				{            tyOwner (tyConst (tyPointer $1)) }
+|	LeafType '*' '*' owner					{ tyOwner (tyPointer          (tyPointer $1)) }
+|	LeafType '*' owner '*'					{          tyPointer (tyOwner (tyPointer $1)) }
+|	LeafType '*' owner '*' owner				{ tyOwner (tyPointer (tyOwner (tyPointer $1))) }
 
 LeafType :: { NonTerm }
 LeafType
@@ -762,9 +768,10 @@ ConstDecl
 type Term = Lexeme Text
 type NonTerm = Node Term
 
-tyPointer, tyConst :: NonTerm -> NonTerm
+tyPointer, tyConst, tyOwner :: NonTerm -> NonTerm
 tyPointer = Fix . TyPointer
 tyConst = Fix . TyConst
+tyOwner = Fix . TyOwner
 
 lexwrap :: (Lexeme Text -> Alex a) -> Alex a
 lexwrap = (alexMonadScan >>=)

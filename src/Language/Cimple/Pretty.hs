@@ -44,6 +44,7 @@ kwGoto          = dullred   $ text "goto"
 kwIf            = dullred   $ text "if"
 kwNonNull       = dullgreen $ text "non_null"
 kwNullable      = dullgreen $ text "nullable"
+kwOwner         = dullgreen $ text "owner"
 kwReturn        = dullred   $ text "return"
 kwSizeof        = dullred   $ text "sizeof"
 kwStaticAssert  = dullred   $ text "static_assert"
@@ -153,7 +154,7 @@ ppCommentBody body = vsep . prefixStars . map (hcat . map ppWord . spaceWords) .
 
     spaceWords = \case
         (L c p s:ws) -> L c p (" "<>s):continue ws
-        [] -> []
+        []           -> []
       where
         continue [] = []
         continue (w@(L _ CmtEnd _):ws) = w:continue ws
@@ -408,6 +409,7 @@ ppNode = foldFix go
     TyForce       ty -> kwForce <+> ty
     TyPointer     ty -> ty <> char '*'
     TyConst       ty -> ty <+> kwConst
+    TyOwner       ty -> ty <+> kwOwner
     TyUserDefined l  -> dullgreen $ ppLexeme l
     TyStd         l  -> dullgreen $ ppLexeme l
     TyFunc        l  -> dullgreen $ ppLexeme l
