@@ -1,12 +1,12 @@
 name:          cimple
-version:       0.0.20
+version:       0.0.21
 synopsis:      Simple C-like programming language
 homepage:      https://toktok.github.io/
 license:       GPL-3
 license-file:  LICENSE
 author:        Iphigenia Df <iphydf@gmail.com>
 maintainer:    Iphigenia Df <iphydf@gmail.com>
-copyright:     Copyright (c) 2016-2022, Iphigenia Df
+copyright:     Copyright (c) 2016-2024, Iphigenia Df
 category:      Data
 stability:     Experimental
 cabal-version: >=1.10
