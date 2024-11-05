@@ -18,7 +18,7 @@ import           GHC.Generics                 (Generic, Generic1)
 import           Language.Cimple.Ast          (Node, NodeF)
 
 data AnnotF attr a = Annot { attr :: attr, unAnnot :: a }
-    deriving (Functor, Generic, Generic1)
+    deriving (Show, Read, Eq, Functor, Generic, Generic1)
     deriving (Show1, Read1, Eq1) via FunctorClassesDefault (AnnotF attr)
 
 type AnnotNode lexeme = Fix (AnnotF () `Compose` NodeF lexeme)
