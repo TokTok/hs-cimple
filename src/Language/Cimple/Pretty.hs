@@ -1,8 +1,5 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
-{-# LANGUAGE LambdaCase        #-}
-{-# LANGUAGE OverloadedStrings #-}
-{- HLINT ignore "Functor law" -}
-{- HLINT ignore "Use <$" -}
+{-# LANGUAGE LambdaCase #-}
 module Language.Cimple.Pretty
     ( plain
     , render
@@ -10,135 +7,140 @@ module Language.Cimple.Pretty
     , showNode
     ) where
 
-import           Data.Fix                     (foldFix)
-import qualified Data.List.Split              as List
-import           Data.Text                    (Text)
-import qualified Data.Text                    as Text
-import           Language.Cimple              (AssignOp (..), BinaryOp (..),
-                                               Comment, CommentF (..),
-                                               CommentStyle (..), Lexeme (..),
-                                               LexemeClass (..), Node,
-                                               NodeF (..), Scope (..),
-                                               UnaryOp (..), lexemeLine,
-                                               lexemeText)
-import           Prelude                      hiding ((<$>))
-import           Text.PrettyPrint.ANSI.Leijen
+import           Data.Fix                      (foldFix)
+import qualified Data.List.Split               as List
+import           Data.Text                     (Text)
+import qualified Data.Text                     as Text
+import qualified Data.Text.Lazy                as TL
+import           Language.Cimple               (AssignOp (..), BinaryOp (..),
+                                                Comment, CommentF (..),
+                                                CommentStyle (..), Lexeme (..),
+                                                LexemeClass (..), Node,
+                                                NodeF (..), Scope (..),
+                                                UnaryOp (..), lexemeLine,
+                                                lexemeText)
+import           Language.Cimple.PrettyColor   (black, blue, cyan, dullcyan,
+                                                dullgreen, dullmagenta, dullred,
+                                                dullyellow, underline)
+import           Prettyprinter
+import           Prettyprinter.Render.Terminal (AnsiStyle)
+import qualified Prettyprinter.Render.Terminal as Term
 
 indentWidth :: Int
 indentWidth = 2
 
-kwBitwise       = dullgreen $ text "bitwise"
-kwBreak         = dullred   $ text "break"
-kwCase          = dullred   $ text "case"
-kwConst         = dullgreen $ text "const"
-kwContinue      = dullred   $ text "continue"
-kwDefault       = dullred   $ text "default"
-kwDo            = dullred   $ text "do"
-kwElse          = dullred   $ text "else"
-kwEnum          = dullgreen $ text "enum"
-kwExtern        = dullgreen $ text "extern"
-kwFor           = dullred   $ text "for"
-kwForce         = dullgreen $ text "force"
-kwGnuPrintf     = dullgreen $ text "GNU_PRINTF"
-kwGoto          = dullred   $ text "goto"
-kwIf            = dullred   $ text "if"
-kwNonNull       = dullgreen $ text "non_null"
-kwNullable      = dullgreen $ text "nullable"
-kwOwner         = dullgreen $ text "owner"
-kwReturn        = dullred   $ text "return"
-kwSizeof        = dullred   $ text "sizeof"
-kwStaticAssert  = dullred   $ text "static_assert"
-kwStatic        = dullgreen $ text "static"
-kwStruct        = dullgreen $ text "struct"
-kwSwitch        = dullred   $ text "switch"
-kwTypedef       = dullgreen $ text "typedef"
-kwUnion         = dullgreen $ text "union"
-kwWhile         = dullred   $ text "while"
+kwBitwise       = dullgreen $ pretty "bitwise"
+kwBreak         = dullred   $ pretty "break"
+kwCase          = dullred   $ pretty "case"
+kwConst         = dullgreen $ pretty "const"
+kwContinue      = dullred   $ pretty "continue"
+kwDefault       = dullred   $ pretty "default"
+kwDo            = dullred   $ pretty "do"
+kwElse          = dullred   $ pretty "else"
+kwEnum          = dullgreen $ pretty "enum"
+kwExtern        = dullgreen $ pretty "extern"
+kwFor           = dullred   $ pretty "for"
+kwForce         = dullgreen $ pretty "force"
+kwGnuPrintf     = dullgreen $ pretty "GNU_PRINTF"
+kwGoto          = dullred   $ pretty "goto"
+kwIf            = dullred   $ pretty "if"
+kwNonNull       = dullgreen $ pretty "non_null"
+kwNullable      = dullgreen $ pretty "nullable"
+kwOwner         = dullgreen $ pretty "owner"
+kwReturn        = dullred   $ pretty "return"
+kwSizeof        = dullred   $ pretty "sizeof"
+kwStaticAssert  = dullred   $ pretty "static_assert"
+kwStatic        = dullgreen $ pretty "static"
+kwStruct        = dullgreen $ pretty "struct"
+kwSwitch        = dullred   $ pretty "switch"
+kwTypedef       = dullgreen $ pretty "typedef"
+kwUnion         = dullgreen $ pretty "union"
+kwWhile         = dullred   $ pretty "while"
 
-kwDocAttention  = dullcyan $ text "@attention"
-kwDocBrief      = dullcyan $ text "@brief"
-kwDocDeprecated = dullcyan $ text "@deprecated"
-kwDocExtends    = dullcyan $ text "@extends"
-kwDocImplements = dullcyan $ text "@implements"
-kwDocParam      = dullcyan $ text "@param"
-kwDocPrivate    = dullcyan $ text "@private"
-kwDocRef        = dullcyan $ text "@ref"
-kwDocReturn     = dullcyan $ text "@return"
-kwDocRetval     = dullcyan $ text "@retval"
-kwDocP          = dullcyan $ text "@p"
-kwDocSee        = dullcyan $ text "@see"
+kwDocAttention  = dullcyan $ pretty "@attention"
+kwDocBrief      = dullcyan $ pretty "@brief"
+kwDocDeprecated = dullcyan $ pretty "@deprecated"
+kwDocExtends    = dullcyan $ pretty "@extends"
+kwDocImplements = dullcyan $ pretty "@implements"
+kwDocParam      = dullcyan $ pretty "@param"
+kwDocPrivate    = dullcyan $ pretty "@private"
+kwDocRef        = dullcyan $ pretty "@ref"
+kwDocReturn     = dullcyan $ pretty "@return"
+kwDocRetval     = dullcyan $ pretty "@retval"
+kwDocP          = dullcyan $ pretty "@p"
+kwDocSee        = dullcyan $ pretty "@see"
 
-cmtPrefix :: Doc
-cmtPrefix = dullyellow (char '*')
+cmtPrefix :: Doc AnsiStyle
+cmtPrefix = dullyellow (pretty '*')
 
-ppText :: Text -> Doc
-ppText = text . Text.unpack
+ppText :: Text -> Doc AnsiStyle
+ppText = pretty . Text.unpack
 
-ppLexeme :: Lexeme Text -> Doc
+ppLexeme :: Lexeme Text -> Doc AnsiStyle
 ppLexeme = ppText . lexemeText
 
-commaSep :: [Doc] -> Doc
+commaSep :: [Doc AnsiStyle] -> Doc AnsiStyle
 commaSep = hsep . punctuate comma
 
-ppScope :: Scope -> Doc
+ppScope :: Scope -> Doc AnsiStyle
 ppScope = \case
-    Global -> empty
+    Global -> mempty
     Static -> kwStatic <> space
 
-ppAssignOp :: AssignOp -> Doc
+ppAssignOp :: AssignOp -> Doc AnsiStyle
 ppAssignOp = \case
     AopEq     -> equals
-    AopMul    -> text "*="
-    AopDiv    -> text "/="
-    AopPlus   -> text "+="
-    AopMinus  -> text "-="
-    AopBitAnd -> text "&="
-    AopBitOr  -> text "|="
-    AopBitXor -> text "^="
-    AopMod    -> text "%="
-    AopLsh    -> text ">>="
-    AopRsh    -> text "<<="
+    AopMul    -> pretty "*="
+    AopDiv    -> pretty "/="
+    AopPlus   -> pretty "+="
+    AopMinus  -> pretty "-="
+    AopBitAnd -> pretty "&="
+    AopBitOr  -> pretty "|="
+    AopBitXor -> pretty "^="
+    AopMod    -> pretty "%="
+    AopLsh    -> pretty ">>="
+    AopRsh    -> pretty "<<="
 
-ppBinaryOp :: BinaryOp -> Doc
+ppBinaryOp :: BinaryOp -> Doc AnsiStyle
 ppBinaryOp = \case
-    BopNe     -> text "!="
-    BopEq     -> text "=="
-    BopOr     -> text "||"
-    BopBitXor -> char '^'
-    BopBitOr  -> char '|'
-    BopAnd    -> text "&&"
-    BopBitAnd -> char '&'
-    BopDiv    -> char '/'
-    BopMul    -> char '*'
-    BopMod    -> char '%'
-    BopPlus   -> char '+'
-    BopMinus  -> char '-'
-    BopLt     -> char '<'
-    BopLe     -> text "<="
-    BopLsh    -> text "<<"
-    BopGt     -> char '>'
-    BopGe     -> text ">="
-    BopRsh    -> text ">>"
+    BopNe     -> pretty "!="
+    BopEq     -> pretty "=="
+    BopOr     -> pretty "||"
+    BopBitXor -> pretty '^'
+    BopBitOr  -> pretty '|'
+    BopAnd    -> pretty "&&"
+    BopBitAnd -> pretty '&'
+    BopDiv    -> pretty '/'
+    BopMul    -> pretty '*'
+    BopMod    -> pretty '%'
+    BopPlus   -> pretty '+'
+    BopMinus  -> pretty '-'
+    BopLt     -> pretty '<'
+    BopLe     -> pretty "<="
+    BopLsh    -> pretty "<<"
+    BopGt     -> pretty '>'
+    BopGe     -> pretty ">="
+    BopRsh    -> pretty ">>"
 
-ppUnaryOp :: UnaryOp -> Doc
+ppUnaryOp :: UnaryOp -> Doc AnsiStyle
 ppUnaryOp = \case
-    UopNot     -> char '!'
-    UopNeg     -> char '~'
-    UopMinus   -> char '-'
-    UopAddress -> char '&'
-    UopDeref   -> char '*'
-    UopIncr    -> text "++"
-    UopDecr    -> text "--"
+    UopNot     -> pretty '!'
+    UopNeg     -> pretty '~'
+    UopMinus   -> pretty '-'
+    UopAddress -> pretty '&'
+    UopDeref   -> pretty '*'
+    UopIncr    -> pretty "++"
+    UopDecr    -> pretty "--"
 
-ppCommentStart :: CommentStyle -> Doc
+ppCommentStart :: CommentStyle -> Doc AnsiStyle
 ppCommentStart = dullyellow . \case
-    Block   -> text "/***"
-    Doxygen -> text "/**"
-    Section -> text "/** @{"
-    Regular -> text "/*"
-    Ignore  -> text "//!TOKSTYLE-"
+    Block   -> pretty "/***"
+    Doxygen -> pretty "/**"
+    Section -> pretty "/** @{"
+    Regular -> pretty "/*"
+    Ignore  -> pretty "//!TOKSTYLE-"
 
-ppCommentBody :: [Lexeme Text] -> Doc
+ppCommentBody :: [Lexeme Text] -> Doc AnsiStyle
 ppCommentBody body = vsep . prefixStars . map (hcat . map ppWord . spaceWords) . groupLines $ body
   where
     -- If the "*/" is on a separate line, don't add an additional "*" before
@@ -147,13 +149,13 @@ ppCommentBody body = vsep . prefixStars . map (hcat . map ppWord . spaceWords) .
         case reverse body of
           e:c:_ | lexemeLine e > lexemeLine c -> 2
           _                                   -> 1
-    prefixStars xs = zipWith (<>) (empty : replicate (length xs - stars) cmtPrefix ++ [empty]) xs
+    prefixStars xs = zipWith (<>) (mempty : replicate (length xs - stars) cmtPrefix ++ [mempty]) xs
     groupLines = List.splitWhen $ \case
         L _ PpNewline _ -> True
         _               -> False
 
     spaceWords = \case
-        (L c p s:ws) -> L c p (" "<>s):continue ws
+        (L c p s:ws) -> L c p (tSpace<>s):continue ws
         []           -> []
       where
         continue [] = []
@@ -163,165 +165,171 @@ ppCommentBody body = vsep . prefixStars . map (hcat . map ppWord . spaceWords) .
         continue (w@(L _ PctEMark _):ws) = w:continue ws
         continue (w@(L _ PctQMark _):ws) = w:continue ws
         continue (w@(L _ PctRParen _):ws) = w:continue ws
-        continue [w@(L c p s), end@(L _ CmtEnd _)] | lexemeLine w == lexemeLine end = [L c p (" "<>s<>" "), end]
-        continue (L c PctLParen s:w:ws) = (L c PctLParen (" "<>s)):w:continue ws
-        continue (L c p s:ws) = (L c p (" "<>s)):continue ws
+        continue [w@(L c p s), end@(L _ CmtEnd _)] | lexemeLine w == lexemeLine end = [L c p (tSpace<>s<>tSpace), end]
+        continue (L c PctLParen s:w:ws) = L c PctLParen (tSpace<>s):w:continue ws
+        continue (L c p s:ws) = L c p (tSpace<>s):continue ws
 
-ppWord (L _ CmtIndent  _) = empty
+        tSpace :: Text
+        tSpace = Text.pack " "
+
+ppWord (L _ CmtIndent  _) = mempty
 ppWord (L _ CmtCommand t) = dullcyan   $ ppText t
 ppWord (L _ _          t) = dullyellow $ ppText t
 
-ppComment :: CommentStyle -> [Lexeme Text] -> Lexeme Text -> Doc
+ppComment :: CommentStyle -> [Lexeme Text] -> Lexeme Text -> Doc AnsiStyle
 ppComment Ignore cs _ =
-    ppCommentStart Ignore <> hcat (map ppWord cs) <> dullyellow (text "//!TOKSTYLE+" <> line)
+    ppCommentStart Ignore <> hcat (map ppWord cs) <> dullyellow (pretty "//!TOKSTYLE+" <> line)
 ppComment style cs (L l c _) =
-    nest 1 $ ppCommentStart style <> ppCommentBody (cs ++ [L l c "*/"])
+    nest 1 $ ppCommentStart style <> ppCommentBody (cs ++ [L l c (Text.pack "*/")])
 
-ppInitialiserList :: [Doc] -> Doc
+ppInitialiserList :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppInitialiserList l = lbrace <+> commaSep l <+> rbrace
 
-ppParamList :: [Doc] -> Doc
+ppParamList :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppParamList = parens . indent 0 . commaSep
 
 ppFunctionPrototype
-    :: Doc
+    :: Doc AnsiStyle
     -> Lexeme Text
-    -> [Doc]
-    -> Doc
+    -> [Doc AnsiStyle]
+    -> Doc AnsiStyle
 ppFunctionPrototype ty name params =
     ty <+> ppLexeme name <> ppParamList params
 
-ppFunctionCall :: Doc -> [Doc] -> Doc
+ppFunctionCall :: Doc AnsiStyle -> [Doc AnsiStyle] -> Doc AnsiStyle
 ppFunctionCall callee args =
     callee <> ppParamList args
 
 ppIfStmt
-    :: Doc
-    -> Doc
-    -> Maybe Doc
-    -> Doc
+    :: Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Maybe (Doc AnsiStyle)
+    -> Doc AnsiStyle
 ppIfStmt cond t Nothing =
     kwIf <+> parens cond <+> t
 ppIfStmt cond t (Just e) =
     kwIf <+> parens cond <+> t <+> kwElse <+> e
 
 ppForStmt
-    :: Doc
-    -> Doc
-    -> Doc
-    -> Doc
-    -> Doc
+    :: Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Doc AnsiStyle
 ppForStmt i c n body =
     kwFor <+> parens (i <+> c <> semi <+> n) <+> body
 
 ppWhileStmt
-    :: Doc
-    -> Doc
-    -> Doc
+    :: Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Doc AnsiStyle
 ppWhileStmt c body =
     kwWhile <+> parens c <+> body
 
 ppDoWhileStmt
-    :: Doc
-    -> Doc
-    -> Doc
+    :: Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Doc AnsiStyle
 ppDoWhileStmt body c =
     kwDo <+> body <+> kwWhile <+> parens c <> semi
 
 ppSwitchStmt
-    :: Doc
-    -> [Doc]
-    -> Doc
+    :: Doc AnsiStyle
+    -> [Doc AnsiStyle]
+    -> Doc AnsiStyle
 ppSwitchStmt c body =
     nest indentWidth (
-        kwSwitch <+> parens c <+> lbrace <$>
+        kwSwitch <+> parens c <+> lbrace <$$>
         vcat body
-    ) <$> rbrace
+    ) <$$> rbrace
 
-ppVLA :: Doc -> Lexeme Text -> Doc -> Doc
+ppVLA :: Doc AnsiStyle -> Lexeme Text -> Doc AnsiStyle -> Doc AnsiStyle
 ppVLA ty n sz =
-    text "VLA("
+    pretty "VLA("
         <> ty
-        <> text ", "
+        <> pretty ", "
         <> ppLexeme n
-        <> text ", "
+        <> pretty ", "
         <> sz
-        <> text ");"
+        <> pretty ");"
 
-ppCompoundStmt :: [Doc] -> Doc
+ppCompoundStmt :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppCompoundStmt body =
     nest indentWidth (
-        lbrace <$>
+        lbrace <$$>
         ppToplevel body
-    ) <$> rbrace
+    ) <$$> rbrace
 
 ppTernaryExpr
-    :: Doc
-    -> Doc
-    -> Doc
-    -> Doc
+    :: Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Doc AnsiStyle
+    -> Doc AnsiStyle
 ppTernaryExpr c t e =
-    c <+> char '?' <+> t <+> colon <+> e
+    c <+> pretty '?' <+> t <+> colon <+> e
 
-ppLicenseDecl :: Lexeme Text -> [Doc] -> Doc
+ppLicenseDecl :: Lexeme Text -> [Doc AnsiStyle] -> Doc AnsiStyle
 ppLicenseDecl l cs =
-    dullyellow $ ppCommentStart Regular <+> text "SPDX-License-Identifier: " <> ppLexeme l <$>
-    vcat (map dullyellow cs) <$>
-    dullyellow (text " */")
+    dullyellow $ ppCommentStart Regular <+> pretty "SPDX-License-Identifier: " <> ppLexeme l <$$>
+    vcat (map dullyellow cs) <$$>
+    dullyellow (pretty " */")
 
-ppIntList :: [Lexeme Text] -> Doc
+ppIntList :: [Lexeme Text] -> Doc AnsiStyle
 ppIntList = parens . commaSep . map (dullred . ppLexeme)
 
-ppMacroBody :: Doc -> Doc
+ppMacroBody :: Doc AnsiStyle -> Doc AnsiStyle
 ppMacroBody =
     vcat
     . map dullmagenta
-    . punctuate (text " \\")
-    . map text
+    . punctuate (pretty " \\")
+    . map pretty
     . List.splitOn "\n"
     . renderS
     . plain
 
-ppVerbatimComment :: Doc -> Doc
+plain :: Doc ann -> Doc xxx
+plain = unAnnotate
+
+ppVerbatimComment :: Doc AnsiStyle -> Doc AnsiStyle
 ppVerbatimComment =
     vcat
     . map dullyellow
-    . zipWith (<>) (empty : repeat (text " * "))
-    . map text
+    . zipWith (<>) (mempty : repeat (pretty " * "))
+    . map pretty
     . List.splitOn "\n"
     . renderS
     . plain
 
-ppCodeBody :: [Doc] -> Doc
+ppCodeBody :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppCodeBody =
     vcat
-    . zipWith (<>) (empty : commentStart " *"  )
-    . map text
+    . zipWith (<>) (mempty : commentStart " *"  )
+    . map pretty
     . List.splitOn "\n"
     . renderS
     . plain
     . hcat
 
-commentStart :: String -> [Doc]
-commentStart = repeat . dullyellow . text
+commentStart :: String -> [Doc AnsiStyle]
+commentStart = repeat . dullyellow . pretty
 
-ppCommentInfo :: Comment (Lexeme Text) -> Doc
+ppCommentInfo :: Comment (Lexeme Text) -> Doc AnsiStyle
 ppCommentInfo = foldFix go
   where
   ppBody     = vcat . zipWith (<>) (        commentStart " * "  )
-  ppIndented = vcat . zipWith (<>) (empty : commentStart " *   ")
+  ppIndented = vcat . zipWith (<>) (mempty : commentStart " *   ")
   ppRef      = underline . cyan . ppLexeme
-  ppAttr     = maybe empty (blue . ppLexeme)
+  ppAttr     = maybe mempty (blue . ppLexeme)
 
-  go :: CommentF (Lexeme Text) Doc -> Doc
+  go :: CommentF (Lexeme Text) (Doc AnsiStyle) -> Doc AnsiStyle
   go = dullyellow . \case
     DocComment docs ->
-        text "/**" <$>
-        ppBody docs <$>
-        dullyellow (text " */")
+        pretty "/**" <$$>
+        ppBody docs <$$>
+        dullyellow (pretty " */")
     DocWord w -> ppLexeme w
     DocSentence docs ending -> fillSep docs <> ppLexeme ending
-    DocNewline -> empty
+    DocNewline -> mempty
 
     DocParam attr name docs ->
         kwDocParam <> ppAttr attr <+> underline (cyan (ppLexeme name)) <+> ppIndented docs
@@ -342,41 +350,41 @@ ppCommentInfo = foldFix go
     DocLine docs -> fillSep docs
     DocCode begin code end -> ppLexeme begin <> ppCodeBody code <> ppLexeme end
     DocList l -> ppVerbatimComment $ vcat l
-    DocOLItem num docs -> ppLexeme num <> char '.' <+> nest 3 (fillSep docs)
-    DocULItem docs sublist -> char '-' <+> nest 2 (vsep $ fillSep docs : sublist)
+    DocOLItem num docs -> ppLexeme num <> pretty '.' <+> nest 3 (fillSep docs)
+    DocULItem docs sublist -> pretty '-' <+> nest 2 (vsep $ fillSep docs : sublist)
 
     DocLParen doc -> lparen <> doc
     DocRParen doc -> doc <> rparen
-    DocColon doc -> ppLexeme doc <> char ':'
-    DocBinaryOp BopMinus l r -> l <>  char '-'      <>  r
-    DocBinaryOp BopDiv   l r -> l <>  char '/'      <>  r
+    DocColon doc -> ppLexeme doc <> pretty ':'
+    DocBinaryOp BopMinus l r -> l <>  pretty '-'      <>  r
+    DocBinaryOp BopDiv   l r -> l <>  pretty '/'      <>  r
     DocAssignOp op       l r -> l <+> ppAssignOp op <+> r
     DocBinaryOp op       l r -> l <+> ppBinaryOp op <+> r
 
-ppNode :: Node (Lexeme Text) -> Doc
+ppNode :: Node (Lexeme Text) -> Doc AnsiStyle
 ppNode = foldFix go
   where
-  go :: NodeF (Lexeme Text) Doc -> Doc
+  go :: NodeF (Lexeme Text) (Doc AnsiStyle) -> Doc AnsiStyle
   go = \case
     StaticAssert cond msg ->
         kwStaticAssert <> parens (cond <> comma <+> dullred (ppLexeme msg)) <> semi
 
     LicenseDecl l cs -> ppLicenseDecl l cs
     CopyrightDecl from (Just to) owner ->
-        text " * Copyright © " <> ppLexeme from <> char '-' <> ppLexeme to <>
+        pretty " * Copyright © " <> ppLexeme from <> pretty '-' <> ppLexeme to <>
         ppCommentBody owner
     CopyrightDecl from Nothing owner ->
-        text " * Copyright © " <> ppLexeme from <>
+        pretty " * Copyright © " <> ppLexeme from <>
         ppCommentBody owner
 
     Comment style _ cs end ->
         ppComment style cs end
     CommentSection start decls end ->
-        start <$> line <> ppToplevel decls <> line <$> end
+        start <$$> line <> ppToplevel decls <> line <$$> end
     CommentSectionEnd cs ->
         dullyellow $ ppLexeme cs
     Commented c d ->
-        c <$> d
+        c <$$> d
     CommentInfo docs ->
         ppCommentInfo docs
 
@@ -390,24 +398,24 @@ ppNode = foldFix go
     UnaryExpr o e        -> ppUnaryOp o <> e
     ParenExpr e          -> parens e
     FunctionCall c  a    -> ppFunctionCall c a
-    ArrayAccess  e  i    -> e <> char '[' <> i <> char ']'
+    ArrayAccess  e  i    -> e <> pretty '[' <> i <> pretty ']'
     CastExpr     ty e    -> parens ty <> e
     CompoundExpr    ty e -> parens ty <+> lbrace <> e <> rbrace  -- DEPRECATED
     CompoundLiteral ty e -> parens ty <+> lbrace <> e <> rbrace
-    PreprocDefined  n    -> text "defined(" <> ppLexeme n <> char ')'
+    PreprocDefined  n    -> pretty "defined(" <> ppLexeme n <> pretty ')'
     InitialiserList l    -> ppInitialiserList l
-    PointerAccess e m    -> e <> text "->" <> ppLexeme m
-    MemberAccess  e m    -> e <> text "." <> ppLexeme m
+    PointerAccess e m    -> e <> pretty "->" <> ppLexeme m
+    MemberAccess  e m    -> e <> pretty "." <> ppLexeme m
     CommentExpr   c e    -> c <+> e
-    Ellipsis             -> text "..."
+    Ellipsis             -> pretty "..."
 
     VarDecl ty name arrs      -> ty <+> ppLexeme name <> hcat arrs
-    DeclSpecArray Nothing     -> text "[]"
+    DeclSpecArray Nothing     -> pretty "[]"
     DeclSpecArray (Just dim)  -> brackets dim
 
     TyBitwise     ty -> kwBitwise <+> ty
     TyForce       ty -> kwForce <+> ty
-    TyPointer     ty -> ty <> char '*'
+    TyPointer     ty -> ty <> pretty '*'
     TyConst       ty -> ty <+> kwConst
     TyOwner       ty -> ty <+> kwOwner
     TyUserDefined l  -> dullgreen $ ppLexeme l
@@ -416,15 +424,15 @@ ppNode = foldFix go
     TyStruct      l  -> kwStruct <+> dullgreen (ppLexeme l)
 
     ExternC decls ->
-        dullmagenta (text "#ifdef __cplusplus") <$>
-        kwExtern <+> dullred (text "\"C\"") <+> lbrace <$>
-        dullmagenta (text "#endif") <$>
+        dullmagenta (pretty "#ifdef __cplusplus") <$$>
+        kwExtern <+> dullred (pretty "\"C\"") <+> lbrace <$$>
+        dullmagenta (pretty "#endif") <$$>
         line <>
-        ppToplevel decls <$>
+        ppToplevel decls <$$>
         line <>
-        dullmagenta (text "#ifdef __cplusplus") <$>
-        rbrace <+> text "/* extern \"C\" */" <$>
-        dullmagenta (text "#endif")
+        dullmagenta (pretty "#ifdef __cplusplus") <$$>
+        rbrace <+> pretty "/* extern \"C\" */" <$$>
+        dullmagenta (pretty "#endif")
 
     Group decls -> vcat decls
 
@@ -432,50 +440,50 @@ ppNode = foldFix go
 
     MacroBodyFunCall e -> e
     MacroBodyStmt body ->
-        kwDo <+> body <+> kwWhile <+> text "(0)"
+        kwDo <+> body <+> kwWhile <+> pretty "(0)"
 
     PreprocScopedDefine def stmts undef ->
-        def <$> ppToplevel stmts <$> undef
+        def <$$> ppToplevel stmts <$$> undef
 
     PreprocInclude hdr ->
-        dullmagenta $ text "#include" <+> ppLexeme hdr
+        dullmagenta $ pretty "#include" <+> ppLexeme hdr
     PreprocDefine name ->
-        dullmagenta $ text "#define" <+> ppLexeme name
+        dullmagenta $ pretty "#define" <+> ppLexeme name
     PreprocDefineConst name value ->
-        dullmagenta $ text "#define" <+> ppLexeme name <+> value
+        dullmagenta $ pretty "#define" <+> ppLexeme name <+> value
     PreprocDefineMacro name params body ->
-        ppMacroBody $ text "#define" <+> ppLexeme name <> ppParamList params <+> body
+        ppMacroBody $ pretty "#define" <+> ppLexeme name <> ppParamList params <+> body
     PreprocUndef name ->
-        dullmagenta $ text "#undef" <+> ppLexeme name
+        dullmagenta $ pretty "#undef" <+> ppLexeme name
 
     PreprocIf cond decls elseBranch ->
-        dullmagenta (text "#if" <+> cond) <$>
+        dullmagenta (pretty "#if" <+> cond) <$$>
         ppToplevel decls <>
-        elseBranch <$>
-        dullmagenta (text "#endif  /*" <+> cond <+> text "*/")
+        elseBranch <$$>
+        dullmagenta (pretty "#endif  /*" <+> cond <+> pretty "*/")
     PreprocIfdef name decls elseBranch ->
-        dullmagenta (text "#ifdef" <+> ppLexeme name) <$>
+        dullmagenta (pretty "#ifdef" <+> ppLexeme name) <$$>
         ppToplevel decls <>
-        elseBranch <$>
-        dullmagenta (text "#endif  /*" <+> ppLexeme name <+> text "*/")
+        elseBranch <$$>
+        dullmagenta (pretty "#endif  /*" <+> ppLexeme name <+> pretty "*/")
     PreprocIfndef name decls elseBranch ->
-        dullmagenta (text "#ifndef" <+> ppLexeme name) <$>
+        dullmagenta (pretty "#ifndef" <+> ppLexeme name) <$$>
         ppToplevel decls <>
-        elseBranch <$>
-        dullmagenta (text "#endif  /*" <+> ppLexeme name <+> text "*/")
-    PreprocElse [] -> empty
+        elseBranch <$$>
+        dullmagenta (pretty "#endif  /*" <+> ppLexeme name <+> pretty "*/")
+    PreprocElse [] -> mempty
     PreprocElse decls ->
-        linebreak <>
-        dullmagenta (text "#else") <$>
+        line <>
+        dullmagenta (pretty "#else") <$$>
         ppToplevel decls
     PreprocElif cond decls elseBranch ->
         hardline <>
-        dullmagenta (text "#elif") <+> cond <$>
+        dullmagenta (pretty "#elif") <+> cond <$$>
         ppToplevel decls <>
         elseBranch
 
     AttrPrintf fmt ellipsis fun ->
-        kwGnuPrintf <> ppIntList [fmt, ellipsis] <$> fun
+        kwGnuPrintf <> ppIntList [fmt, ellipsis] <$$> fun
     CallbackDecl ty name ->
         ppLexeme ty <+> ppLexeme name
     FunctionPrototype ty name params ->
@@ -493,14 +501,14 @@ ppNode = foldFix go
     AggregateDecl struct -> struct <> semi
     Struct name members ->
         nest indentWidth (
-            kwStruct <+> ppLexeme name <+> lbrace <$>
+            kwStruct <+> ppLexeme name <+> lbrace <$$>
             vcat members
-        ) <$> rbrace
+        ) <$$> rbrace
     Union name members ->
         nest indentWidth (
-            kwUnion <+> ppLexeme name <+> lbrace <$>
+            kwUnion <+> ppLexeme name <+> lbrace <$$>
             vcat members
-        ) <$> rbrace
+        ) <$$> rbrace
     Typedef ty tyname ->
         kwTypedef <+> ty <+> dullgreen (ppLexeme tyname) <> semi
     TypedefFunction proto ->
@@ -518,28 +526,28 @@ ppNode = foldFix go
 
     EnumConsts Nothing enums ->
         nest indentWidth (
-            kwEnum <+> lbrace <$>
+            kwEnum <+> lbrace <$$>
             vcat enums
-        ) <$> text "};"
+        ) <$$> pretty "};"
     EnumConsts (Just name) enums ->
         nest indentWidth (
-            kwEnum <+> ppLexeme name <+> lbrace <$>
+            kwEnum <+> ppLexeme name <+> lbrace <$$>
             vcat enums
-        ) <$> text "};"
+        ) <$$> pretty "};"
     EnumDecl name enums ty ->
         nest indentWidth (
-            kwTypedef <+> kwEnum <+> dullgreen (ppLexeme name) <+> lbrace <$>
+            kwTypedef <+> kwEnum <+> dullgreen (ppLexeme name) <+> lbrace <$$>
             vcat enums
-        ) <$> rbrace <+> dullgreen (ppLexeme ty) <> semi
+        ) <$$> rbrace <+> dullgreen (ppLexeme ty) <> semi
 
     NonNull [] [] f ->
-        kwNonNull <> text "()" <$> f
+        kwNonNull <> pretty "()" <$$> f
     NonNull nonnull [] f ->
-        kwNonNull <> ppIntList nonnull <$> f
+        kwNonNull <> ppIntList nonnull <$$> f
     NonNull [] nullable f ->
-        kwNullable <> ppIntList nullable <$> f
+        kwNullable <> ppIntList nullable <$$> f
     NonNull nonnull nullable f ->
-        kwNonNull <> ppIntList nonnull <+> kwNullable <> ppIntList nullable <$> f
+        kwNonNull <> ppIntList nonnull <+> kwNullable <> ppIntList nullable <$$> f
 
     -- Statements
     VarDeclStmt decl Nothing      -> decl <> semi
@@ -551,7 +559,7 @@ ppNode = foldFix go
     IfStmt cond t e               -> ppIfStmt cond t e
     ForStmt i c n body            -> ppForStmt i c n body
     Default s                     -> kwDefault <> colon <+> s
-    Label l s                     -> indent (-99) (line <> ppLexeme l <> colon) <$> s
+    Label l s                     -> indent (-99) (line <> ppLexeme l <> colon) <$$> s
     ExprStmt e                    -> e <> semi
     Goto l                        -> kwGoto <+> ppLexeme l <> semi
     Case e s                      -> kwCase <+> e <> colon <+> s
@@ -561,17 +569,26 @@ ppNode = foldFix go
     CompoundStmt body             -> ppCompoundStmt body
     VLA ty n sz                   -> ppVLA ty n sz
 
-ppToplevel :: [Doc] -> Doc
+ppToplevel :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppToplevel = vcat . punctuate line
 
-ppTranslationUnit :: [Node (Lexeme Text)] -> Doc
-ppTranslationUnit decls = (ppToplevel . map ppNode $ decls) <> linebreak
+ppTranslationUnit :: [Node (Lexeme Text)] -> Doc AnsiStyle
+ppTranslationUnit decls = (ppToplevel . map ppNode $ decls) <> line
 
 showNode  :: Node (Lexeme Text) -> Text
 showNode = Text.pack . show . ppNode
 
-renderS :: Doc -> String
-renderS = flip displayS "" . renderSmart 1 120
+renderSmart :: Float -> Int -> Doc AnsiStyle -> SimpleDocStream AnsiStyle
+renderSmart ribbonFraction widthPerLine
+    = layoutSmart LayoutOptions
+        { layoutPageWidth = AvailablePerLine widthPerLine (realToFrac ribbonFraction) }
 
-render :: Doc -> Text
-render = Text.pack . renderS
+renderS :: Doc AnsiStyle -> String
+renderS = Text.unpack . render
+
+render :: Doc AnsiStyle -> Text
+render = TL.toStrict . Term.renderLazy . renderSmart 1 120
+
+infixr 5 <$$>
+(<$$>) :: Doc a -> Doc a -> Doc a
+x <$$> y = x <> line <> y

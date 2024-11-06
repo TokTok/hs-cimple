@@ -1,11 +1,13 @@
 module Language.Cimple.PrettySpec where
 
-import           Test.Hspec                   (Spec, describe, it, shouldBe)
+import           Test.Hspec                    (Spec, describe, it, shouldBe)
 
-import qualified Data.Text                    as Text
-import           Language.Cimple.IO           (parseText)
-import           Language.Cimple.Pretty       (plain, ppTranslationUnit)
-import           Text.PrettyPrint.ANSI.Leijen (displayS, renderCompact)
+import qualified Data.Text                     as Text
+import qualified Data.Text.Lazy                as TL
+import           Language.Cimple.IO            (parseText)
+import           Language.Cimple.Pretty        (plain, ppTranslationUnit)
+import           Prettyprinter                 (SimpleDocStream, layoutCompact)
+import           Prettyprinter.Render.Terminal (AnsiStyle, renderLazy)
 
 getRight :: Either String a -> a
 getRight (Left  err) = error err
@@ -23,12 +25,17 @@ pretty =
 compact :: String -> String
 compact =
     flip displayS ""
-    . renderCompact
+    . layoutCompact
     . plain
     . ppTranslationUnit
     . getRight
     . parseText
     . Text.pack
+
+displayS :: SimpleDocStream AnsiStyle -> ShowS
+displayS sdoc =
+    let rendered = renderLazy sdoc
+    in (TL.unpack rendered ++)
 
 
 spec :: Spec

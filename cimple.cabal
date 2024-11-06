@@ -42,6 +42,7 @@ library
     Language.Cimple.Lexer
     Language.Cimple.Parser
     Language.Cimple.ParseResult
+    Language.Cimple.PrettyColor
     Language.Cimple.SemCheck.Includes
     Language.Cimple.Tokens
     Language.Cimple.TranslationUnit
@@ -49,7 +50,6 @@ library
 
   build-depends:
       aeson
-    , ansi-wl-pprint
     , array
     , base                 <5
     , bytestring
@@ -59,6 +59,8 @@ library
     , filepath
     , monad-parallel
     , mtl
+    , prettyprinter
+    , prettyprinter-ansi-terminal
     , split
     , text
     , transformers-compat
@@ -121,11 +123,12 @@ test-suite testsuite
   build-tool-depends: hspec-discover:hspec-discover
   build-depends:
       QuickCheck
-    , ansi-wl-pprint
     , base                 <5
     , cimple
     , data-fix
     , extra
     , hspec
+    , prettyprinter
+    , prettyprinter-ansi-terminal
     , text
     , transformers-compat
