@@ -173,7 +173,7 @@ haskell_library(
     ),
     src_strip_prefix = "src",
     tags = ["no-cross"],
-    version = "0.0.21",
+    version = "0.0.22",
     visibility = ["//visibility:public"],
     deps = [
         ":ast",
