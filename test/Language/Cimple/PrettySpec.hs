@@ -1,11 +1,15 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Language.Cimple.PrettySpec where
 
 import           Test.Hspec                    (Spec, describe, it, shouldBe)
 
+import           Data.Text                     (Text)
 import qualified Data.Text                     as Text
 import qualified Data.Text.Lazy                as TL
+import           Language.Cimple               (Lexeme, Node)
 import           Language.Cimple.IO            (parseText)
-import           Language.Cimple.Pretty        (plain, ppTranslationUnit)
+import           Language.Cimple.Pretty        (plain, ppTranslationUnit,
+                                                showNode)
 import           Prettyprinter                 (SimpleDocStream, layoutCompact)
 import           Prettyprinter.Render.Terminal (AnsiStyle, renderLazy)
 
@@ -18,9 +22,7 @@ pretty =
     show
     . plain
     . ppTranslationUnit
-    . getRight
-    . parseText
-    . Text.pack
+    . mustParse
 
 compact :: String -> String
 compact =
@@ -28,7 +30,11 @@ compact =
     . layoutCompact
     . plain
     . ppTranslationUnit
-    . getRight
+    . mustParse
+
+mustParse :: String -> [Node (Lexeme Text)]
+mustParse =
+    getRight
     . parseText
     . Text.pack
 
@@ -40,6 +46,15 @@ displayS sdoc =
 
 spec :: Spec
 spec = do
+    describe "showNode" $ do
+        it "prints code with syntax highlighting" $ do
+            let pp = showNode $ head $ mustParse "int a(void) { return 3; }"
+            pp <> "\n" `shouldBe` Text.unlines
+                [ "\ESC[0;32mint\ESC[0m a(\ESC[0;32mvoid\ESC[0m) {"
+                , "  \ESC[0;31mreturn\ESC[0m \ESC[0;31m3\ESC[0m;"
+                , "}"
+                ]
+
     describe "renderPretty" $ do
         it "pretty-prints a simple C function" $ do
             let pp = pretty "int a(void) { return 3; }"

@@ -576,7 +576,7 @@ ppTranslationUnit :: [Node (Lexeme Text)] -> Doc AnsiStyle
 ppTranslationUnit decls = (ppToplevel . map ppNode $ decls) <> line
 
 showNode  :: Node (Lexeme Text) -> Text
-showNode = Text.pack . show . ppNode
+showNode = render . ppNode
 
 renderSmart :: Float -> Int -> Doc AnsiStyle -> SimpleDocStream AnsiStyle
 renderSmart ribbonFraction widthPerLine
