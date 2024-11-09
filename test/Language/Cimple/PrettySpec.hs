@@ -89,6 +89,27 @@ spec = do
                 , "} Foo;"
                 ]
 
+        it "pretty-prints ifdef'd struct members in the correct order" $
+            compact (unlines
+                [ "typedef struct Foo {"
+                , "  int32_t a;"
+                , "#ifdef ENABLE_XY"
+                , "  int32_t x;"
+                , "  int32_t y;"
+                , "#endif /* ENABLE_XY */"
+                , "} Foo;"
+                ])
+            `shouldBe` unlines
+                [ "typedef struct Foo {"
+                , "int32_t a;"
+                , "#ifdef ENABLE_XY"
+                , "int32_t x;"
+                , ""
+                , "int32_t y;"
+                , "#endif  /* ENABLE_XY */"
+                , "} Foo;"
+                ]
+
         it "respects newlines at end of comments" $ do
             compact "/* foo bar */" `shouldBe` "/* foo bar */\n"
             compact "/* foo bar\n */" `shouldBe` "/* foo bar\n */\n"

@@ -659,7 +659,7 @@ MemberDecl :: { NonTerm }
 MemberDecl
 :	VarDecl ';'						{ Fix $ MemberDecl $1 Nothing }
 |	VarDecl ':' LIT_INTEGER ';'				{ Fix $ MemberDecl $1 (Just $3) }
-|	PreprocIfdef(MemberDeclList)				{ $1 }
+|	PreprocIfdef(MemberDecls)				{ $1 }
 |	Comment							{ $1 }
 
 TypedefDecl :: { NonTerm }
