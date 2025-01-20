@@ -19,7 +19,10 @@ haskell_library(
         "src/Language/Cimple/Tokens.hs",
     ],
     src_strip_prefix = "src",
-    tags = ["no-cross"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -37,7 +40,10 @@ haskell_library(
     name = "ast",
     srcs = ["src/Language/Cimple/Ast.hs"],
     src_strip_prefix = "src",
-    tags = ["no-cross"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -57,7 +63,10 @@ haskell_library(
         "src/Language/Cimple/Flatten.hs",
     ],
     src_strip_prefix = "src",
-    tags = ["no-cross"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -84,7 +93,10 @@ haskell_library(
     extra_srcs = ["src/Language/Cimple/Parser.preproc.y"],
     ghcopts = ["-DSOURCE=\"$(location src/Language/Cimple/Parser.preproc.y)\""],
     src_strip_prefix = "src",
-    tags = ["no-cross"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -115,7 +127,10 @@ haskell_library(
     name = "comment-parser",
     srcs = [":CommentParser"],
     src_strip_prefix = "src",
-    tags = ["no-cross"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -142,7 +157,10 @@ haskell_library(
     name = "tree-parser",
     srcs = [":TreeParser"],
     src_strip_prefix = "src",
-    tags = ["no-cross"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
     visibility = [
         "//hs-cimple:__subpackages__",
         "//tools/haskell:__pkg__",
@@ -172,7 +190,10 @@ haskell_library(
         ],
     ),
     src_strip_prefix = "src",
-    tags = ["no-cross"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
     version = "0.0.23",
     visibility = ["//visibility:public"],
     deps = [
