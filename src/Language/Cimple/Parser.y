@@ -666,6 +666,7 @@ TypedefDecl :: { NonTerm }
 TypedefDecl
 :	typedef QualType ID_SUE_TYPE ';'			{ Fix $ Typedef $2 $3 }
 |	typedef FunctionPrototype(ID_FUNC_TYPE) ';'		{ Fix $ TypedefFunction $2 }
+|	struct ID_SUE_TYPE ';'					{ Fix $ Typedef (Fix (TyStruct $2)) $2 }
 
 QualType :: { NonTerm }
 QualType
