@@ -549,6 +549,11 @@ ppNode = foldFix go
     NonNull nonnull nullable f ->
         kwNonNull <> ppIntList nonnull <+> kwNullable <> ppIntList nullable <$$> f
 
+    NonNullParam p ->
+        kwNonNull <> pretty "()" <+> p
+    NullableParam p ->
+        kwNullable <> pretty "()" <+> p
+
     -- Statements
     VarDeclStmt decl Nothing      -> decl <> semi
     VarDeclStmt decl (Just initr) -> decl <+> equals <+> initr <> semi

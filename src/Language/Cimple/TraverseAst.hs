@@ -471,6 +471,10 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse nullable
             _ <- recurse f
             pure ()
+        NonNullParam p ->
+            recurse p
+        NullableParam p ->
+            recurse p
         ConstDecl ty name -> do
             _ <- recurse ty
             _ <- recurse name

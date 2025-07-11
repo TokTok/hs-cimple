@@ -758,6 +758,8 @@ FunctionParams
 FunctionParam :: { NonTerm }
 FunctionParam
 :	VarDecl							{ $1 }
+|	non_null '(' ')' VarDecl			{ Fix $ NonNullParam $4 }
+|	nullable '(' ')' VarDecl			{ Fix $ NullableParam $4 }
 
 ConstDecl :: { NonTerm }
 ConstDecl

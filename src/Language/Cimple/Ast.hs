@@ -119,6 +119,8 @@ data NodeF lexeme a
     | CallbackDecl lexeme lexeme
     | Ellipsis
     | NonNull [lexeme] [lexeme] a
+    | NonNullParam a
+    | NullableParam a
     -- Constants
     | ConstDecl a lexeme
     | ConstDefn Scope a lexeme a
