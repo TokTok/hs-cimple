@@ -706,6 +706,7 @@ FunctionDecl :: { NonTerm }
 FunctionDecl
 :	FunctionDeclarator					{ $1 Global }
 |	static FunctionDeclarator				{ $2 Static }
+|	Attrs FunctionDeclarator				{ $1 $ $2 Global }
 |	NonNull FunctionDeclarator				{ $1 $ $2 Global }
 |	NonNull static FunctionDeclarator			{ $1 $ $3 Static }
 |	NonNull Attrs FunctionDeclarator			{ $1 . $2 . $3 $ Global }

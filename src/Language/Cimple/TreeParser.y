@@ -121,6 +121,7 @@ import           Language.Cimple.Tokens        (LexemeClass (..))
     functionPrototype	{ Fix (FunctionPrototype{}) }
     ellipsis		{ Fix (Ellipsis) }
     nonNull		{ Fix (NonNull{}) }
+    attrPrintf		{ Fix (AttrPrintf{}) }
     -- Constants
     constDecl		{ Fix (ConstDecl{}) }
     constDefn		{ Fix (ConstDefn{}) }
@@ -195,6 +196,7 @@ CommentableDecl
 :	functionDecl						{ $1 }
 |	functionDefn						{ $1 }
 |	nonNull							{ $1 }
+|	attrPrintf						{ $1 }
 |	aggregateDecl						{ $1 }
 |	struct							{ $1 }
 |	typedef							{ $1 }
