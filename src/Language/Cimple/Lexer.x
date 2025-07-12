@@ -116,6 +116,10 @@ tokens :-
 -- Sodium constants.
 <0,ppSC>	"crypto_"[a-z0-9_]+[A-Z][A-Z0-9_]*	{ mkL IdConst }
 
+-- Clang nullability qualifiers (ignored for now).
+<0,ppSC>	"_Nonnull"				;
+<0,ppSC>	"_Nullable"				;
+
 -- Standard C (ish).
 <ppSC>		defined					{ mkL PpDefined }
 <ppSC>		\"[^\"]*\"				{ mkL LitString }
