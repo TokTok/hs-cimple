@@ -22,16 +22,8 @@ spec = do
             let ast = parseText "int a(void) { return 3; }"
             ast `shouldSatisfy` isRight1
 
-        it "should parse non_null annotations" $ do
-            let ast = parseText "non_null() int a(char *p);"
-            ast `shouldSatisfy` isRight1
-
-        it "should parse non_null and nullable annotations" $ do
-            let ast = parseText "non_null(2) nullable(1) int a(char *p, int *q);"
-            ast `shouldSatisfy` isRight1
-
         it "should parse per-param non_null and nullable annotations" $ do
-            let ast = parseText "int a(non_null() char *p, non_null() int *q);"
+            let ast = parseText "int a(char *_Nonnull p, int *_Nullable q);"
             ast `shouldSatisfy` isRight1
 
         it "should parse a type declaration" $ do

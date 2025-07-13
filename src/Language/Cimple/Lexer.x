@@ -116,9 +116,9 @@ tokens :-
 -- Sodium constants.
 <0,ppSC>	"crypto_"[a-z0-9_]+[A-Z][A-Z0-9_]*	{ mkL IdConst }
 
--- Clang nullability qualifiers (ignored for now).
-<0,ppSC>	"_Nonnull"				;
-<0,ppSC>	"_Nullable"				;
+-- Clang nullability qualifiers.
+<0,ppSC>	"_Nonnull"				{ mkL KwNonnull }
+<0,ppSC>	"_Nullable"				{ mkL KwNullable }
 
 -- Standard C (ish).
 <ppSC>		defined					{ mkL PpDefined }
@@ -157,8 +157,6 @@ tokens :-
 <0>		"#include"				{ mkL PpInclude }
 <0,ppSC>	"tox_"?"bitwise"			{ mkL KwBitwise }
 <0,ppSC>	"tox_"?"force"				{ mkL KwForce }
-<0,ppSC>	"tox_"?"non_null"			{ mkL KwNonNull }
-<0,ppSC>	"tox_"?"nullable"			{ mkL KwNullable }
 <0,ppSC>	"tox_"?"owner"				{ mkL KwOwner }
 <0,ppSC>	"break"					{ mkL KwBreak }
 <0,ppSC>	"case"					{ mkL KwCase }

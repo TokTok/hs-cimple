@@ -333,6 +333,10 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (TyForce <$> recurse ty)
         TyConst ty ->
             Fix <$> (TyConst <$> recurse ty)
+        TyNonnull ty ->
+            Fix <$> (TyNonnull <$> recurse ty)
+        TyNullable ty ->
+            Fix <$> (TyNullable <$> recurse ty)
         TyOwner ty ->
             Fix <$> (TyOwner <$> recurse ty)
         TyPointer ty ->

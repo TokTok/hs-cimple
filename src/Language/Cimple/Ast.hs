@@ -106,6 +106,8 @@ data NodeF lexeme a
     | TyForce a
     | TyConst a
     | TyOwner a
+    | TyNonnull a
+    | TyNullable a
     | TyPointer a
     | TyStruct lexeme
     | TyFunc lexeme

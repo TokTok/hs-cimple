@@ -432,6 +432,10 @@ instance TraverseAst text (Node (Lexeme text)) where
             recurse ty
         TyConst ty ->
             recurse ty
+        TyNonnull ty ->
+            recurse ty
+        TyNullable ty ->
+            recurse ty
         TyOwner ty ->
             recurse ty
         TyPointer ty ->

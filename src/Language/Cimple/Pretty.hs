@@ -44,8 +44,8 @@ kwForce         = dullgreen $ pretty "force"
 kwGnuPrintf     = dullgreen $ pretty "GNU_PRINTF"
 kwGoto          = dullred   $ pretty "goto"
 kwIf            = dullred   $ pretty "if"
-kwNonNull       = dullgreen $ pretty "non_null"
-kwNullable      = dullgreen $ pretty "nullable"
+kwNonnull       = dullgreen $ pretty "_Nonnull"
+kwNullable      = dullgreen $ pretty "_Nullable"
 kwOwner         = dullgreen $ pretty "owner"
 kwReturn        = dullred   $ pretty "return"
 kwSizeof        = dullred   $ pretty "sizeof"
@@ -417,6 +417,8 @@ ppNode = foldFix go
     TyForce       ty -> kwForce <+> ty
     TyPointer     ty -> ty <> pretty '*'
     TyConst       ty -> ty <+> kwConst
+    TyNonnull     ty -> ty <+> kwNonnull
+    TyNullable    ty -> ty <+> kwNullable
     TyOwner       ty -> ty <+> kwOwner
     TyUserDefined l  -> dullgreen $ ppLexeme l
     TyStd         l  -> dullgreen $ ppLexeme l
@@ -541,16 +543,16 @@ ppNode = foldFix go
         ) <$$> rbrace <+> dullgreen (ppLexeme ty) <> semi
 
     NonNull [] [] f ->
-        kwNonNull <> pretty "()" <$$> f
+        kwNonnull <> pretty "()" <$$> f
     NonNull nonnull [] f ->
-        kwNonNull <> ppIntList nonnull <$$> f
+        kwNonnull <> ppIntList nonnull <$$> f
     NonNull [] nullable f ->
         kwNullable <> ppIntList nullable <$$> f
     NonNull nonnull nullable f ->
-        kwNonNull <> ppIntList nonnull <+> kwNullable <> ppIntList nullable <$$> f
+        kwNonnull <> ppIntList nonnull <+> kwNullable <> ppIntList nullable <$$> f
 
     NonNullParam p ->
-        kwNonNull <> pretty "()" <+> p
+        kwNonnull <> pretty "()" <+> p
     NullableParam p ->
         kwNullable <> pretty "()" <+> p
 

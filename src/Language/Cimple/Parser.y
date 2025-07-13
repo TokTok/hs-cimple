@@ -58,7 +58,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     GNU_PRINTF			{ L _ KwGnuPrintf		_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
-    non_null			{ L _ KwNonNull			_ }
+    nonnull			{ L _ KwNonnull			_ }
     nullable			{ L _ KwNullable		_ }
     owner			{ L _ KwOwner			_ }
     return			{ L _ KwReturn			_ }
@@ -436,7 +436,7 @@ SwitchCaseBody
 DeclStmt :: { NonTerm }
 DeclStmt
 :	VarDeclStmt						{ $1 }
-|	VLA '(' QualType ',' ID_VAR ',' Expr ')' ';'		{ Fix $ VLA $3 $5 $7 }
+|	VLA '(' QualType(GlobalLeafType) ',' ID_VAR ',' Expr ')' ';'	{ Fix $ VLA $3 $5 $7 }
 
 VarDeclStmt :: { NonTerm }
 VarDeclStmt
@@ -445,8 +445,7 @@ VarDeclStmt
 
 VarDecl :: { NonTerm }
 VarDecl
-:	QualType ID_VAR DeclSpecArrays				{ Fix $ VarDecl $1 $2 $3 }
-|	ID_FUNC_TYPE '*' ID_VAR DeclSpecArrays			{ Fix $ VarDecl (Fix $ TyPointer $ Fix $ TyFunc $1) $3 $4 }
+:	QualType(LocalLeafType) ID_VAR DeclSpecArrays		{ Fix $ VarDecl $1 $2 $3 }
 
 DeclSpecArrays :: { [NonTerm] }
 DeclSpecArrays
@@ -456,7 +455,7 @@ DeclSpecArrays
 DeclSpecArray :: { NonTerm }
 DeclSpecArray
 :	'[' ']'							{ Fix $ DeclSpecArray Nothing }
-|	'[' Expr ']'						{ Fix $ DeclSpecArray (Just $2) }
+|	'[' Qual Expr ']'					{ Fix $ DeclSpecArray (Just ($2 $3)) }
 |	'[' '/*!' Expr '*/' ']'					{ Fix $ DeclSpecArray (Just $3) }
 
 InitialiserExpr :: { NonTerm }
@@ -487,9 +486,9 @@ CompoundStmt
 PreprocSafeExpr(x)
 :	LiteralExpr						{ $1 }
 |	'(' x ')'						{ Fix $ ParenExpr $2 }
-|	'(' QualType ')' x %prec CAST				{ Fix $ CastExpr $2 $4 }
+|	'(' QualType(LocalLeafType) ')' x %prec CAST		{ Fix $ CastExpr $2 $4 }
 |	sizeof '(' Expr ')'					{ Fix $ SizeofExpr $3 }
-|	sizeof '(' QualType ')'					{ Fix $ SizeofType $3 }
+|	sizeof '(' QualType(LocalLeafType) ')'			{ Fix $ SizeofType $3 }
 
 ConstExpr :: { NonTerm }
 ConstExpr
@@ -554,7 +553,7 @@ Expr
 -- Allow `(Type){0}` to set struct values to all-zero.
 CompoundLiteral :: { NonTerm }
 CompoundLiteral
-:	'(' QualType ')' '{' ZeroInitExpr '}'			{ Fix $ CompoundLiteral $2 $5 }
+:	'(' QualType(LocalLeafType) ')' '{' ZeroInitExpr '}'	{ Fix $ CompoundLiteral $2 $5 }
 
 ZeroInitExpr :: { NonTerm }
 ZeroInitExpr
@@ -664,71 +663,56 @@ MemberDecl
 
 TypedefDecl :: { NonTerm }
 TypedefDecl
-:	typedef QualType ID_SUE_TYPE ';'			{ Fix $ Typedef $2 $3 }
+:	typedef QualType(GlobalLeafType) ID_SUE_TYPE ';'	{ Fix $ Typedef $2 $3 }
 |	typedef FunctionPrototype(ID_FUNC_TYPE) ';'		{ Fix $ TypedefFunction $2 }
 |	struct ID_SUE_TYPE ';'					{ Fix $ Typedef (Fix (TyStruct $2)) $2 }
 
-QualType :: { NonTerm }
-QualType
+QualType(leafType)
 :	bitwise ID_STD_TYPE					{ Fix (TyBitwise (Fix (TyStd $2))) }
-|	force LeafType						{ Fix (TyForce $2) }
-|	LeafType						{                                        $1 }
-|	LeafType '*'						{                              tyPointer $1 }
-|	LeafType '*' '*'					{          tyPointer          (tyPointer $1) }
-|	LeafType '*' '*' const					{ tyConst (tyPointer          (tyPointer $1)) }
-|	LeafType '*' const					{                     tyConst (tyPointer $1) }
-|	LeafType '*' const '*'					{          tyPointer (tyConst (tyPointer $1)) }
-|	LeafType '*' const '*' const				{ tyConst (tyPointer (tyConst (tyPointer $1))) }
-|	LeafType const						{                                         tyConst $1 }
-|	LeafType const '*'					{                              tyPointer (tyConst $1) }
-|	LeafType const '*' const				{                     tyConst (tyPointer (tyConst $1)) }
-|	LeafType const '*' const '*'				{          tyPointer (tyConst (tyPointer (tyConst $1))) }
-|	LeafType const '*' const '*' const			{ tyConst (tyPointer (tyConst (tyPointer (tyConst $1)))) }
-|	const LeafType						{                                         tyConst $2 }
-|	const LeafType '*'					{                              tyPointer (tyConst $2) }
-|	const LeafType '*' const				{                     tyConst (tyPointer (tyConst $2)) }
-|	const LeafType '*' const '*'				{          tyPointer (tyConst (tyPointer (tyConst $2))) }
-|	const LeafType '*' const '*' const			{ tyConst (tyPointer (tyConst (tyPointer (tyConst $2)))) }
-|	LeafType '*'       owner				{            tyOwner          (tyPointer $1) }
-|	LeafType '*' const owner				{            tyOwner (tyConst (tyPointer $1)) }
-|	LeafType '*' '*' owner					{ tyOwner (tyPointer          (tyPointer $1)) }
-|	LeafType '*' owner '*'					{          tyPointer (tyOwner (tyPointer $1)) }
-|	LeafType '*' owner '*' owner				{ tyOwner (tyPointer (tyOwner (tyPointer $1))) }
+|	force leafType						{ Fix (TyForce $2) }
+|	leafType ConstQual					{                              ($2      $1)    }
+|	leafType ConstQual '*' Qual				{                $4 (tyPointer ($2      $1))   }
+|	leafType ConstQual '*' Qual '*' Qual			{ $6 (tyPointer ($4 (tyPointer ($2      $1)))) }
+|	const leafType						{                              (tyConst $2)    }
+|	const leafType '*' Qual					{                $4 (tyPointer (tyConst $2))   }
+|	const leafType '*' Qual '*' Qual			{ $6 (tyPointer ($4 (tyPointer (tyConst $2)))) }
 
-LeafType :: { NonTerm }
-LeafType
+ConstQual :: { NonTerm -> NonTerm }
+ConstQual
+:								{ id }
+|	const							{ tyConst }
+
+Qual :: { NonTerm -> NonTerm }
+Qual
+:								{ id }
+|	const							{ tyConst }
+|	nonnull							{ tyNonnull }
+|	nullable						{ tyNullable }
+|	nonnull const						{ tyConst . tyNonnull }
+|	nullable const						{ tyConst . tyNullable }
+|	owner							{ tyOwner }
+
+GlobalLeafType :: { NonTerm }
+GlobalLeafType
 :	struct ID_SUE_TYPE					{ Fix $ TyStruct $2 }
 |	void							{ Fix $ TyStd $1 }
 |	ID_STD_TYPE						{ Fix $ TyStd $1 }
 |	ID_SUE_TYPE						{ Fix $ TyUserDefined $1 }
+
+LocalLeafType :: { NonTerm }
+LocalLeafType
+:	GlobalLeafType						{ $1 }
+|	ID_FUNC_TYPE						{ Fix $ TyFunc $1 }
 
 FunctionDecl :: { NonTerm }
 FunctionDecl
 :	FunctionDeclarator					{ $1 Global }
 |	static FunctionDeclarator				{ $2 Static }
 |	Attrs FunctionDeclarator				{ $1 $ $2 Global }
-|	NonNull FunctionDeclarator				{ $1 $ $2 Global }
-|	NonNull static FunctionDeclarator			{ $1 $ $3 Static }
-|	NonNull Attrs FunctionDeclarator			{ $1 . $2 . $3 $ Global }
 
 Attrs :: { NonTerm -> NonTerm }
 Attrs
 :	GNU_PRINTF '(' LIT_INTEGER ',' LIT_INTEGER ')'		{ Fix . AttrPrintf $3 $5 }
-
-NonNull :: { NonTerm -> NonTerm }
-NonNull
-:	non_null '(' ')'					{ Fix . NonNull [] [] }
-|	nullable '(' Ints ')'					{ Fix . NonNull [] $3 }
-|	non_null '(' Ints ')' nullable '(' Ints ')'		{ Fix . NonNull $3 $7 }
-
-Ints :: { [Term] }
-Ints
-:	IntList							{ reverse $1 }
-
-IntList :: { [Term] }
-IntList
-:	LIT_INTEGER						{ [$1] }
-|	IntList ',' LIT_INTEGER					{ $3 : $1 }
 
 FunctionDeclarator :: { Scope -> NonTerm }
 FunctionDeclarator
@@ -741,7 +725,7 @@ CallbackDecl
 :	ID_FUNC_TYPE ID_VAR					{ Fix $ CallbackDecl $1 $2 }
 
 FunctionPrototype(id)
-:	QualType id FunctionParamList				{ Fix $ FunctionPrototype $1 $2 $3 }
+:	QualType(GlobalLeafType) id FunctionParamList		{ Fix $ FunctionPrototype $1 $2 $3 }
 |	ID_FUNC_TYPE '*' id FunctionParamList			{ Fix $ FunctionPrototype (Fix $ TyPointer $ Fix $ TyFunc $1) $3 $4 }
 
 FunctionParamList :: { [NonTerm] }
@@ -759,14 +743,12 @@ FunctionParams
 FunctionParam :: { NonTerm }
 FunctionParam
 :	VarDecl							{ $1 }
-|	non_null '(' ')' VarDecl			{ Fix $ NonNullParam $4 }
-|	nullable '(' ')' VarDecl			{ Fix $ NullableParam $4 }
 
 ConstDecl :: { NonTerm }
 ConstDecl
-:	extern const LeafType ID_VAR ';'			{ Fix $ ConstDecl $3 $4 }
-|	const LeafType ID_VAR '=' InitialiserExpr ';'		{ Fix $ ConstDefn Global $2 $3 $5 }
-|	static const LeafType ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Static $3 $4 $6 }
+:	extern const GlobalLeafType ID_VAR ';'			{ Fix $ ConstDecl $3 $4 }
+|	const GlobalLeafType ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Global $2 $3 $5 }
+|	static const GlobalLeafType ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Static $3 $4 $6 }
 
 {
 type Term = Lexeme Text
@@ -776,6 +758,8 @@ tyPointer, tyConst, tyOwner :: NonTerm -> NonTerm
 tyPointer = Fix . TyPointer
 tyConst = Fix . TyConst
 tyOwner = Fix . TyOwner
+tyNullable = Fix . TyNullable
+tyNonnull = Fix . TyNonnull
 
 lexwrap :: (Lexeme Text -> Alex a) -> Alex a
 lexwrap = (alexMonadScan >>=)

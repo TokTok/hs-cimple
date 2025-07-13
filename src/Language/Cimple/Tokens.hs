@@ -28,7 +28,7 @@ data LexemeClass
     | KwGnuPrintf
     | KwGoto
     | KwIf
-    | KwNonNull
+    | KwNonnull
     | KwNullable
     | KwOwner
     | KwReturn
