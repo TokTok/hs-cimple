@@ -333,6 +333,8 @@ instance TraverseAst text (Node (Lexeme text)) where
             pure ()
         DeclSpecArray size ->
             recurse size
+        ArrayDim _ size ->
+            recurse size
         InitialiserList values ->
             recurse values
         UnaryExpr _op expr ->

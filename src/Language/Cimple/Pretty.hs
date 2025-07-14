@@ -16,9 +16,9 @@ import           Language.Cimple               (AssignOp (..), BinaryOp (..),
                                                 Comment, CommentF (..),
                                                 CommentStyle (..), Lexeme (..),
                                                 LexemeClass (..), Node,
-                                                NodeF (..), Scope (..),
-                                                UnaryOp (..), lexemeLine,
-                                                lexemeText)
+                                                NodeF (..), Nullability (..),
+                                                Scope (..), UnaryOp (..),
+                                                lexemeLine, lexemeText)
 import           Language.Cimple.PrettyColor   (black, blue, cyan, dullcyan,
                                                 dullgreen, dullmagenta, dullred,
                                                 dullyellow, underline)
@@ -86,6 +86,13 @@ ppScope :: Scope -> Doc AnsiStyle
 ppScope = \case
     Global -> mempty
     Static -> kwStatic <> space
+
+ppNullability :: Nullability -> Doc AnsiStyle
+ppNullability = \case
+    NullabilityUnspecified -> mempty
+    Nullable               -> kwNullable
+    Nonnull                -> kwNonnull
+
 
 ppAssignOp :: AssignOp -> Doc AnsiStyle
 ppAssignOp = \case
@@ -412,6 +419,7 @@ ppNode = foldFix go
     VarDecl ty name arrs      -> ty <+> ppLexeme name <> hcat arrs
     DeclSpecArray Nothing     -> pretty "[]"
     DeclSpecArray (Just dim)  -> brackets dim
+    ArrayDim nullability size -> ppNullability nullability <+> size
 
     TyBitwise     ty -> kwBitwise <+> ty
     TyForce       ty -> kwForce <+> ty

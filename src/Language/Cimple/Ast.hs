@@ -13,6 +13,7 @@ module Language.Cimple.Ast
     , CommentStyle (..)
     , Comment
     , CommentF (..)
+    , Nullability (..)
     ) where
 
 import           Data.Aeson                   (FromJSON, FromJSON1, ToJSON,
@@ -73,6 +74,7 @@ data NodeF lexeme a
     | VarDeclStmt a (Maybe a)
     | VarDecl a lexeme [a]
     | DeclSpecArray (Maybe a)
+    | ArrayDim Nullability a
     -- Expressions
     | InitialiserList [a]
     | UnaryExpr UnaryOp a
@@ -258,3 +260,12 @@ data CommentStyle
 
 instance FromJSON CommentStyle
 instance ToJSON CommentStyle
+
+data Nullability
+    = NullabilityUnspecified
+    | Nullable
+    | Nonnull
+    deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
+
+instance FromJSON Nullability
+instance ToJSON Nullability

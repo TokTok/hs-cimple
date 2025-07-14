@@ -17,8 +17,8 @@ import qualified Data.Text                   as Text
 import           Language.Cimple.Ast         (AssignOp (..), BinaryOp (..),
                                               CommentStyle (..),
                                               LiteralType (..), Node,
-                                              NodeF (..), Scope (..),
-                                              UnaryOp (..))
+                                              NodeF (..), Nullability (..),
+                                              Scope (..), UnaryOp (..))
 import           Language.Cimple.DescribeAst (parseError)
 import           Language.Cimple.Lexer       (Alex, AlexPosn (..), Lexeme (..),
                                               alexError, alexMonadScan)
@@ -455,7 +455,7 @@ DeclSpecArrays
 DeclSpecArray :: { NonTerm }
 DeclSpecArray
 :	'[' ']'							{ Fix $ DeclSpecArray Nothing }
-|	'[' Qual Expr ']'					{ Fix $ DeclSpecArray (Just ($2 $3)) }
+|	'[' Nullability Expr ']'				{ Fix $ DeclSpecArray (Just (Fix (ArrayDim $2 $3))) }
 |	'[' '/*!' Expr '*/' ']'					{ Fix $ DeclSpecArray (Just $3) }
 
 InitialiserExpr :: { NonTerm }
@@ -691,6 +691,12 @@ Qual
 |	nonnull const						{ tyConst . tyNonnull }
 |	nullable const						{ tyConst . tyNullable }
 |	owner							{ tyOwner }
+
+Nullability :: { Nullability }
+Nullability
+:								{ NullabilityUnspecified }
+|	nullable						{ Nullable }
+|	nonnull							{ Nonnull }
 
 GlobalLeafType :: { NonTerm }
 GlobalLeafType

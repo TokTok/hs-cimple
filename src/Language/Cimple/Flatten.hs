@@ -11,7 +11,7 @@ import           Data.Maybe          (maybeToList)
 import           GHC.Generics
 import           Language.Cimple.Ast (AssignOp, BinaryOp, CommentF (..),
                                       CommentStyle, LiteralType, NodeF (..),
-                                      Scope, UnaryOp)
+                                      Nullability, Scope, UnaryOp)
 
 class Concats t a where
     concats :: t -> [a]
@@ -44,6 +44,7 @@ instance GenConcatsFlatten AssignOp     a where gconcatsFlatten = const []
 instance GenConcatsFlatten Scope        a where gconcatsFlatten = const []
 instance GenConcatsFlatten CommentStyle a where gconcatsFlatten = const []
 instance GenConcatsFlatten LiteralType  a where gconcatsFlatten = const []
+instance GenConcatsFlatten Nullability  a where gconcatsFlatten = const []
 
 instance GenConcatsFlatten b a => GenConcatsFlatten (Maybe b) a where
     gconcatsFlatten = gconcatsFlatten . maybeToList
