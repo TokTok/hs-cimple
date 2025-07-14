@@ -2,17 +2,24 @@
 module Language.Cimple.ParserSpec where
 
 import           Data.Fix           (Fix (..))
+import           Data.Text          (Text)
+import qualified Data.Text          as Text
 import           Test.Hspec         (Spec, describe, it, shouldBe,
                                      shouldSatisfy)
 
 import           Language.Cimple    (AlexPosn (..), Lexeme (..),
-                                     LexemeClass (..), NodeF (..), Scope (..))
+                                     LexemeClass (..), Node, NodeF (..),
+                                     Scope (..))
 import           Language.Cimple.IO (parseText)
 
 
 isRight1 :: Either a [b] -> Bool
 isRight1 (Right [_]) = True
 isRight1 _           = False
+
+
+parseLines :: [Text] -> Either String [Node (Lexeme Text)]
+parseLines = parseText . Text.unlines
 
 
 spec :: Spec

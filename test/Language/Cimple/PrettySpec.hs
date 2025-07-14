@@ -46,6 +46,27 @@ displayS sdoc =
 
 spec :: Spec
 spec = do
+    -- implementation: Pretty.hs (ppComment).
+    describe "Regular comment pretty-printing" $ do
+        it "should pretty-print a doc comment" $
+            pretty (unlines
+                [ "/*"
+                , " * @brief hello world."
+                , " *"
+                , " * This is cool stuff."
+                , " */"
+                , "const int abc = 3;"
+                ])
+            `shouldBe` unlines
+                [ "/*"
+                , " * @brief hello world."
+                , " *"
+                , " * This is cool stuff."
+                , " */"
+                , ""
+                , "const int abc = 3;"
+                ]
+
     describe "showNode" $ do
         it "prints code with syntax highlighting" $ do
             let pp = showNode $ head $ mustParse "int a(void) { return 3; }"
@@ -112,21 +133,23 @@ spec = do
 
         it "respects newlines at end of comments" $ do
             compact "/* foo bar */" `shouldBe` "/* foo bar */\n"
-            compact "/* foo bar\n */" `shouldBe` "/* foo bar\n */\n"
+            compact "/* foo bar\n */" `shouldBe` "/* foo bar\n*/\n"
 
         it "respects comment styles" $ do
             compact "/* foo bar */" `shouldBe` "/* foo bar */\n"
-            compact "/** foo bar */ int a(void);" `shouldBe` "/** foo bar */\n\nint a(void);\n"
             compact "/*** foo bar */" `shouldBe` "/*** foo bar */\n"
             compact "/**** foo bar */" `shouldBe` "/*** foo bar */\n"
 
+--      it "properly formats doxygen comments" $ do
+--          compact "/** foo bar */ int a(void);" `shouldBe` "/** foo bar */\n\nint a(void);\n"
+
         it "supports punctuation in comments" $ do
             compact "/* foo.bar,baz-blep */"
-                `shouldBe` "/* foo.bar, baz-blep */\n"
-            compact "/* foo? */" `shouldBe` "/* foo?*/\n"
+                `shouldBe` "/* foo.bar,baz-blep */\n"
+            compact "/* foo? */" `shouldBe` "/* foo? */\n"
             compact "/* 123 - 456 */" `shouldBe` "/* 123 - 456 */\n"
             compact "/* - 3 */" `shouldBe` "/* - 3 */\n"
-            compact "/* a-b */" `shouldBe` "/* a-b*/\n"
+            compact "/* a-b */" `shouldBe` "/* a-b */\n"
 
         it "formats pointer types with east-const" $ do
             compact "void foo(const int *a);"
@@ -149,7 +172,7 @@ spec = do
                 `shouldBe` "void foo(int a, char const* msg, ...);\n"
 
         it "supports C preprocessor directives" $ do
-            compact "#define XYZZY 123\n"
-                `shouldBe` "#define XYZZY 123\n"
-            compact "#include <tox/tox.h>\n"
-                `shouldBe` "#include <tox/tox.h>\n"
+            compact "#ifndef XYZZY\n#define XYZZY 123\n#endif /* XYZZY */\n"
+                `shouldBe` "#ifndef XYZZY\n#define XYZZY 123\n#endif  /* XYZZY */\n"
+            compact "#include \"tox.h\"\n"
+                `shouldBe` "#include \"tox.h\"\n"

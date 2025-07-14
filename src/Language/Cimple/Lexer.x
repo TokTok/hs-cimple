@@ -262,9 +262,6 @@ tokens :-
 <cmtSC>		"SPDX-License-Identifier:"		{ mkL CmtSpdxLicense }
 <cmtSC>		"GPL-3.0-or-later"			{ mkL CmtWord }
 <cmtSC>		"TODO("[^\)]+"):"			{ mkL CmtWord }
-<cmtSC>		[Ee]".g."				{ mkL CmtWord }
-<cmtSC>		"etc."					{ mkL CmtWord }
-<cmtSC>		[Ii]".e."				{ mkL CmtWord }
 <cmtSC>		[0-2][0-9](":"[0-5][0-9]){2}"."[0-9]{3}	{ mkL CmtWord }
 <cmtSC>		"v"?[0-9]+("."[0-9]+)+			{ mkL CmtWord }
 <cmtSC>		[A-Z][A-Za-z]+"::"[a-z_]+		{ mkL CmtWord }
@@ -274,15 +271,13 @@ tokens :-
 <cmtSC>		"@code"					{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"<code>"				{ mkL CmtCode `andBegin` codeSC }
 <cmtSC>		"["[^\]]+"]"				{ mkL CmtAttr }
-<cmtSC>		"@retval"				{ mkL CmtCommand `andBegin` retvalSC }
-<cmtSC>		[@\\][a-z]+				{ mkL CmtCommand }
+<cmtSC>		[@\\][a-z_]+				{ mkL CmtCommand }
 <cmtSC>		"*"[A-Za-z][A-Za-z0-9_']*"*"		{ mkL CmtWord }
 <cmtSC>		"#"[A-Za-z][A-Za-z0-9_]*		{ mkL CmtRef }
 <cmtSC>		"_"*[A-Za-z][A-Za-z0-9_']*		{ mkL CmtWord }
 <cmtSC>		"#"[0-9]+				{ mkL CmtWord }
 <cmtSC>		"http://"[^\ ]+				{ mkL CmtWord }
 <cmtSC>		[0-9]+"%"				{ mkL LitInteger }
-<cmtSC>		"-1"					{ mkL LitInteger }
 <cmtSC>		"`"([^`]|"\`")+"`"			{ mkL CmtCode }
 <cmtSC>		"${"([^\}])+"}"				{ mkL CmtCode }
 <cmtSC>		"-"+					{ mkL CmtWord }
@@ -290,18 +285,12 @@ tokens :-
 <cmtSC>		"–"					{ mkL CmtWord }
 <cmtSC>		"*/"					{ mkL CmtEnd `andBegin` 0 }
 <cmtSC>		\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
-<cmtSC>		" "+					;
-
-<retvalSC>	[^\ ]+					{ mkL CmtWord `andBegin` cmtSC }
-<retvalSC>	" "+					;
+<cmtSC>		" "+					{ mkL CmtSpace }
 
 <cmtNewlineSC>	" "+"*"+"/"				{ mkL CmtEnd `andBegin` 0 }
-<cmtNewlineSC>	" "+"*"					{ begin cmtStartSC }
+<cmtNewlineSC>	" "+"*"					{ begin cmtSC }
 
-<cmtStartSC>	" "+					{ mkL CmtIndent `andBegin` cmtSC }
-<cmtStartSC>	\n					{ mkL PpNewline `andBegin` cmtNewlineSC }
-
-<codeStartSC>	" "+					{ mkL CmtIndent `andBegin` codeSC }
+<codeStartSC>	" "+					{ mkL CmtSpace `andBegin` codeSC }
 <codeStartSC>	\n					{ mkL PpNewline `andBegin` codeNewlineSC }
 
 <codeNewlineSC>	" "+"*"					{ begin codeStartSC }

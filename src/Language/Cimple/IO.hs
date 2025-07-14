@@ -54,7 +54,7 @@ parseStmt :: Text -> Either String TextNode
 parseStmt = runText Parser.parseStmt
 
 parseText :: Text -> Either String [TextNode]
-parseText = fmap cacheText . runText Parser.parseTranslationUnit
+parseText = fmap cacheText . runText Parser.parseTranslationUnit >=> ParseResult.toEither . TreeParser.parseTranslationUnit
 
 parseBytes :: LBS.ByteString -> Either String [TextNode]
 parseBytes = flip runAlex Parser.parseTranslationUnit

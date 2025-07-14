@@ -96,42 +96,38 @@ instance TraverseAst text (Comment (Lexeme text)) where
             recurse docs
         DocWord word ->
             recurse word
-        DocSentence docs ending -> do
-            _ <- recurse docs
-            _ <- recurse ending
-            pure ()
-        DocNewline -> pure ()
 
-        DocAttention docs ->
-            recurse docs
-        DocBrief docs ->
-            recurse docs
-        DocDeprecated docs ->
-            recurse docs
+        DocAttention -> pure ()
+        DocBrief -> pure ()
+        DocDeprecated -> pure ()
+        DocFile -> pure ()
         DocExtends feat ->
             recurse feat
         DocImplements feat ->
             recurse feat
-        DocParam attr name docs -> do
+        DocNote -> pure ()
+        DocParam attr name -> do
             _ <- recurse attr
             _ <- recurse name
-            _ <- recurse docs
             pure ()
-        DocReturn docs ->
-            recurse docs
-        DocRetval expr docs -> do
-            _ <- recurse expr
-            _ <- recurse docs
+        DocReturn -> pure ()
+        DocRetval -> pure ()
+        DocSection sec -> do
+            _ <- recurse sec
             pure ()
-        DocSee ref docs -> do
+        DocSee ref -> do
             _ <- recurse ref
-            _ <- recurse docs
+            pure ()
+        DocSecurityRank kw rank -> do
+            _ <- recurse kw
+            _ <- recurse rank
+            pure ()
+        DocSubsection subsec -> do
+            _ <- recurse subsec
             pure ()
 
         DocPrivate -> pure ()
 
-        DocParagraph docs ->
-            recurse docs
         DocLine docs ->
             recurse docs
         DocCode begin docs end -> do
@@ -139,35 +135,11 @@ instance TraverseAst text (Comment (Lexeme text)) where
             _ <- recurse docs
             _ <- recurse end
             pure ()
-        DocList docs ->
-            recurse docs
-        DocOLItem docs sublist -> do
-            _ <- recurse docs
-            _ <- recurse sublist
-            pure ()
-        DocULItem docs sublist -> do
-            _ <- recurse docs
-            _ <- recurse sublist
-            pure ()
 
-        DocColon docs ->
-            recurse docs
         DocRef doc ->
             recurse doc
         DocP doc ->
             recurse doc
-        DocLParen docs ->
-            recurse docs
-        DocRParen docs ->
-            recurse docs
-        DocAssignOp _ lhs rhs -> do
-            _ <- recurse lhs
-            _ <- recurse rhs
-            pure ()
-        DocBinaryOp _ lhs rhs -> do
-            _ <- recurse lhs
-            _ <- recurse rhs
-            pure ()
 
       where
         recurse :: TraverseAst text a => a -> f ()

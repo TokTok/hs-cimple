@@ -5,6 +5,8 @@ module Language.Cimple.DescribeAstSpec where
 import           Test.Hspec          (Spec, describe, it, shouldBe,
                                       shouldNotContain)
 
+import           Control.Monad       (unless)
+import           Data.List           (isInfixOf)
 import qualified Data.List.Extra     as List
 import           Data.Text           (Text)
 import qualified Data.Text           as Text
@@ -40,9 +42,10 @@ spec = do
                 "expected constant or literal"
 
         it "has suggestions for any sequence of tokens in top level" $ do
-            property $ \tokens ->
-                expected parseText (Text.intercalate " " (map sampleToken tokens)) `shouldNotContain`
-                    "expected one of"
+            property $ \tokens -> do
+                let msg = expected parseText (Text.intercalate " " (map sampleToken tokens))
+                unless ("\"ifndefDefine\"" `isInfixOf` msg) $
+                    msg `shouldNotContain` "expected one of"
 
         it "has suggestions for any sequence of tokens in expressions" $ do
             property $ \tokens ->

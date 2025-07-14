@@ -141,7 +141,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     '/** @{'			{ L _ CmtStartDocSection	_ }
     '/** @} */'			{ L _ CmtEndDocSection		_ }
     '/***'			{ L _ CmtStartBlock		_ }
-    ' '				{ L _ CmtIndent			_ }
+    ' '				{ L _ CmtSpace			_ }
     '*/'			{ L _ CmtEnd			_ }
     'Copyright'			{ L _ CmtSpdxCopyright		_ }
     'License'			{ L _ CmtSpdxLicense		_ }
@@ -179,7 +179,7 @@ TranslationUnit
 
 LicenseDecl :: { NonTerm }
 LicenseDecl
-:	'/*' 'License' CMT_WORD '\n' CopyrightDecls '*/'	{ Fix $ LicenseDecl $3 (reverse $5) }
+:	'/*' ' ' 'License' ' ' CMT_WORD '\n' CopyrightDecls '*/'	{ Fix $ LicenseDecl $5 (reverse $7) }
 
 CopyrightDecls :: { [NonTerm] }
 CopyrightDecls
@@ -188,7 +188,7 @@ CopyrightDecls
 
 CopyrightDecl :: { NonTerm }
 CopyrightDecl
-:	' ' 'Copyright' CopyrightDates CopyrightOwner '\n'	{ Fix $ CopyrightDecl (fst $3) (snd $3) $4 }
+:	' ' 'Copyright' ' ' CopyrightDates ' ' CopyrightOwner '\n'	{ Fix $ CopyrightDecl (fst $4) (snd $4) $6 }
 
 CopyrightDates :: { (Term, Maybe Term) }
 CopyrightDates
@@ -242,7 +242,6 @@ CommentToken :: { Term }
 CommentToken
 :	CommentWord						{ $1 }
 |	'\n'							{ $1 }
-|	' '							{ $1 }
 
 CommentWords :: { [Term] }
 CommentWords
@@ -258,6 +257,7 @@ CommentWord
 |	CMT_CODE						{ $1 }
 |	LIT_INTEGER						{ $1 }
 |	LIT_STRING						{ $1 }
+|	' '							{ $1 }
 |	'.'							{ $1 }
 |	'...'							{ $1 }
 |	'?'							{ $1 }

@@ -113,58 +113,40 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
             Fix <$> (DocComment <$> recurse docs)
         DocWord word ->
             Fix <$> (DocWord <$> recurse word)
-        DocSentence docs ending ->
-            Fix <$> (DocSentence <$> recurse docs <*> recurse ending)
-        DocNewline -> pure $ Fix DocNewline
 
-        DocAttention docs ->
-            Fix <$> (DocAttention <$> recurse docs)
-        DocBrief docs ->
-            Fix <$> (DocBrief <$> recurse docs)
-        DocDeprecated docs ->
-            Fix <$> (DocDeprecated <$> recurse docs)
+        DocAttention -> pure $ Fix DocAttention
+        DocBrief -> pure $ Fix DocBrief
+        DocDeprecated -> pure $ Fix DocDeprecated
+        DocFile -> pure $ Fix DocFile
         DocExtends feat ->
             Fix <$> (DocExtends <$> recurse feat)
         DocImplements feat ->
             Fix <$> (DocImplements <$> recurse feat)
-        DocParam attr name docs ->
-            Fix <$> (DocParam <$> recurse attr <*> recurse name <*> recurse docs)
-        DocReturn docs ->
-            Fix <$> (DocReturn <$> recurse docs)
-        DocRetval expr docs ->
-            Fix <$> (DocRetval <$> recurse expr <*> recurse docs)
-        DocSee ref docs ->
-            Fix <$> (DocSee <$> recurse ref <*> recurse docs)
+        DocNote -> pure $ Fix DocNote
+        DocParam attr name ->
+            Fix <$> (DocParam <$> recurse attr <*> recurse name)
+        DocReturn -> pure $ Fix DocReturn
+        DocRetval -> pure $ Fix DocRetval
+        DocSection sec ->
+            Fix <$> (DocSection <$> recurse sec)
+        DocSee ref ->
+            Fix <$> (DocSee <$> recurse ref)
+        DocSecurityRank kw rank ->
+            Fix <$> (DocSecurityRank <$> recurse kw <*> recurse rank)
+        DocSubsection subsec ->
+            Fix <$> (DocSubsection <$> recurse subsec)
 
         DocPrivate -> pure $ Fix DocPrivate
 
-        DocParagraph docs ->
-            Fix <$> (DocParagraph <$> recurse docs)
         DocLine docs ->
             Fix <$> (DocLine <$> recurse docs)
         DocCode begin docs end ->
             Fix <$> (DocCode <$> recurse begin <*> recurse docs <*> recurse end)
-        DocList docs ->
-            Fix <$> (DocList <$> recurse docs)
-        DocOLItem docs sublist ->
-            Fix <$> (DocOLItem <$> recurse docs <*> recurse sublist)
-        DocULItem docs sublist ->
-            Fix <$> (DocULItem <$> recurse docs <*> recurse sublist)
 
-        DocColon docs ->
-            Fix <$> (DocColon <$> recurse docs)
         DocRef doc ->
             Fix <$> (DocRef <$> recurse doc)
         DocP doc ->
             Fix <$> (DocP <$> recurse doc)
-        DocLParen docs ->
-            Fix <$> (DocLParen <$> recurse docs)
-        DocRParen docs ->
-            Fix <$> (DocRParen <$> recurse docs)
-        DocAssignOp op lhs rhs ->
-            Fix <$> (DocAssignOp op <$> recurse lhs <*> recurse rhs)
-        DocBinaryOp op lhs rhs ->
-            Fix <$> (DocBinaryOp op <$> recurse lhs <*> recurse rhs)
 
       where
         recurse :: MapAst itext otext a => a -> f (Mapped itext otext a)

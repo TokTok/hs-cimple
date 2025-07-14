@@ -120,7 +120,7 @@ sampleToken c = case c of
     CmtCommand            -> "@param"
     CmtAttr               -> "[out]"
     CmtEndDocSection      -> "/** @} */"
-    CmtIndent             -> "*"
+    CmtSpace              -> " "
     CmtStart              -> "/*"
     CmtStartCode          -> "/*!"
     CmtStartBlock         -> "/***"

@@ -139,36 +139,30 @@ instance ToJSON lexeme => ToJSON1 (NodeF lexeme)
 
 data CommentF lexeme a
     = DocComment [a]
-    | DocWord lexeme
-    | DocSentence [a] lexeme
-    | DocNewline
 
-    | DocAttention [a]
-    | DocBrief [a]
-    | DocDeprecated [a]
+    | DocAttention
+    | DocBrief
+    | DocDeprecated
     | DocExtends lexeme
+    | DocFile
     | DocImplements lexeme
-    | DocParam (Maybe lexeme) lexeme [a]
-    | DocReturn [a]
-    | DocRetval lexeme [a]
-    | DocSee lexeme [a]
+    | DocNote
+    | DocParam (Maybe lexeme) lexeme
+    | DocReturn
+    | DocRetval
+    | DocSection lexeme
+    | DocSecurityRank lexeme lexeme
+    | DocSee lexeme
+    | DocSubsection lexeme
 
     | DocPrivate
 
-    | DocParagraph [a]
     | DocLine [a]
     | DocCode lexeme [a] lexeme
-    | DocList [a]
-    | DocULItem [a] [a]
-    | DocOLItem lexeme [a]
 
-    | DocColon lexeme
+    | DocWord lexeme
     | DocRef lexeme
     | DocP lexeme
-    | DocLParen a
-    | DocRParen a
-    | DocAssignOp AssignOp a a
-    | DocBinaryOp BinaryOp a a
     deriving (Show, Read, Eq, Ord, Generic, Generic1, Functor, Foldable, Traversable)
     deriving (Show1, Read1, Eq1, Ord1) via FunctorClassesDefault (CommentF lexeme)
 

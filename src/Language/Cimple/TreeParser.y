@@ -18,7 +18,6 @@ import           Language.Cimple.Tokens        (LexemeClass (..))
 
 %name parseTranslationUnit TranslationUnit
 %name parseDecls Decls
-%name parseHeaderBody HeaderBody
 
 %error {parseError}
 %errorhandlertype explist
@@ -130,59 +129,12 @@ import           Language.Cimple.Tokens        (LexemeClass (..))
 
 TranslationUnit :: { [NonTerm] }
 TranslationUnit
-:	licenseDecl docComment Header				{ [$1, Fix $ Commented $2 $3] }
-|	licenseDecl docComment Source				{ $1 : mapHead (Fix . Commented $2) $3 }
-|	licenseDecl            Header				{ [$1, $2] }
-|	licenseDecl            Source				{ $1 : $2 }
-
-Header :: { NonTerm }
-Header
-:	preprocIfndef ModeLine					{% recurse parseHeaderBody $1 }
-
-ModeLine :: { Maybe NonTerm }
-ModeLine
-:								{ Nothing }
-|	comment							{ Just $1 }
-
-HeaderBody :: { [NonTerm] }
-HeaderBody
-:	preprocDefine Includes Decls				{ $1 : $2 ++ $3 }
-
-Source :: { [NonTerm] }
-Source
-:	Features localInclude Includes Decls			{ maybeToList $1 ++ [$2] ++ $3 ++ $4 }
-
-Features :: { Maybe NonTerm }
-Features
-:								{ Nothing }
-|	NonEmptyList(IfDefine)					{ Just $ Fix $ Group $1 }
-
-IfDefine :: { NonTerm }
-IfDefine
-:	ifndefDefine						{ $1 }
-|	ifdefDefine						{ $1 }
-|	ifDefine						{ $1 }
-
-Includes :: { [NonTerm] }
-Includes
-:								{ [] }
-|	NonEmptyList(SysInclude)				{ [Fix $ Group $1] }
-|	NonEmptyList(LocalInclude)				{ [Fix $ Group $1] }
-|	NonEmptyList(SysInclude) NonEmptyList(LocalInclude)	{ [Fix $ Group $1, Fix $ Group $2] }
-
-LocalInclude :: { NonTerm }
-LocalInclude
-:	localInclude						{ $1 }
-|	localIncludeBlock					{ $1 }
-
-SysInclude :: { NonTerm }
-SysInclude
-:	sysInclude						{ $1 }
-|	sysIncludeBlock						{ $1 }
+:	licenseDecl Decls					{ $1 : $2 }
+|	            Decls					{ $1 }
 
 Decls :: { [NonTerm] }
 Decls
-:	List(Decl)						{ $1 }
+:	NonEmptyList(Decl)					{ $1 }
 
 Decl :: { NonTerm }
 Decl
@@ -213,7 +165,13 @@ CommentableDecl
 |	preprocIfndef						{% recurse parseDecls $1 }
 |	staticAssert						{ $1 }
 |	typedefFunction						{ $1 }
-|	IfDefine						{ $1 }
+|	ifndefDefine						{ $1 }
+|	ifdefDefine						{ $1 }
+|	ifDefine						{ $1 }
+|	localInclude						{ $1 }
+|	localIncludeBlock					{ $1 }
+|	sysInclude						{ $1 }
+|	sysIncludeBlock						{ $1 }
 
 List(x)
 :								{ [] }

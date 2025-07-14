@@ -43,6 +43,8 @@ library
     Language.Cimple.Parser
     Language.Cimple.ParseResult
     Language.Cimple.PrettyColor
+    Language.Cimple.PrettyComment
+    Language.Cimple.PrettyCommon
     Language.Cimple.SemCheck.Includes
     Language.Cimple.Tokens
     Language.Cimple.TranslationUnit
@@ -115,6 +117,7 @@ test-suite testsuite
   other-modules:
     Language.CimpleSpec
     Language.Cimple.AstSpec
+    Language.Cimple.CommentParserSpec
     Language.Cimple.DescribeAstSpec
     Language.Cimple.ParserSpec
     Language.Cimple.PrettySpec
