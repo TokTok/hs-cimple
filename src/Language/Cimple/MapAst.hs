@@ -343,6 +343,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (TyPointer <$> recurse ty)
         TyStruct name ->
             Fix <$> (TyStruct <$> recurse name)
+        TyUnion name ->
+            Fix <$> (TyUnion <$> recurse name)
         TyFunc name ->
             Fix <$> (TyFunc <$> recurse name)
         TyStd name ->

@@ -424,6 +424,7 @@ ppNode = foldFix go
     TyStd         l  -> dullgreen $ ppLexeme l
     TyFunc        l  -> dullgreen $ ppLexeme l
     TyStruct      l  -> kwStruct <+> dullgreen (ppLexeme l)
+    TyUnion       l  -> kwUnion <+> dullgreen (ppLexeme l)
 
     ExternC decls ->
         dullmagenta (pretty "#ifdef __cplusplus") <$$>

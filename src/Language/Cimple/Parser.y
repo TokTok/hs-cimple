@@ -695,6 +695,7 @@ Qual
 GlobalLeafType :: { NonTerm }
 GlobalLeafType
 :	struct ID_SUE_TYPE					{ Fix $ TyStruct $2 }
+|	union ID_SUE_TYPE					{ Fix $ TyUnion $2 }
 |	void							{ Fix $ TyStd $1 }
 |	ID_STD_TYPE						{ Fix $ TyStd $1 }
 |	ID_SUE_TYPE						{ Fix $ TyUserDefined $1 }

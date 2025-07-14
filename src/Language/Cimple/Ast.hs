@@ -110,6 +110,7 @@ data NodeF lexeme a
     | TyNullable a
     | TyPointer a
     | TyStruct lexeme
+    | TyUnion lexeme
     | TyFunc lexeme
     | TyStd lexeme
     | TyUserDefined lexeme

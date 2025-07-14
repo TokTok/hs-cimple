@@ -146,9 +146,9 @@ describeExpected [option] = option
 describeExpected options
     | wants ["break", "const", "continue", "ID_CONST", "VLA"] = "statement or declaration"
     | wants ["ID_FUNC_TYPE", "non_null", "static", "'#include'"] = "top-level declaration or definition"
-    | options == ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "struct", "void"] = "top-level type specifier"
-    | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "struct", "void"] = "type specifier"
-    | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "bitwise", "const", "force", "struct", "void"] = "type specifier"
+    | options == ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "struct", "union", "void"] = "top-level type specifier"
+    | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "struct", "union", "void"] = "type specifier"
+    | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "bitwise", "const", "force", "struct", "union", "void"] = "type specifier"
     | options == ["ID_CONST", "ID_VAR", "LIT_CHAR", "LIT_FALSE", "LIT_INTEGER", "'{'"] = "constant or literal"
     | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "ID_VAR"] `isPrefixOf` options = "type specifier or variable name"
     | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "bitwise", "const"] `isPrefixOf` options = "type specifier"

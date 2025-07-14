@@ -442,6 +442,8 @@ instance TraverseAst text (Node (Lexeme text)) where
             recurse ty
         TyStruct name ->
             recurse name
+        TyUnion name ->
+            recurse name
         TyFunc name ->
             recurse name
         TyStd name ->
