@@ -48,7 +48,7 @@ runText :: Alex a -> Text -> Either String a
 runText f = flip runAlex f . LBS.fromStrict . Text.encodeUtf8
 
 parseExpr :: Text -> Either String TextNode
-parseExpr = runText Parser.parseStmt
+parseExpr = runText Parser.parseExpr
 
 parseStmt :: Text -> Either String TextNode
 parseStmt = runText Parser.parseStmt

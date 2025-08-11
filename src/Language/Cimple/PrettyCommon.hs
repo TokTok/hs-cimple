@@ -114,11 +114,8 @@ ppUnaryOp = \case
 cmtPrefix :: Doc AnsiStyle
 cmtPrefix = dullyellow (pretty '*')
 
-ppText :: Text -> Doc AnsiStyle
-ppText = pretty . Text.unpack
-
-ppLexeme :: Lexeme Text -> Doc AnsiStyle
-ppLexeme = ppText . lexemeText
+ppLexeme :: Pretty a => Lexeme a -> Doc AnsiStyle
+ppLexeme = pretty . lexemeText
 
 commaSep :: [Doc AnsiStyle] -> Doc AnsiStyle
 commaSep = hsep . punctuate comma

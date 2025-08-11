@@ -301,13 +301,13 @@ spec = do
         it "should pretty-print @security_rank" $
             compact (unlines
                 [ "/**"
-                , " * @security_rank(high, 100)"
+                , " * @security_rank(sink, data, 1)"
                 , " */"
                 , "const int abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
-                , " * @security_rank(high, 100)"
+                , " * @security_rank(sink, data, 1)"
                 , " */"
                 , "const int abc = 3;"
                 ]

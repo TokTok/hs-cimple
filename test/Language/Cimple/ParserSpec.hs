@@ -41,6 +41,18 @@ spec = do
             let ast = parseText "typedef struct Foo { int x : 123; } Foo;"
             ast `shouldSatisfy` isRight1
 
+        it "should parse a struct with preprocessor conditionals" $ do
+            let ast = parseText $ Text.unlines
+                    [ "struct Foo {"
+                    , "  int x;"
+                    , "#ifndef HAVE_FOO_BAR"
+                    , "  int foo_bar;"
+                    , "#endif /* HAVE_FOO_BAR */"
+                    , "  int y;"
+                    , "};"
+                    ]
+            ast `shouldSatisfy` isRight1
+
         it "should parse a comment" $ do
             let ast = parseText "/* hello */"
             ast `shouldSatisfy` isRight1

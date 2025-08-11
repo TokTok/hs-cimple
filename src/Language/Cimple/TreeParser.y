@@ -18,6 +18,7 @@ import           Language.Cimple.Tokens        (LexemeClass (..))
 
 %name parseTranslationUnit TranslationUnit
 %name parseDecls Decls
+%name parseMemberDecls MemberDecls
 
 %error {parseError}
 %errorhandlertype explist
@@ -103,8 +104,9 @@ import           Language.Cimple.Tokens        (LexemeClass (..))
     enumDecl		{ Fix (EnumDecl{}) }
     enumerator		{ Fix (Enumerator{}) }
     aggregateDecl	{ Fix (AggregateDecl{}) }
-    typedef		{ Fix (Typedef{}) }
     typedefFunction	{ Fix (TypedefFunction{}) }
+    typedefStruct	{ Fix (Typedef (Fix Struct{}) _) }
+    typedef		{ Fix (Typedef{}) }
     struct		{ Fix (Struct{}) }
     union		{ Fix (Union{}) }
     memberDecl		{ Fix (MemberDecl{}) }
@@ -149,8 +151,10 @@ CommentableDecl
 |	functionDefn						{ $1 }
 |	nonNull							{ $1 }
 |	attrPrintf						{ $1 }
-|	aggregateDecl						{ $1 }
-|	struct							{ $1 }
+|	aggregateDecl						{% processAggregate $1 }
+|	struct							{% processAggregate $1 }
+|	union							{% processAggregate $1 }
+|	typedefStruct						{% processAggregate $1 }
 |	typedef							{ $1 }
 |	constDecl						{ $1 }
 |	constDefn						{ $1 }
@@ -173,6 +177,19 @@ CommentableDecl
 |	sysInclude						{ $1 }
 |	sysIncludeBlock						{ $1 }
 
+MemberDecls :: { [NonTerm] }
+MemberDecls
+:	NonEmptyList(MemberDecl)				{ $1 }
+
+MemberDecl :: { NonTerm }
+MemberDecl
+:	comment							{ $1 }
+|	memberDecl						{ $1 }
+|	docComment memberDecl					{% fmap (\c -> Fix $ Commented c $2) $ parseDocComment $1 }
+|	preprocIfdef						{% recurse parseMemberDecls $1 }
+|	preprocIfndef						{% recurse parseMemberDecls $1 }
+|	preprocIf						{% recurse parseMemberDecls $1 }
+
 List(x)
 :								{ [] }
 |	NonEmptyList(x)						{ $1 }
@@ -187,7 +204,6 @@ NonEmptyList_(x)
 {
 type TextLexeme = Lexeme Text
 type NonTerm = Node TextLexeme
-
 
 mapHead :: (a -> a) -> [a] -> [a]
 mapHead _ [] = []
@@ -225,12 +241,27 @@ hasInclude style (Fix (PreprocIfndef _ td ed))    = any (hasInclude style) td ||
 hasInclude style (Fix (PreprocElse ed))           = any (hasInclude style) ed
 hasInclude _ _                                    = False
 
+-- This helper function unpacks a struct/union, processes its members,
+-- and then packs it back up.
+processAggregate :: NonTerm -> ParseResult NonTerm
+processAggregate (Fix (Struct name members)) = do
+    processedMembers <- parseMemberDecls members
+    return $ Fix (Struct name processedMembers)
+processAggregate (Fix (Union name members)) = do
+    processedMembers <- parseMemberDecls members
+    return $ Fix (Union name processedMembers)
+processAggregate (Fix (AggregateDecl agg)) = do
+    processedAgg <- processAggregate agg
+    return $ Fix (AggregateDecl processedAgg)
+processAggregate (Fix (Typedef agg name)) = do
+    processedAgg <- processAggregate agg
+    return $ Fix (Typedef processedAgg name)
+processAggregate n = return n -- Return other types unchanged
 
 recurse :: ([NonTerm] -> ParseResult [NonTerm]) -> NonTerm -> ParseResult NonTerm
 recurse f (Fix (ExternC ds))          = Fix <$> (ExternC <$> f ds)
 recurse f (Fix (PreprocIf     c t e)) = Fix <$> (PreprocIf     c <$> f t <*> recurse f e)
 recurse f (Fix (PreprocIfdef  c t e)) = Fix <$> (PreprocIfdef  c <$> f t <*> recurse f e)
-recurse f (Fix (PreprocIfndef c t e)) = Fix <$> (PreprocIfndef c <$> f t <*> recurse f e)
 recurse f (Fix (PreprocIfndef c t e)) = Fix <$> (PreprocIfndef c <$> f t <*> recurse f e)
 recurse f (Fix (PreprocElif   c t e)) = Fix <$> (PreprocElif   c <$> f t <*> recurse f e)
 recurse f (Fix (PreprocElse      [])) = Fix <$> pure (PreprocElse [])

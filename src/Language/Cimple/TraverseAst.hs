@@ -118,8 +118,9 @@ instance TraverseAst text (Comment (Lexeme text)) where
         DocSee ref -> do
             _ <- recurse ref
             pure ()
-        DocSecurityRank kw rank -> do
+        DocSecurityRank kw mparam rank -> do
             _ <- recurse kw
+            _ <- recurse mparam
             _ <- recurse rank
             pure ()
         DocSubsection subsec -> do

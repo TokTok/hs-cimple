@@ -14,14 +14,20 @@ module Language.Cimple.Ast
     , Comment
     , CommentF (..)
     , Nullability (..)
+    , getNodeId
     ) where
 
 import           Data.Aeson                   (FromJSON, FromJSON1, ToJSON,
                                                ToJSON1)
-import           Data.Fix                     (Fix)
+import           Data.Fix                     (Fix (..))
 import           Data.Functor.Classes         (Eq1, Ord1, Read1, Show1)
 import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
+import           Data.Hashable                (Hashable (..))
+import           Data.Hashable.Lifted         (Hashable1)
 import           GHC.Generics                 (Generic, Generic1)
+
+getNodeId :: Hashable a => Node a -> Int
+getNodeId = hash
 
 data NodeF lexeme a
     -- Preprocessor
@@ -136,6 +142,7 @@ type Node lexeme = Fix (NodeF lexeme)
 
 instance FromJSON lexeme => FromJSON1 (NodeF lexeme)
 instance ToJSON lexeme => ToJSON1 (NodeF lexeme)
+instance Hashable lexeme => Hashable1 (NodeF lexeme)
 
 data CommentF lexeme a
     = DocComment [a]
@@ -151,7 +158,7 @@ data CommentF lexeme a
     | DocReturn
     | DocRetval
     | DocSection lexeme
-    | DocSecurityRank lexeme lexeme
+    | DocSecurityRank lexeme (Maybe lexeme) lexeme
     | DocSee lexeme
     | DocSubsection lexeme
 
@@ -170,6 +177,7 @@ type Comment lexeme = Fix (CommentF lexeme)
 
 instance FromJSON lexeme => FromJSON1 (CommentF lexeme)
 instance ToJSON lexeme => ToJSON1 (CommentF lexeme)
+instance Hashable lexeme => Hashable1 (CommentF lexeme)
 
 data AssignOp
     = AopEq
@@ -239,6 +247,7 @@ instance ToJSON LiteralType
 data Scope
     = Global
     | Static
+    | Local
     deriving (Enum, Bounded, Ord, Show, Read, Eq, Generic)
 
 instance FromJSON Scope
@@ -263,3 +272,13 @@ data Nullability
 
 instance FromJSON Nullability
 instance ToJSON Nullability
+
+instance (Hashable lexeme, Hashable a) => Hashable (NodeF lexeme a) where
+instance (Hashable lexeme, Hashable a) => Hashable (CommentF lexeme a) where
+instance Hashable AssignOp where
+instance Hashable BinaryOp where
+instance Hashable UnaryOp where
+instance Hashable LiteralType where
+instance Hashable Scope where
+instance Hashable CommentStyle where
+instance Hashable Nullability where

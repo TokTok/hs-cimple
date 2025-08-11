@@ -1,4 +1,5 @@
 {-# LANGUAGE LambdaCase #-}
+{-# LANGUAGE RankNTypes #-}
 module Language.Cimple.PrettyComment
     ( ppCommentInfo
     ) where
@@ -31,15 +32,17 @@ ppCodeBody =
     . plain
     . hcat
 
-ppCommentInfo :: Comment (Lexeme Text) -> Doc AnsiStyle
+ppCommentInfo :: Pretty a => Comment (Lexeme a) -> Doc AnsiStyle
 ppCommentInfo = foldFix go
   where
+  ppRef :: forall a. Pretty a => Lexeme a -> Doc AnsiStyle
   ppRef      = underline . cyan . ppLexeme
+  ppAttr :: forall a. Pretty a => Maybe (Lexeme a) -> Doc AnsiStyle
   ppAttr     = maybe mempty (blue . ppLexeme)
   mapTail _ []     = []
   mapTail f (x:xs) = x:map f xs
 
-  go :: CommentF (Lexeme Text) (Doc AnsiStyle) -> Doc AnsiStyle
+  go :: Pretty a => CommentF (Lexeme a) (Doc AnsiStyle) -> Doc AnsiStyle
   go = \case
     DocComment docs ->
         dullyellow (pretty "/**") <>
@@ -51,8 +54,13 @@ ppCommentInfo = foldFix go
     DocParam attr name ->
         kwDocParam <> ppAttr attr <+> ppLexeme name
 
-    DocSecurityRank kw rank ->
-        kwDocSecurityRank <> pretty '(' <> ppLexeme kw <> pretty ", " <> ppLexeme rank <> pretty ')'
+    DocSecurityRank kw mparam rank ->
+        kwDocSecurityRank <> pretty '(' <> ppLexeme kw <>
+        (case mparam of
+            Nothing    -> mempty
+            Just param -> pretty ", " <> ppLexeme param
+        ) <>
+        pretty ", " <> ppLexeme rank <> pretty ')'
 
     DocAttention      -> kwDocAttention
     DocBrief          -> kwDocBrief

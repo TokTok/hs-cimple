@@ -59,6 +59,7 @@ library
     , data-fix
     , file-embed
     , filepath
+    , hashable
     , monad-parallel
     , mtl
     , prettyprinter

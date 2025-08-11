@@ -75,7 +75,7 @@ instance GenConcatsFlatten (Fix (CommentF a)) a where
     gconcatsFlatten (Fix (DocRetval)) = []
     gconcatsFlatten (Fix (DocSection s)) = [s]
     gconcatsFlatten (Fix (DocSee r)) = [r]
-    gconcatsFlatten (Fix (DocSecurityRank s r)) = [s, r]
+    gconcatsFlatten (Fix (DocSecurityRank s p r)) = s : maybeToList p ++ [r]
     gconcatsFlatten (Fix (DocSubsection s)) = [s]
     gconcatsFlatten (Fix (DocWord x)) = [x]
 

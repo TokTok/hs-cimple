@@ -27,6 +27,7 @@ import qualified Data.Text              as Text
 import qualified Data.Text.Encoding     as Text
 import           GHC.Generics           (Generic)
 import           Language.Cimple.Tokens (LexemeClass (..))
+import           Data.Hashable (Hashable(..))
 }
 
 %wrapper "monad-bytestring"
@@ -308,12 +309,14 @@ tokens :-
 deriving instance Generic AlexPosn
 instance FromJSON AlexPosn
 instance ToJSON AlexPosn
+instance Hashable AlexPosn
 
 data Lexeme text = L AlexPosn LexemeClass text
     deriving (Eq, Show, Generic, Functor, Foldable, Traversable)
 
 instance FromJSON text => FromJSON (Lexeme text)
 instance ToJSON text => ToJSON (Lexeme text)
+instance Hashable text => Hashable (Lexeme text) where
 
 mkL :: LexemeClass -> AlexInput -> Int64 -> Alex (Lexeme Text)
 mkL c (p, _, str, _) len = pure $ L p c (piece str)

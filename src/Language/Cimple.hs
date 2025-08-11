@@ -3,10 +3,12 @@ module Language.Cimple
     , DefaultActions
     , defaultActions
     , removeSloc
+    , getParamNameFromNode
     ) where
 
 import           Control.Monad.State.Strict  (State)
 import qualified Control.Monad.State.Strict  as State
+import           Data.Fix                    (Fix (..))
 import           Data.Text                   (Text)
 
 import           Language.Cimple.Annot       as X
@@ -26,3 +28,7 @@ removeSloc :: Node (Lexeme Text) -> Node (Lexeme Text)
 removeSloc =
     flip State.evalState () . mapAst defaultActions
         { doLexeme = \_ (L _ c t) _ -> pure $ L (AlexPn 0 0 0) c t }
+
+getParamNameFromNode :: Node (Lexeme Text) -> Maybe Text
+getParamNameFromNode (Fix (VarDecl _ (L _ _ name) _)) = Just name
+getParamNameFromNode _                                = Nothing

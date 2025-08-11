@@ -6,6 +6,7 @@ module Language.Cimple.Pretty
     , renderSmart
     , ppTranslationUnit
     , showNode
+    , showNodePlain
     ) where
 
 import           Data.Fix                      (foldFix)
@@ -35,6 +36,7 @@ ppScope :: Scope -> Doc AnsiStyle
 ppScope = \case
     Global -> mempty
     Static -> kwStatic <> space
+    Local  -> mempty
 
 ppNullability :: Nullability -> Doc AnsiStyle
 ppNullability = \case
@@ -50,7 +52,7 @@ ppCommentStart = dullyellow . \case
     Regular -> pretty "/*"
     Ignore  -> pretty "//!TOKSTYLE-"
 
-ppCommentBody :: [Lexeme Text] -> Doc AnsiStyle
+ppCommentBody :: [Lexeme (Doc AnsiStyle)] -> Doc AnsiStyle
 ppCommentBody body = vsep . prefixStars . map (hcat . map ppWord . spaceWords) . groupLines $ body
   where
     -- If the "*/" is on a separate line, don't add an additional "*" before
@@ -79,15 +81,16 @@ ppCommentBody body = vsep . prefixStars . map (hcat . map ppWord . spaceWords) .
         continue (L c PctLParen s:w:ws) = L c PctLParen s:w:continue ws
         continue (L c p s:ws) = L c p s:continue ws
 
-ppWord (L _ CmtSpace   t) = ppText t
-ppWord (L _ CmtCommand t) = dullcyan   $ ppText t
-ppWord (L _ _          t) = dullyellow $ ppText t
+ppWord :: Lexeme (Doc AnsiStyle) -> Doc AnsiStyle
+ppWord l@(L _ CmtSpace   _) = lexemeText l
+ppWord l@(L _ CmtCommand _) = dullcyan   $ lexemeText l
+ppWord l@(L _ _          _) = dullyellow $ lexemeText l
 
-ppComment :: CommentStyle -> [Lexeme Text] -> Lexeme Text -> Doc AnsiStyle
+ppComment :: CommentStyle -> [Lexeme (Doc AnsiStyle)] -> Lexeme (Doc AnsiStyle) -> Doc AnsiStyle
 ppComment Ignore cs _ =
     ppCommentStart Ignore <> hcat (map ppWord cs) <> dullyellow (pretty "//!TOKSTYLE+" <> line)
-ppComment style cs (L l c _) =
-    nest 1 $ ppCommentStart style <> ppCommentBody (cs ++ [L l c (Text.pack "*/")])
+ppComment style cs end =
+    nest 1 $ ppCommentStart style <> ppCommentBody (cs ++ [end])
 
 ppInitialiserList :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppInitialiserList l = lbrace <+> commaSep l <+> rbrace
@@ -96,8 +99,9 @@ ppParamList :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppParamList = parens . indent 0 . commaSep
 
 ppFunctionPrototype
-    :: Doc AnsiStyle
-    -> Lexeme Text
+    :: Pretty a
+    => Doc AnsiStyle
+    -> Lexeme a
     -> [Doc AnsiStyle]
     -> Doc AnsiStyle
 ppFunctionPrototype ty name params =
@@ -150,7 +154,7 @@ ppSwitchStmt c body =
         vcat body
     ) <> line <> rbrace
 
-ppVLA :: Doc AnsiStyle -> Lexeme Text -> Doc AnsiStyle -> Doc AnsiStyle
+ppVLA :: Pretty a => Doc AnsiStyle -> Lexeme a -> Doc AnsiStyle -> Doc AnsiStyle
 ppVLA ty n sz =
     pretty "VLA("
         <> ty
@@ -175,13 +179,13 @@ ppTernaryExpr
 ppTernaryExpr c t e =
     c <+> pretty '?' <+> t <+> colon <+> e
 
-ppLicenseDecl :: Lexeme Text -> [Doc AnsiStyle] -> Doc AnsiStyle
+ppLicenseDecl :: Pretty a => Lexeme a -> [Doc AnsiStyle] -> Doc AnsiStyle
 ppLicenseDecl l cs =
     dullyellow $ ppCommentStart Regular <+> pretty "SPDX-License-Identifier: " <> ppLexeme l <> line <>
     vcat (map dullyellow cs) <> line <>
     dullyellow (pretty " */")
 
-ppIntList :: [Lexeme Text] -> Doc AnsiStyle
+ppIntList :: Pretty a => [Lexeme a] -> Doc AnsiStyle
 ppIntList = parens . commaSep . map (dullred . ppLexeme)
 
 ppMacroBody :: Doc AnsiStyle -> Doc AnsiStyle
@@ -194,10 +198,10 @@ ppMacroBody =
     . renderS
     . plain
 
-ppNode :: Node (Lexeme Text) -> Doc AnsiStyle
+ppNode :: Pretty a => Node (Lexeme a) -> Doc AnsiStyle
 ppNode = foldFix go
   where
-  go :: NodeF (Lexeme Text) (Doc AnsiStyle) -> Doc AnsiStyle
+  go :: Pretty a => NodeF (Lexeme a) (Doc AnsiStyle) -> Doc AnsiStyle
   go = \case
     StaticAssert cond msg ->
         kwStaticAssert <> parens (cond <> comma <+> dullred (ppLexeme msg)) <> semi
@@ -205,13 +209,13 @@ ppNode = foldFix go
     LicenseDecl l cs -> ppLicenseDecl l cs
     CopyrightDecl from (Just to) owner ->
         pretty " * Copyright © " <> ppLexeme from <> pretty '-' <> ppLexeme to <+>
-        ppCommentBody owner
+        ppCommentBody (fmap pretty <$> owner)
     CopyrightDecl from Nothing owner ->
         pretty " * Copyright © " <> ppLexeme from <+>
-        ppCommentBody owner
+        ppCommentBody (fmap pretty <$> owner)
 
-    Comment style _ cs end ->
-        ppComment style cs end
+    Comment style _ cs (L l c _) ->
+        ppComment style (fmap pretty <$> cs) (L l c (pretty "*/"))
     CommentSection start decls end ->
         start <> line <> line <> ppToplevel decls <> line <> line <> end
     CommentSectionEnd cs ->
@@ -414,8 +418,11 @@ ppNode = foldFix go
 ppToplevel :: [Doc AnsiStyle] -> Doc AnsiStyle
 ppToplevel = vcat . punctuate line
 
-ppTranslationUnit :: [Node (Lexeme Text)] -> Doc AnsiStyle
+ppTranslationUnit :: Pretty a => [Node (Lexeme a)] -> Doc AnsiStyle
 ppTranslationUnit decls = (ppToplevel . map ppNode $ decls) <> line
 
-showNode  :: Node (Lexeme Text) -> Text
+showNode  :: Pretty a => Node (Lexeme a) -> Text
 showNode = render . ppNode
+
+showNodePlain :: Pretty a => Node (Lexeme a) -> Text
+showNodePlain = render . plain . ppNode

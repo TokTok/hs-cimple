@@ -109,7 +109,8 @@ Command
 |	'@section' ' ' TOKEN				{ Fix $ DocSection $3 }
 |	'@subsection' ' ' TOKEN				{ Fix $ DocSubsection $3 }
 |	'@see' ' ' TOKEN				{ Fix $ DocSee $3 }
-|	'@security_rank' '(' TOKEN ',' ' ' TOKEN ')'	{ Fix $ DocSecurityRank $3 $6 }
+|	'@security_rank' '(' TOKEN ',' ' ' TOKEN ')'	{ Fix $ DocSecurityRank $3 Nothing $6 }
+|	'@security_rank' '(' TOKEN ',' ' ' TOKEN ',' ' ' TOKEN ')'	{ Fix $ DocSecurityRank $3 (Just $6) $9 }
 |	'@code' Words '@endcode'			{ Fix $ DocCode $1 $2 $3 }
 
 Words :: { [NonTerm] }

@@ -4,8 +4,9 @@ module Language.Cimple.Tokens
     ( LexemeClass (..)
     ) where
 
-import           Data.Aeson   (FromJSON, ToJSON)
-import           GHC.Generics (Generic)
+import           Data.Aeson    (FromJSON, ToJSON)
+import           Data.Hashable (Hashable)
+import           GHC.Generics  (Generic)
 
 data LexemeClass
     = IdConst
@@ -131,3 +132,4 @@ data LexemeClass
 
 instance FromJSON LexemeClass
 instance ToJSON LexemeClass
+instance Hashable LexemeClass
