@@ -312,7 +312,7 @@ instance ToJSON AlexPosn
 instance Hashable AlexPosn
 
 data Lexeme text = L AlexPosn LexemeClass text
-    deriving (Eq, Show, Generic, Functor, Foldable, Traversable)
+    deriving (Eq, Show, Generic, Functor, Foldable, Traversable, Ord)
 
 instance FromJSON text => FromJSON (Lexeme text)
 instance ToJSON text => ToJSON (Lexeme text)
