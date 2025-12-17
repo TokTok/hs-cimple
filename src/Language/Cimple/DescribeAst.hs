@@ -34,10 +34,10 @@ instance HasLocation lexeme => HasLocation (Node lexeme) where
             l:_ -> sloc file l
 
 
-getLoc :: Node (Lexeme Text) -> Lexeme Text
+getLoc :: Node (Lexeme l) -> Lexeme l
 getLoc n =
     case foldFix Flatten.lexemes n of
-        []  -> L (AlexPn 0 0 0) IdVar ""
+        []  -> error "getLoc: node has no lexemes"
         l:_ -> l
 
 
