@@ -5,10 +5,11 @@ module Language.Cimple.DescribeAst
     ( HasLocation (..)
     , describeLexeme
     , describeNode
+    , getLoc
     , parseError
     ) where
 
-import           Data.Fix                (Fix (..), foldFix)
+import           Data.Fix                (Fix (..), foldFix, unFix)
 import           Data.List               (isPrefixOf, (\\))
 import qualified Data.List               as List
 import           Data.Text               (Text)
@@ -31,6 +32,13 @@ instance HasLocation lexeme => HasLocation (Node lexeme) where
         case foldFix Flatten.lexemes n of
             []  -> Text.pack file <> ":0:0"
             l:_ -> sloc file l
+
+
+getLoc :: Node (Lexeme Text) -> Lexeme Text
+getLoc n =
+    case foldFix Flatten.lexemes n of
+        []  -> L (AlexPn 0 0 0) IdVar ""
+        l:_ -> l
 
 
 describeNode :: Show a => Node a -> String

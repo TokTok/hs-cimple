@@ -671,25 +671,33 @@ QualType(leafType)
 :	bitwise ID_STD_TYPE					{ Fix (TyBitwise (Fix (TyStd $2))) }
 |	force leafType						{ Fix (TyForce $2) }
 |	leafType ConstQual					{                              ($2      $1)    }
-|	leafType ConstQual '*' Qual				{                $4 (tyPointer ($2      $1))   }
-|	leafType ConstQual '*' Qual '*' Qual			{ $6 (tyPointer ($4 (tyPointer ($2      $1)))) }
+|	leafType ConstQual '*'					{                (tyPointer ($2      $1))   }
+|	leafType ConstQual '*' QualList				{                $4 (tyPointer ($2      $1))   }
+|	leafType ConstQual '*' QualMaybe '*' QualMaybe		{ $6 (tyPointer ($4 (tyPointer ($2      $1)))) }
 |	const leafType						{                              (tyConst $2)    }
-|	const leafType '*' Qual					{                $4 (tyPointer (tyConst $2))   }
-|	const leafType '*' Qual '*' Qual			{ $6 (tyPointer ($4 (tyPointer (tyConst $2)))) }
+|	const leafType '*' QualMaybe				{                $4 (tyPointer (tyConst $2))   }
+|	const leafType '*' QualMaybe '*' QualMaybe		{ $6 (tyPointer ($4 (tyPointer (tyConst $2)))) }
 
 ConstQual :: { NonTerm -> NonTerm }
 ConstQual
 :								{ id }
 |	const							{ tyConst }
 
+QualList :: { NonTerm -> NonTerm }
+QualList
+:	Qual QualList						{ $1 . $2 }
+|	Qual							{ $1 }
+
+QualMaybe :: { NonTerm -> NonTerm }
+QualMaybe
+:	QualList						{ $1 }
+|								{ id }
+
 Qual :: { NonTerm -> NonTerm }
 Qual
-:								{ id }
-|	const							{ tyConst }
+:	const							{ tyConst }
 |	nonnull							{ tyNonnull }
 |	nullable						{ tyNullable }
-|	nonnull const						{ tyConst . tyNonnull }
-|	nullable const						{ tyConst . tyNullable }
 |	owner							{ tyOwner }
 
 Nullability :: { Nullability }
