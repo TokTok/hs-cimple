@@ -160,6 +160,7 @@ tokens :-
 <0,ppSC>	"tox_"?"force"				{ mkL KwForce }
 <0,ppSC>	"tox_"?"owner"				{ mkL KwOwner }
 <0,ppSC>	"_Owner"				{ mkL KwOwner }
+<0,ppSC>	"_Owned"				{ mkL KwOwner }
 <0,ppSC>	"break"					{ mkL KwBreak }
 <0,ppSC>	"case"					{ mkL KwCase }
 <0,ppSC>	"const"					{ mkL KwConst }
