@@ -5,6 +5,8 @@ module Language.Cimple.Pretty
     , render
     , renderSmart
     , ppTranslationUnit
+    , ppNode
+    , ppNodeF
     , showNode
     , showNodePlain
     ) where
@@ -199,10 +201,10 @@ ppMacroBody =
     . plain
 
 ppNode :: Pretty a => Node (Lexeme a) -> Doc AnsiStyle
-ppNode = foldFix go
-  where
-  go :: Pretty a => NodeF (Lexeme a) (Doc AnsiStyle) -> Doc AnsiStyle
-  go = \case
+ppNode = foldFix ppNodeF
+
+ppNodeF :: Pretty a => NodeF (Lexeme a) (Doc AnsiStyle) -> Doc AnsiStyle
+ppNodeF = \case
     StaticAssert cond msg ->
         kwStaticAssert <> parens (cond <> comma <+> dullred (ppLexeme msg)) <> semi
 

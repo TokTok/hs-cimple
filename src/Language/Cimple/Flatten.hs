@@ -4,7 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE Strict                #-}
 {-# LANGUAGE TypeOperators         #-}
-module Language.Cimple.Flatten (lexemes) where
+module Language.Cimple.Flatten (Concats (..), lexemes) where
 
 import           Data.Fix            (Fix (..))
 import           Data.Maybe          (maybeToList)
@@ -45,6 +45,9 @@ instance GenConcatsFlatten Scope        a where gconcatsFlatten = const []
 instance GenConcatsFlatten CommentStyle a where gconcatsFlatten = const []
 instance GenConcatsFlatten LiteralType  a where gconcatsFlatten = const []
 instance GenConcatsFlatten Nullability  a where gconcatsFlatten = const []
+
+instance (GenConcatsFlatten b a, GenConcatsFlatten c a) => GenConcatsFlatten (b, c) a where
+    gconcatsFlatten (x, y) = gconcatsFlatten x ++ gconcatsFlatten y
 
 instance GenConcatsFlatten b a => GenConcatsFlatten (Maybe b) a where
     gconcatsFlatten = gconcatsFlatten . maybeToList

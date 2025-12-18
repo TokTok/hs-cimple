@@ -14,6 +14,7 @@ import           Data.Text                   (Text)
 import           Language.Cimple.Annot       as X
 import           Language.Cimple.Ast         as X
 import           Language.Cimple.DescribeAst as X
+import           Language.Cimple.Flatten     as X
 import           Language.Cimple.Lexer       as X
 import           Language.Cimple.MapAst      as X
 import           Language.Cimple.Parser      as X

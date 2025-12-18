@@ -19,6 +19,7 @@ module Language.Cimple.Ast
 
 import           Data.Aeson                   (FromJSON, FromJSON1, ToJSON,
                                                ToJSON1)
+import           Data.Bifunctor               (Bifunctor (..))
 import           Data.Fix                     (Fix (..))
 import           Data.Functor.Classes         (Eq1, Ord1, Read1, Show1)
 import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
@@ -138,6 +139,103 @@ data NodeF lexeme a
     deriving (Show, Read, Eq, Ord, Generic, Generic1, Functor, Foldable, Traversable)
     deriving (Show1, Read1, Eq1, Ord1) via FunctorClassesDefault (NodeF lexeme)
 
+instance Bifunctor NodeF where
+    bimap f g n = case n of
+        PreprocInclude l -> PreprocInclude (f l)
+        PreprocDefine l -> PreprocDefine (f l)
+        PreprocDefineConst l a -> PreprocDefineConst (f l) (g a)
+        PreprocDefineMacro l as a -> PreprocDefineMacro (f l) (map g as) (g a)
+        PreprocIf a as a' -> PreprocIf (g a) (map g as) (g a')
+        PreprocIfdef l as a -> PreprocIfdef (f l) (map g as) (g a)
+        PreprocIfndef l as a -> PreprocIfndef (f l) (map g as) (g a)
+        PreprocElse as -> PreprocElse (map g as)
+        PreprocElif a as a' -> PreprocElif (g a) (map g as) (g a')
+        PreprocUndef l -> PreprocUndef (f l)
+        PreprocDefined l -> PreprocDefined (f l)
+        PreprocScopedDefine a as a' -> PreprocScopedDefine (g a) (map g as) (g a')
+        MacroBodyStmt a -> MacroBodyStmt (g a)
+        MacroBodyFunCall a -> MacroBodyFunCall (g a)
+        MacroParam l -> MacroParam (f l)
+        StaticAssert a l -> StaticAssert (g a) (f l)
+        LicenseDecl l as -> LicenseDecl (f l) (map g as)
+        CopyrightDecl l ml ls -> CopyrightDecl (f l) (fmap f ml) (map f ls)
+        Comment s l ls l' -> Comment s (f l) (map f ls) (f l')
+        CommentSection a as a' -> CommentSection (g a) (map g as) (g a')
+        CommentSectionEnd l -> CommentSectionEnd (f l)
+        Commented a a' -> Commented (g a) (g a')
+        CommentInfo c -> CommentInfo (mapCommentLexeme f c)
+        ExternC as -> ExternC (map g as)
+        Group as -> Group (map g as)
+        CompoundStmt as -> CompoundStmt (map g as)
+        Break -> Break
+        Goto l -> Goto (f l)
+        Continue -> Continue
+        Return ma -> Return (fmap g ma)
+        SwitchStmt a as -> SwitchStmt (g a) (map g as)
+        IfStmt a a' ma'' -> IfStmt (g a) (g a') (fmap g ma'')
+        ForStmt a a' a'' a''' -> ForStmt (g a) (g a') (g a'') (g a''')
+        WhileStmt a as -> WhileStmt (g a) (g as)
+        DoWhileStmt a a' -> DoWhileStmt (g a) (g a')
+        Case a a' -> Case (g a) (g a')
+        Default a -> Default (g a)
+        Label l a -> Label (f l) (g a)
+        ExprStmt a -> ExprStmt (g a)
+        VLA a l a' -> VLA (g a) (f l) (g a')
+        VarDeclStmt a ma -> VarDeclStmt (g a) (fmap g ma)
+        VarDecl a l as -> VarDecl (g a) (f l) (map g as)
+        DeclSpecArray ma -> DeclSpecArray (fmap g ma)
+        ArrayDim nullability a -> ArrayDim nullability (g a)
+        InitialiserList as -> InitialiserList (map g as)
+        UnaryExpr u a -> UnaryExpr u (g a)
+        BinaryExpr a b a' -> BinaryExpr (g a) b (g a')
+        TernaryExpr a a' a'' -> TernaryExpr (g a) (g a') (g a'')
+        AssignExpr a as a' -> AssignExpr (g a) as (g a')
+        ParenExpr a -> ParenExpr (g a)
+        CastExpr a a' -> CastExpr (g a) (g a')
+        CompoundExpr a a' -> CompoundExpr (g a) (g a')
+        CompoundLiteral a a' -> CompoundLiteral (g a) (g a')
+        SizeofExpr a -> SizeofExpr (g a)
+        SizeofType a -> SizeofType (g a)
+        LiteralExpr t l -> LiteralExpr t (f l)
+        VarExpr l -> VarExpr (f l)
+        MemberAccess a l -> MemberAccess (g a) (f l)
+        PointerAccess a l -> PointerAccess (g a) (f l)
+        ArrayAccess a a' -> ArrayAccess (g a) (g a')
+        FunctionCall a as -> FunctionCall (g a) (map g as)
+        CommentExpr a a' -> CommentExpr (g a) (g a')
+        EnumConsts ml as -> EnumConsts (fmap f ml) (map g as)
+        EnumDecl l as l' -> EnumDecl (f l) (map g as) (f l')
+        Enumerator l ma -> Enumerator (f l) (fmap g ma)
+        AggregateDecl a -> AggregateDecl (g a)
+        Typedef a l -> Typedef (g a) (f l)
+        TypedefFunction a -> TypedefFunction (g a)
+        Struct l as -> Struct (f l) (map g as)
+        Union l as -> Union (f l) (map g as)
+        MemberDecl a ml -> MemberDecl (g a) (fmap f ml)
+        TyBitwise a -> TyBitwise (g a)
+        TyForce a -> TyForce (g a)
+        TyConst a -> TyConst (g a)
+        TyOwner a -> TyOwner (g a)
+        TyNonnull a -> TyNonnull (g a)
+        TyNullable a -> TyNullable (g a)
+        TyPointer a -> TyPointer (g a)
+        TyStruct l -> TyStruct (f l)
+        TyUnion l -> TyUnion (f l)
+        TyFunc l -> TyFunc (f l)
+        TyStd l -> TyStd (f l)
+        TyUserDefined l -> TyUserDefined (f l)
+        AttrPrintf l l' a -> AttrPrintf (f l) (f l') (g a)
+        FunctionDecl s a -> FunctionDecl s (g a)
+        FunctionDefn s a a' -> FunctionDefn s (g a) (g a')
+        FunctionPrototype a l as -> FunctionPrototype (g a) (f l) (map g as)
+        CallbackDecl l l' -> CallbackDecl (f l) (f l')
+        Ellipsis -> Ellipsis
+        NonNull ls ls' a -> NonNull (map f ls) (map f ls') (g a)
+        NonNullParam a -> NonNullParam (g a)
+        NullableParam a -> NullableParam (g a)
+        ConstDecl a l -> ConstDecl (g a) (f l)
+        ConstDefn s a l a' -> ConstDefn s (g a) (f l) (g a')
+
 type Node lexeme = Fix (NodeF lexeme)
 
 instance FromJSON lexeme => FromJSON1 (NodeF lexeme)
@@ -172,6 +270,33 @@ data CommentF lexeme a
     | DocP lexeme
     deriving (Show, Read, Eq, Ord, Generic, Generic1, Functor, Foldable, Traversable)
     deriving (Show1, Read1, Eq1, Ord1) via FunctorClassesDefault (CommentF lexeme)
+
+instance Bifunctor CommentF where
+    bimap f g n = case n of
+        DocComment as           -> DocComment (map g as)
+        DocAttention            -> DocAttention
+        DocBrief                -> DocBrief
+        DocDeprecated           -> DocDeprecated
+        DocExtends l            -> DocExtends (f l)
+        DocFile                 -> DocFile
+        DocImplements l         -> DocImplements (f l)
+        DocNote                 -> DocNote
+        DocParam ml l           -> DocParam (fmap f ml) (f l)
+        DocReturn               -> DocReturn
+        DocRetval               -> DocRetval
+        DocSection l            -> DocSection (f l)
+        DocSecurityRank l ml l' -> DocSecurityRank (f l) (fmap f ml) (f l')
+        DocSee l                -> DocSee (f l)
+        DocSubsection l         -> DocSubsection (f l)
+        DocPrivate              -> DocPrivate
+        DocLine as              -> DocLine (map g as)
+        DocCode l as l'         -> DocCode (f l) (map g as) (f l')
+        DocWord l               -> DocWord (f l)
+        DocRef l                -> DocRef (f l)
+        DocP l                  -> DocP (f l)
+
+mapCommentLexeme :: (l -> l') -> Comment l -> Comment l'
+mapCommentLexeme f (Fix n) = Fix $ bimap f (mapCommentLexeme f) n
 
 type Comment lexeme = Fix (CommentF lexeme)
 

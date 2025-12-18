@@ -367,6 +367,39 @@ The Cimple lexer does not support all of C's numeric literal formats.
 A lone semicolon (`;`), which constitutes an empty statement in standard C, is
 not a valid statement in Cimple and will result in a parse error.
 
+### No Anonymous or Nested Aggregate Types
+
+To enforce naming conventions and simplify static analysis, all structs,
+unions, and enums must be defined at the top level (global scope) and must be
+named. Anonymous aggregate types and aggregate types defined within another
+struct or union are not supported.
+
+**Invalid:**
+
+```c
+struct My_Struct {
+    int x;
+    union { // Anonymous nested union
+        int a;
+        float b;
+    } data;
+};
+```
+
+**Valid:**
+
+```c
+union My_Union {
+    int a;
+    float b;
+};
+
+struct My_Struct {
+    int x;
+    union My_Union data;
+};
+```
+
 ## 4. Supported C Features
 
 ### Variadic Functions
