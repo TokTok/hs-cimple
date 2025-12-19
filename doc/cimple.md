@@ -44,10 +44,12 @@ Cimple enforces strict naming conventions for different types of identifiers.
 
 - **Variables and Functions**: Must use `snake_case` or `camelCase` starting
   with a lowercase letter (e.g., `my_variable`, `calculateValue`).
-- **Structs, Unions, and Enum Types**: Must use `Upper_Snake_Case` (e.g.,
-  `My_Struct`, `Address_Info`, `Error_Code`).
-- **Standard Type Typedefs**: Typedefs for data types must end with `_t`
-  (e.g., `uint32_t`, `status_t`).
+- **Structs, Unions, and Enum Types**: Must use `PascalCase` (which may include
+  underscores) containing at least one lowercase letter (e.g., `My_Struct`,
+  `Address_Info`, `Error_Code`). Pure `UPPER_CASE` is not allowed.
+- **Standard Type Typedefs**: Typedefs for data types must generally end with
+  `_t` (e.g., `uint32_t`, `status_t`). Note: Some built-in system types (e.g.,
+  `DWORD`, `SOCKET`) are supported as exceptions.
 - **Function Type Typedefs**: Typedefs for function types must end with `_cb`
   (for "callback") (e.g., `network_event_cb`).
 - **Constants, Enum Members, and Goto Labels**: Must use
@@ -93,10 +95,10 @@ with the `_cb` suffix.
 
 ```c
 // Direct function pointer declaration
-void (*my_func_ptr)(int);
+void (*my_func_ptr)(int arg);
 
 // Typedef for a function pointer type
-typedef void (*my_func_ptr_t)(int);
+typedef void (*my_func_ptr_t)(int arg);
 my_func_ptr_t ptr;
 ```
 
@@ -104,7 +106,7 @@ my_func_ptr_t ptr;
 
 ```c
 // 1. Define the function type with a _cb suffix
-typedef void my_func_cb(int);
+typedef void my_func_cb(int arg);
 
 // 2. Use the function type to declare the function pointer
 my_func_cb *ptr;
@@ -142,7 +144,7 @@ The bodies of `for`, `while`, and `do-while` loops must be enclosed in braces
 while (condition)
     do_something();
 
-for (int i = 0; i < 10; i++)
+for (int i = 0; i < 10; ++i)
     printf("%d\n", i);
 ```
 
@@ -153,7 +155,7 @@ while (condition) {
     do_something();
 }
 
-for (int i = 0; i < 10; i++) {
+for (int i = 0; i < 10; ++i) {
     printf("%d\n", i);
 }
 ```
@@ -169,14 +171,14 @@ braces.
 
 ```c
 if (condition)
-    x = 1;
+    ++x;
 ```
 
 **Valid:**
 
 ```c
 if (condition) {
-    x = 1;
+    ++x;
 }
 
 if (condition)
@@ -198,31 +200,31 @@ The initialization and advancement clauses of a `for` loop are restricted.
 - The **initialization** clause must be either a single variable declaration
   (with optional initialization) or a single assignment expression. It cannot
   be empty or contain multiple comma-separated expressions.
-- The **advancement** clause must be a single expression statement (like `i++`
+- The **advancement** clause must be a single expression statement (like `++i`
   or `i += 1`).
 
 **Invalid:**
 
 ```c
 // Multiple initializations
-for (int i = 0, j = 0; i < 10; i++) { ... }
+for (int i = 0, j = 0; i < 10; ++i) { ... }
 
 // Empty initialization
-for (; i < 10; i++) { ... }
+for (; i < 10; ++i) { ... }
 ```
 
 **Valid:**
 
 ```c
-for (int i = 0; i < 10; i++) { ... }
+for (int i = 0; i < 10; ++i) { ... }
 
-for (i = 0; i < 10; i++) { ... }
+for (i = 0; i < 10; ++i) { ... }
 ```
 
 ### `goto` Label Naming
 
-Labels for `goto` statements must follow the same `UPPER_SNAKE_CASE` convention
-as constants.
+Labels for `goto` statements must follow the same `UPPER_CASE_WITH_UNDERSCORES`
+convention as constants.
 
 **Invalid:**
 
@@ -321,12 +323,14 @@ My_Struct ****s;
 ### Restricted Compound Literals
 
 Cimple only supports a very restricted form of C's compound literals, intended
-primarily for zero-initialization with a constant expression.
+primarily for zero-initialization.
 
 **Valid:**
 
 ```c
 My_Struct s = (My_Struct){0};
+My_Struct s2 = (My_Struct){nullptr};
+My_Struct s3 = (My_Struct){{0}};
 ```
 
 ### Restricted Expression Statements
@@ -444,20 +448,20 @@ The following standard C features are intentionally not supported in Cimple:
   parameter types are declared between the argument list and the function body
   are not allowed. All functions must use modern, prototyped parameter lists.
 - **Compound Expressions**: The GNU C extension for compound expressions
-  (e.g., `({ int y = foo(); y; })`) is considered deprecated and is not
-  supported.
+  (e.g., `({ int y = foo(); y; })`) is not supported.
 
 ## 7. Built-in Types
 
-Cimple has built-in knowledge of certain standard C types. You do not need to
-provide `typedef`s for these in your source code for the parser to understand
-them.
+Cimple has built-in knowledge of certain standard C types. Because these are
+treated as keywords or built-in types by the parser, they cannot be redefined
+using `typedef`.
 
-- `size_t`: This is recognized as a built-in unsigned integer type, equivalent
-  to `unsigned long`. These built-in types are reserved and cannot be
-  redefined.
 - **Fixed-width Integers**: The standard fixed-width integer types from
   `<stdint.h>` (e.g., `uint8_t`, `int8_t`, `uint16_t`, `int16_t`, `uint32_t`,
-  `int32_t`, `uint64_t`, `int64_t`) are built-in. These are the preferred
-  types for integer variables, rather than using types like `unsigned char`,
-  `short`, `int`, or `long`.
+  `int32_t`, `uint64_t`, `int64_t`) are treated as built-in types. These are
+  the preferred types for integer variables.
+- **Other Standard Types**: Common C types like `bool`, `char`, `double`,
+  `float`, `int`, `long`, `unsigned`, and `va_list` are also recognized and
+  cannot be redefined.
+- **`size_t`**: Note that `size_t` is not a reserved keyword but is supported
+  through the `_t` naming convention for standard type typedefs.

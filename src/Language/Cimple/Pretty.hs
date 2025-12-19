@@ -251,6 +251,7 @@ ppNodeF = \case
     VarDecl ty name arrs      -> ty <+> ppLexeme name <> hcat arrs
     DeclSpecArray Nothing     -> pretty "[]"
     DeclSpecArray (Just dim)  -> brackets dim
+    ArrayDim NullabilityUnspecified size -> size
     ArrayDim nullability size -> ppNullability nullability <+> size
 
     TyBitwise     ty -> kwBitwise <+> ty
