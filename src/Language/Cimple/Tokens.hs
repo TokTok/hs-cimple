@@ -46,6 +46,7 @@ data LexemeClass
     | LitFalse
     | LitTrue
     | LitChar
+    | LitFloat
     | LitInteger
     | LitString
     | LitSysInclude

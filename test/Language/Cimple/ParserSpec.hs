@@ -4,12 +4,12 @@ module Language.Cimple.ParserSpec where
 import           Data.Fix           (Fix (..))
 import           Data.Text          (Text)
 import qualified Data.Text          as Text
-import           Test.Hspec         (Spec, describe, it, shouldBe,
-                                     shouldSatisfy)
+import           Test.Hspec         (Spec, describe, expectationFailure, it,
+                                     shouldBe, shouldSatisfy)
 
 import           Language.Cimple    (AlexPosn (..), Lexeme (..),
                                      LexemeClass (..), Node, NodeF (..),
-                                     Scope (..))
+                                     Scope (..), UnaryOp (..))
 import           Language.Cimple.IO (parseText)
 
 
@@ -28,6 +28,12 @@ spec = do
         it "should parse a simple function" $ do
             let ast = parseText "int a(void) { return 3; }"
             ast `shouldSatisfy` isRight1
+
+        it "should parse *f(x) as *(f(x))" $ do
+            let ast = parseLines ["void g() { int x = *f(1); }"]
+            case ast of
+                Right [Fix (FunctionDefn _ _ (Fix (CompoundStmt [Fix (VarDeclStmt _ (Just (Fix (UnaryExpr UopDeref (Fix (FunctionCall (Fix (VarExpr (L _ _ "f"))) [_]))))))])))] -> return ()
+                _ -> expectationFailure $ "Unexpected AST: " ++ show ast
 
         it "should parse per-param non_null and nullable annotations" $ do
             let ast = parseText "int a(char *_Nonnull p, int *_Nullable q);"

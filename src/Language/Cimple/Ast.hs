@@ -361,6 +361,7 @@ instance ToJSON UnaryOp
 data LiteralType
     = Char
     | Int
+    | Float
     | Bool
     | String
     | ConstId

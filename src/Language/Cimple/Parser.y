@@ -73,6 +73,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     void			{ L _ KwVoid			_ }
     while			{ L _ KwWhile			_ }
     LIT_CHAR			{ L _ LitChar			_ }
+    LIT_FLOAT			{ L _ LitFloat			_ }
     LIT_FALSE			{ L _ LitFalse			_ }
     LIT_TRUE			{ L _ LitTrue			_ }
     LIT_INTEGER			{ L _ LitInteger		_ }
@@ -255,6 +256,7 @@ CommentWord
 |	CMT_ATTR						{ $1 }
 |	CMT_REF							{ $1 }
 |	CMT_CODE						{ $1 }
+|	LIT_FLOAT						{ $1 }
 |	LIT_INTEGER						{ $1 }
 |	LIT_STRING						{ $1 }
 |	' '							{ $1 }
@@ -322,7 +324,8 @@ PreprocUndef
 
 PreprocConstExpr :: { NonTerm }
 PreprocConstExpr
-:	PureExpr(PreprocConstExpr)				{ $1 }
+:	PreprocSafeExpr(PreprocConstExpr)			{ $1 }
+|	PureExprOps(PreprocConstExpr)				{ $1 }
 |	'defined' '(' ID_CONST ')'				{ Fix $ PreprocDefined $3 }
 
 MacroParamList :: { [NonTerm] }
@@ -484,19 +487,23 @@ CompoundStmt
 
 -- Expressions that are safe for use as macro body without () around it..
 PreprocSafeExpr(x)
-:	LiteralExpr						{ $1 }
-|	'(' x ')'						{ Fix $ ParenExpr $2 }
+:	PreprocAtoms(x)						{ $1 }
 |	'(' QualType(LocalLeafType) ')' x %prec CAST		{ Fix $ CastExpr $2 $4 }
 |	sizeof '(' Expr ')'					{ Fix $ SizeofExpr $3 }
 |	sizeof '(' QualType(LocalLeafType) ')'			{ Fix $ SizeofType $3 }
 
+PreprocAtoms(x)
+:	LiteralExpr						{ $1 }
+|	'(' x ')'						{ Fix $ ParenExpr $2 }
+
 ConstExpr :: { NonTerm }
 ConstExpr
-:	PureExpr(ConstExpr)					{ $1 }
+:	PreprocSafeExpr(ConstExpr)				{ $1 }
+|	PureExprOps(ConstExpr)					{ $1 }
+|	'defined' '(' ID_CONST ')'				{ Fix $ PreprocDefined $3 }
 
-PureExpr(x)
-:	PreprocSafeExpr(x)					{ $1 }
-|	x '!=' x						{ Fix $ BinaryExpr $1 BopNe $3 }
+PureExprOps(x)
+:	x '!=' x						{ Fix $ BinaryExpr $1 BopNe $3 }
 |	x '==' x						{ Fix $ BinaryExpr $1 BopEq $3 }
 |	x '||' x						{ Fix $ BinaryExpr $1 BopOr $3 }
 |	x '^' x							{ Fix $ BinaryExpr $1 BopBitXor $3 }
@@ -524,6 +531,7 @@ LiteralExpr :: { NonTerm }
 LiteralExpr
 :	StringLiteralExpr					{ $1 }
 |	LIT_CHAR						{ Fix $ LiteralExpr Char $1 }
+|	LIT_FLOAT						{ Fix $ LiteralExpr Float $1 }
 |	LIT_INTEGER						{ Fix $ LiteralExpr Int $1 }
 |	LIT_FALSE						{ Fix $ LiteralExpr Bool $1 }
 |	LIT_TRUE						{ Fix $ LiteralExpr Bool $1 }
@@ -534,21 +542,34 @@ StringLiteralExpr
 :	LIT_STRING						{ Fix $ LiteralExpr String $1 }
 |	StringLiteralExpr LIT_STRING				{ $1 }
 
+PrimaryExpr :: { NonTerm }
+PrimaryExpr
+:	ID_VAR							{ Fix $ VarExpr $1 }
+|	LiteralExpr						{ $1 }
+|	CompoundLiteral						{ $1 }
+|	'(' Expr ')'						{ Fix $ ParenExpr $2 }
+
+PostfixExpr :: { NonTerm }
+PostfixExpr
+:	PrimaryExpr						{ $1 }
+|	PostfixExpr '[' Expr ']'				{ Fix $ ArrayAccess $1 $3 }
+|	PostfixExpr '.' ID_VAR					{ Fix $ MemberAccess $1 $3 }
+|	PostfixExpr '->' ID_VAR					{ Fix $ PointerAccess $1 $3 }
+|	FunctionCall						{ $1 }
+
 LhsExpr :: { NonTerm }
 LhsExpr
-:	ID_VAR							{ Fix $ VarExpr $1 }
+:	PostfixExpr						{ $1 }
 |	'*' LhsExpr %prec DEREF					{ Fix $ UnaryExpr UopDeref $2 }
-|	LhsExpr '.' ID_VAR					{ Fix $ MemberAccess $1 $3 }
-|	LhsExpr '->' ID_VAR					{ Fix $ PointerAccess $1 $3 }
-|	LhsExpr '[' Expr ']'					{ Fix $ ArrayAccess $1 $3 }
 
 Expr :: { NonTerm }
 Expr
 :	LhsExpr							{ $1 }
+|	PureExprOps(Expr)					{ $1 }
+|	'(' QualType(LocalLeafType) ')' Expr %prec CAST		{ Fix $ CastExpr $2 $4 }
+|	sizeof '(' Expr ')'					{ Fix $ SizeofExpr $3 }
+|	sizeof '(' QualType(LocalLeafType) ')'			{ Fix $ SizeofType $3 }
 |	ExprStmt						{ $1 }
-|	FunctionCall						{ $1 }
-|	CompoundLiteral						{ $1 }
-|	PureExpr(Expr)						{ $1 }
 
 -- Allow `(Type){0}` to set struct values to all-zero.
 CompoundLiteral :: { NonTerm }
@@ -559,6 +580,7 @@ ZeroInitExpr :: { NonTerm }
 ZeroInitExpr
 :	ID_VAR							{ Fix $ VarExpr $1 }
 |	LIT_CHAR						{ Fix $ LiteralExpr Char $1 }
+|	LIT_FLOAT						{ Fix $ LiteralExpr Float $1 }
 |	LIT_INTEGER						{ Fix $ LiteralExpr Int $1 }
 |	LIT_FALSE						{ Fix $ LiteralExpr Bool $1 }
 |	ID_CONST						{ Fix $ LiteralExpr ConstId $1 }
@@ -589,7 +611,7 @@ ExprStmt
 
 FunctionCall :: { NonTerm }
 FunctionCall
-:	Expr ArgList						{ Fix $ FunctionCall $1 $2 }
+:	PostfixExpr ArgList					{ Fix $ FunctionCall $1 $2 }
 
 ArgList :: { [NonTerm] }
 ArgList

@@ -12,6 +12,7 @@ haskell_binary(
         "//hs-cimple",
         "//third_party/haskell:base",
         "//third_party/haskell:bytestring",
+        "//third_party/haskell:optparse-applicative",
         "//third_party/haskell:text",
     ],
 )

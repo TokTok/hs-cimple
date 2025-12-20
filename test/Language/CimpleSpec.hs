@@ -56,6 +56,7 @@ sampleToken c = case c of
     LitFalse              -> "false"
     LitTrue               -> "true"
     LitChar               -> "'a'"
+    LitFloat              -> "1.23"
     LitInteger            -> "123"
     LitString             -> "\"str\""
     LitSysInclude         -> "<stdio.h>"

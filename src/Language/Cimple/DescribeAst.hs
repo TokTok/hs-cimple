@@ -157,7 +157,7 @@ describeExpected options
     | options == ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "struct", "union", "void"] = "top-level type specifier"
     | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "struct", "union", "void"] = "type specifier"
     | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "bitwise", "const", "force", "struct", "union", "void"] = "type specifier"
-    | options == ["ID_CONST", "ID_VAR", "LIT_CHAR", "LIT_FALSE", "LIT_INTEGER", "'{'"] = "constant or literal"
+    | options == ["ID_CONST", "ID_VAR", "LIT_CHAR", "LIT_FLOAT", "LIT_FALSE", "LIT_INTEGER", "'{'"] = "constant or literal"
     | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "ID_VAR"] `isPrefixOf` options = "type specifier or variable name"
     | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "bitwise", "const"] `isPrefixOf` options = "type specifier"
     | ["ID_CONST", "sizeof", "LIT_CHAR", "LIT_FALSE", "LIT_TRUE", "LIT_INTEGER"] `isPrefixOf` options = "constant expression"
@@ -165,10 +165,11 @@ describeExpected options
     | wants ["'defined'"] = "preprocessor constant expression"
     | wants ["'&'", "'&&'", "'*'", "'=='", "';'"] = "operator or end of statement"
     | wants ["'&'", "'&&'", "'*'", "'^'", "'!='"] = "operator"
-    | wants ["ID_CONST", "ID_VAR", "sizeof", "LIT_CHAR", "'--'", "'&'", "'*'"] = "expression"
+    | wants ["ID_CONST", "ID_VAR", "LIT_CHAR", "'*'", "'('"] = "expression"
     | ["ID_CONST", "ID_STD_TYPE", "ID_SUE_TYPE", "ID_VAR", "const", "sizeof"] `isPrefixOf` options = "expression or type specifier"
     | ["ID_CONST", "ID_STD_TYPE", "ID_SUE_TYPE", "const", "sizeof"] `isPrefixOf` options = "constant expression or type specifier"
     | ["'&='", "'->'", "'*='"] `isPrefixOf` options = "assignment or member/array access"
+    | wants ["'='", "'*='", "'/='", "'+='", "'-='"] = "assignment operator"
     | wants ["CMT_WORD"] = "comment contents"
 
     | length options == 2 = commaOr options

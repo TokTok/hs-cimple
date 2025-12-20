@@ -6,6 +6,7 @@ module Language.Cimple.IO
     , parseProgram
     , parseStmt
     , parseText
+    , parseUnit
     ) where
 
 import           Control.Monad                   ((>=>))
@@ -61,6 +62,10 @@ parseBytes = flip runAlex Parser.parseTranslationUnit
 
 parseBytesPedantic :: LBS.ByteString -> Either String [TextNode]
 parseBytesPedantic = parseBytes >=> ParseResult.toEither . TreeParser.parseTranslationUnit
+
+
+parseUnit :: Bool -> LBS.ByteString -> Either String [TextNode]
+parseUnit pedantic = if pedantic then parseBytesPedantic else parseBytes
 
 
 parseFile :: FilePath -> IO (Either String (TranslationUnit Text))
