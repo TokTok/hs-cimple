@@ -31,6 +31,7 @@ haskell_library(
         "//tools/haskell:__pkg__",
     ],
     deps = [
+        ":ast",
         "//third_party/haskell:aeson",
         "//third_party/haskell:array",
         "//third_party/haskell:base",
@@ -66,6 +67,7 @@ haskell_library(
     srcs = [
         "src/Language/Cimple/DescribeAst.hs",
         "src/Language/Cimple/Flatten.hs",
+        "src/Language/Cimple/Parser/Error.hs",
     ],
     src_strip_prefix = "src",
     tags = [
@@ -79,7 +81,9 @@ haskell_library(
     deps = [
         ":ast",
         ":lexer",
+        "//third_party/haskell:aeson",
         "//third_party/haskell:base",
+        "//third_party/haskell:bytestring",
         "//third_party/haskell:data-fix",
         "//third_party/haskell:text",
     ],
@@ -88,15 +92,14 @@ haskell_library(
 happy_parser(
     name = "Parser",
     src = "src/Language/Cimple/Parser.y",
-    preproc = "expand_yacc.pl",
-    preproc_tool = "@perl",
+    preproc = "//hs-cimple/tools:cimple-yacc",
 )
 
 haskell_library(
     name = "parser",
     srcs = [":Parser"],
-    extra_srcs = ["src/Language/Cimple/Parser.preproc.y"],
-    ghcopts = ["-DSOURCE=\"$(location src/Language/Cimple/Parser.preproc.y)\""],
+    extra_srcs = [":Parser"],
+    ghcopts = ["-DSOURCE=\"$(location :Parser)\""],
     src_strip_prefix = "src",
     tags = [
         "haskell",
@@ -124,8 +127,7 @@ haskell_library(
 happy_parser(
     name = "CommentParser",
     src = "src/Language/Cimple/CommentParser.y",
-    preproc = "expand_yacc.pl",
-    preproc_tool = "@perl",
+    #preproc = "//hs-cimple/tools:cimple-yacc",
 )
 
 haskell_library(
@@ -154,8 +156,7 @@ haskell_library(
 happy_parser(
     name = "TreeParser",
     src = "src/Language/Cimple/TreeParser.y",
-    preproc = "expand_yacc.pl",
-    preproc_tool = "@perl",
+    #preproc = "//hs-cimple/tools:cimple-yacc",
 )
 
 haskell_library(
@@ -191,6 +192,7 @@ haskell_library(
             "src/Language/Cimple/DescribeAst.hs",
             "src/Language/Cimple/Flatten.hs",
             "src/Language/Cimple/ParseResult.hs",
+            "src/Language/Cimple/Parser/Error.hs",
             "src/Language/Cimple/Tokens.hs",
         ],
     ),
@@ -229,6 +231,7 @@ hspec_test(
     size = "small",
     deps = [
         ":hs-cimple",
+        ":parser",
         "//third_party/haskell:QuickCheck",
         "//third_party/haskell:base",
         "//third_party/haskell:data-fix",

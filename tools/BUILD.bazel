@@ -79,3 +79,22 @@ haskell_binary(
         "//third_party/haskell:groom",
     ],
 )
+
+haskell_binary(
+    name = "cimple-yacc",
+    srcs = ["cimple-yacc.hs"],
+    tags = [
+        "haskell",
+        "no-cross",
+    ],
+    visibility = ["//visibility:public"],
+    deps = [
+        "//third_party/haskell:array",
+        "//third_party/haskell:base",
+        "//third_party/haskell:containers",
+        "//third_party/haskell:happy-lib",
+        "//third_party/haskell:optparse-applicative",
+        "//third_party/haskell:text",
+        "//third_party/haskell:time",
+    ],
+)

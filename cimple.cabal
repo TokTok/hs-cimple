@@ -40,8 +40,10 @@ library
     Language.Cimple.Flatten
     Language.Cimple.Graph
     Language.Cimple.Lexer
-    Language.Cimple.Parser
     Language.Cimple.ParseResult
+    Language.Cimple.Parser
+    Language.Cimple.Parser.Error
+    Language.Cimple.Parser.Error.Pretty
     Language.Cimple.PrettyColor
     Language.Cimple.PrettyComment
     Language.Cimple.PrettyCommon
@@ -117,12 +119,12 @@ test-suite testsuite
   hs-source-dirs:     test
   main-is:            testsuite.hs
   other-modules:
-    Language.CimpleSpec
     Language.Cimple.AstSpec
     Language.Cimple.CommentParserSpec
-    Language.Cimple.DescribeAstSpec
     Language.Cimple.ParserSpec
+    Language.Cimple.PrettyCommentSpec
     Language.Cimple.PrettySpec
+    Language.CimpleSpec
 
   ghc-options:        -Wall -Wno-unused-imports
   build-tool-depends: hspec-discover:hspec-discover

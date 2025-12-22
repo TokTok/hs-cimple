@@ -17,20 +17,30 @@ module Language.Cimple.Lexer
     , lexemeText
     , lexemeLine
     , runAlex
+    , pushContext
+    , popContext
+    , getContext
+    , Context (..)
+    , ParseError (..)
     ) where
 
-import           Data.Aeson             (FromJSON, ToJSON)
+import           Data.Aeson             (FromJSON, FromJSONKey (..),
+                                         FromJSONKeyFunction (..), ToJSON,
+                                         ToJSONKey (..), ToJSONKeyFunction (..),
+                                         toEncoding, toJSON)
+import qualified Data.Aeson.Types       as Aeson
 import qualified Data.ByteString        as BS
 import qualified Data.ByteString.Lazy   as LBS
+import           Data.Hashable          (Hashable (..))
 import           Data.Text              (Text)
 import qualified Data.Text              as Text
 import qualified Data.Text.Encoding     as Text
 import           GHC.Generics           (Generic)
+import           Language.Cimple.Ast    (Node)
 import           Language.Cimple.Tokens (LexemeClass (..))
-import           Data.Hashable (Hashable(..))
 }
 
-%wrapper "monad-bytestring"
+%wrapper "monadUserState-bytestring"
 
 tokens :-
 
@@ -310,15 +320,19 @@ tokens :-
 {
 deriving instance Generic AlexPosn
 instance FromJSON AlexPosn
+instance FromJSONKey AlexPosn where fromJSONKey = Aeson.FromJSONKeyText (read . Text.unpack)
 instance ToJSON AlexPosn
+instance ToJSONKey AlexPosn where toJSONKey = Aeson.toJSONKeyText (Text.pack . show)
 instance Hashable AlexPosn
+deriving instance Read AlexPosn
 
 data Lexeme text = L AlexPosn LexemeClass text
-    deriving (Eq, Show, Generic, Functor, Foldable, Traversable, Ord)
+    deriving (Eq, Show, Read, Generic, Functor, Foldable, Traversable, Ord)
 
 instance FromJSON text => FromJSON (Lexeme text)
 instance ToJSON text => ToJSON (Lexeme text)
 instance Hashable text => Hashable (Lexeme text) where
+    hashWithSalt s (L p c t) = s `hashWithSalt` p `hashWithSalt` c `hashWithSalt` t
 
 mkL :: LexemeClass -> AlexInput -> Int64 -> Alex (Lexeme Text)
 mkL c (p, _, str, _) len = pure $ L p c (piece str)
@@ -342,6 +356,45 @@ lexemeLine (L (AlexPn _ l _) _ _) = l
 
 alexEOF :: Alex (Lexeme Text)
 alexEOF = return (L (AlexPn 0 0 0) Eof Text.empty)
+
+data Context
+    = Context String
+    | ContextLexeme String (Lexeme Text)
+    | ContextNode String (Node (Lexeme Text))
+    deriving (Eq, Show, Read, Generic)
+
+instance FromJSON Context
+instance ToJSON Context
+instance Hashable Context
+
+data AlexUserState = AlexUserState { alex_context :: [Context] }
+alexInitUserState = AlexUserState []
+
+data ParseError = ParseError
+    { errorPosn     :: AlexPosn
+    , errorContext  :: [Context]
+    , errorExpected :: [String]
+    , errorLexeme   :: Lexeme Text
+    } deriving (Eq, Show, Read, Generic)
+
+instance FromJSON ParseError
+instance ToJSON ParseError
+instance Hashable ParseError
+
+pushContext :: Context -> Alex ()
+pushContext ctx = Alex $ \s ->
+    let us = alex_ust s
+        us' = us { alex_context = ctx : alex_context us }
+    in Right (s { alex_ust = us' }, ())
+
+popContext :: Alex ()
+popContext = Alex $ \s ->
+    let us = alex_ust s
+        us' = us { alex_context = case alex_context us of [] -> []; (_:cs) -> cs }
+    in Right (s { alex_ust = us' }, ())
+
+getContext :: Alex [Context]
+getContext = Alex $ \s -> Right (s, alex_context (alex_ust s))
 
 alexScanTokens :: LBS.ByteString -> Either String [Lexeme Text]
 alexScanTokens str =

@@ -69,7 +69,9 @@ spec = do
 
     describe "showNode" $ do
         it "prints code with syntax highlighting" $ do
-            let pp = showNode $ head $ mustParse "int a(void) { return 3; }"
+            let pp = case mustParse "int a(void) { return 3; }" of
+                    (x:_) -> showNode x
+                    []    -> error "mustParse returned empty list"
             pp <> "\n" `shouldBe` Text.unlines
                 [ "\ESC[0;32mint\ESC[0m a(\ESC[0;32mvoid\ESC[0m) {"
                 , "  \ESC[0;31mreturn\ESC[0m \ESC[0;31m3\ESC[0m;"

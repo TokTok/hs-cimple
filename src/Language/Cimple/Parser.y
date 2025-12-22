@@ -6,6 +6,7 @@ module Language.Cimple.Parser
     ( parseExpr
     , parseStmt
     , parseTranslationUnit
+    , preprocessorEnabled
     , source
     ) where
 
@@ -19,7 +20,7 @@ import           Language.Cimple.Ast         (AssignOp (..), BinaryOp (..),
                                               LiteralType (..), Node,
                                               NodeF (..), Nullability (..),
                                               Scope (..), UnaryOp (..))
-import           Language.Cimple.DescribeAst (parseError)
+import           Language.Cimple.Parser.Error (parseError)
 import           Language.Cimple.Lexer       (Alex, AlexPosn (..), Lexeme (..),
                                               alexError, alexMonadScan)
 import           Language.Cimple.Tokens      (LexemeClass (..))
@@ -829,4 +830,7 @@ source = Just $(embedFile SOURCE)
 #else
 source = Nothing
 #endif
+
+preprocessorEnabled :: Bool
+preprocessorEnabled = False
 }

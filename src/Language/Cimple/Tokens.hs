@@ -129,7 +129,7 @@ data LexemeClass
 
     | ErrorToken
     | Eof
-    deriving (Enum, Bounded, Ord, Eq, Show, Generic)
+    deriving (Enum, Bounded, Ord, Eq, Show, Read, Generic)
 
 instance FromJSON LexemeClass
 instance ToJSON LexemeClass

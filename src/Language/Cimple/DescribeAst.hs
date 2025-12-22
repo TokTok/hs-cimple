@@ -6,18 +6,15 @@ module Language.Cimple.DescribeAst
     , describeLexeme
     , describeNode
     , getLoc
-    , parseError
     ) where
 
 import           Data.Fix                (Fix (..), foldFix, unFix)
-import           Data.List               (isPrefixOf, (\\))
-import qualified Data.List               as List
 import           Data.Text               (Text)
 import qualified Data.Text               as Text
 import           Language.Cimple.Ast     (Node, NodeF (..))
 import qualified Language.Cimple.Flatten as Flatten
-import           Language.Cimple.Lexer   (Alex, AlexPosn (..), Lexeme (..),
-                                          alexError, lexemeLine)
+import           Language.Cimple.Lexer   (AlexPosn (..), Lexeme (..),
+                                          lexemeLine)
 import           Language.Cimple.Tokens  (LexemeClass (..))
 
 
@@ -146,44 +143,3 @@ describeLexemeClass = d
 
 describeLexeme :: Show a => Lexeme a -> String
 describeLexeme (L _ c s) = maybe "" (<> ": ") (describeLexemeClass c) <> show s
-
-describeExpected :: [String] -> String
-describeExpected [] = "end of file"
-describeExpected ["ID_VAR"] = "variable name"
-describeExpected [option] = option
-describeExpected options
-    | wants ["break", "const", "continue", "ID_CONST", "VLA"] = "statement or declaration"
-    | wants ["ID_FUNC_TYPE", "non_null", "static", "'#include'"] = "top-level declaration or definition"
-    | options == ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "struct", "union", "void"] = "top-level type specifier"
-    | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "struct", "union", "void"] = "type specifier"
-    | options == ["ID_STD_TYPE", "ID_SUE_TYPE", "bitwise", "const", "force", "struct", "union", "void"] = "type specifier"
-    | options == ["ID_CONST", "ID_VAR", "LIT_CHAR", "LIT_FLOAT", "LIT_FALSE", "LIT_INTEGER", "'{'"] = "constant or literal"
-    | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "ID_VAR"] `isPrefixOf` options = "type specifier or variable name"
-    | ["ID_FUNC_TYPE", "ID_STD_TYPE", "ID_SUE_TYPE", "bitwise", "const"] `isPrefixOf` options = "type specifier"
-    | ["ID_CONST", "sizeof", "LIT_CHAR", "LIT_FALSE", "LIT_TRUE", "LIT_INTEGER"] `isPrefixOf` options = "constant expression"
-    | ["ID_CONST", "ID_SUE_TYPE", "'/*'"] `isPrefixOf` options = "enumerator, type name, or comment"
-    | wants ["'defined'"] = "preprocessor constant expression"
-    | wants ["'&'", "'&&'", "'*'", "'=='", "';'"] = "operator or end of statement"
-    | wants ["'&'", "'&&'", "'*'", "'^'", "'!='"] = "operator"
-    | wants ["ID_CONST", "ID_VAR", "LIT_CHAR", "'*'", "'('"] = "expression"
-    | ["ID_CONST", "ID_STD_TYPE", "ID_SUE_TYPE", "ID_VAR", "const", "sizeof"] `isPrefixOf` options = "expression or type specifier"
-    | ["ID_CONST", "ID_STD_TYPE", "ID_SUE_TYPE", "const", "sizeof"] `isPrefixOf` options = "constant expression or type specifier"
-    | ["'&='", "'->'", "'*='"] `isPrefixOf` options = "assignment or member/array access"
-    | wants ["'='", "'*='", "'/='", "'+='", "'-='"] = "assignment operator"
-    | wants ["CMT_WORD"] = "comment contents"
-
-    | length options == 2 = commaOr options
-    | otherwise           = "one of " <> commaOr options
-  where
-    wants xs = null (xs \\ options)
-
-commaOr :: [String] -> String
-commaOr = go . reverse
-  where
-    go []     = ""
-    go (x:xs) = List.intercalate ", " (reverse xs) <> " or " <> x
-
-parseError :: Show text => (Lexeme text, [String]) -> Alex a
-parseError (l@(L (AlexPn _ line col) _ _), options) =
-    alexError $ ":" <> show line <> ":" <> show col <> ": Parse error near " <> describeLexeme l
-        <> "; expected " <> describeExpected options
