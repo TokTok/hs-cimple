@@ -6,15 +6,7 @@ import           Test.Hspec      (Spec, describe, it, shouldNotBe)
 
 import           Data.Text       (Text)
 import           Language.Cimple (LexemeClass (..))
-import           Test.QuickCheck (Arbitrary (..), arbitraryBoundedEnum, forAll,
-                                  suchThat)
-
-instance Arbitrary LexemeClass where
-    arbitrary = arbitraryBoundedEnum `suchThat` ok
-      where
-        ok ErrorToken = False
-        ok Eof        = False
-        ok _          = True
+import           Test.QuickCheck (Arbitrary (..), arbitraryBoundedEnum, forAll)
 
 
 sampleToken :: LexemeClass -> Text

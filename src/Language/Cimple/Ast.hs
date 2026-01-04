@@ -80,8 +80,7 @@ data NodeF lexeme a
     | VLA a lexeme a
     | VarDeclStmt a (Maybe a)
     | VarDecl a lexeme [a]
-    | DeclSpecArray (Maybe a)
-    | ArrayDim Nullability a
+    | DeclSpecArray Nullability (Maybe a)
     -- Expressions
     | InitialiserList [a]
     | UnaryExpr UnaryOp a
@@ -90,7 +89,6 @@ data NodeF lexeme a
     | AssignExpr a AssignOp a
     | ParenExpr a
     | CastExpr a a
-    | CompoundExpr a a -- DEPRECATED
     | CompoundLiteral a a
     | SizeofExpr a
     | SizeofType a
@@ -183,8 +181,7 @@ instance Bifunctor NodeF where
         VLA a l a' -> VLA (g a) (f l) (g a')
         VarDeclStmt a ma -> VarDeclStmt (g a) (fmap g ma)
         VarDecl a l as -> VarDecl (g a) (f l) (map g as)
-        DeclSpecArray ma -> DeclSpecArray (fmap g ma)
-        ArrayDim nullability a -> ArrayDim nullability (g a)
+        DeclSpecArray nullability ma -> DeclSpecArray nullability (fmap g ma)
         InitialiserList as -> InitialiserList (map g as)
         UnaryExpr u a -> UnaryExpr u (g a)
         BinaryExpr a b a' -> BinaryExpr (g a) b (g a')
@@ -192,7 +189,6 @@ instance Bifunctor NodeF where
         AssignExpr a as a' -> AssignExpr (g a) as (g a')
         ParenExpr a -> ParenExpr (g a)
         CastExpr a a' -> CastExpr (g a) (g a')
-        CompoundExpr a a' -> CompoundExpr (g a) (g a')
         CompoundLiteral a a' -> CompoundLiteral (g a) (g a')
         SizeofExpr a -> SizeofExpr (g a)
         SizeofType a -> SizeofType (g a)

@@ -239,7 +239,6 @@ ppNodeF = \case
     FunctionCall c  a    -> ppFunctionCall c a
     ArrayAccess  e  i    -> e <> pretty '[' <> i <> pretty ']'
     CastExpr     ty e    -> parens ty <> e
-    CompoundExpr    ty e -> parens ty <+> lbrace <> e <> rbrace  -- DEPRECATED
     CompoundLiteral ty e -> parens ty <+> lbrace <> e <> rbrace
     PreprocDefined  n    -> pretty "defined(" <> ppLexeme n <> pretty ')'
     InitialiserList l    -> ppInitialiserList l
@@ -249,10 +248,9 @@ ppNodeF = \case
     Ellipsis             -> pretty "..."
 
     VarDecl ty name arrs      -> ty <+> ppLexeme name <> hcat arrs
-    DeclSpecArray Nothing     -> pretty "[]"
-    DeclSpecArray (Just dim)  -> brackets dim
-    ArrayDim NullabilityUnspecified size -> size
-    ArrayDim nullability size -> ppNullability nullability <+> size
+    DeclSpecArray nullability Nothing -> brackets (ppNullability nullability)
+    DeclSpecArray NullabilityUnspecified (Just dim) -> brackets dim
+    DeclSpecArray nullability (Just dim) -> brackets (ppNullability nullability <+> dim)
 
     TyBitwise     ty -> kwBitwise <+> ty
     TyForce       ty -> kwForce <+> ty

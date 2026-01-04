@@ -304,9 +304,7 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse name
             _ <- recurse arrs
             pure ()
-        DeclSpecArray size ->
-            recurse size
-        ArrayDim _ size ->
+        DeclSpecArray _nullability size ->
             recurse size
         InitialiserList values ->
             recurse values
@@ -328,10 +326,6 @@ instance TraverseAst text (Node (Lexeme text)) where
         ParenExpr expr ->
             recurse expr
         CastExpr ty expr -> do
-            _ <- recurse ty
-            _ <- recurse expr
-            pure ()
-        CompoundExpr ty expr -> do -- DEPRECATED
             _ <- recurse ty
             _ <- recurse expr
             pure ()

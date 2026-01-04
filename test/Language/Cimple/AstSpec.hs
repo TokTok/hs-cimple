@@ -100,8 +100,7 @@ spec = do
             test (VLA "a" "l" "a'") (VLA "a-a" "l-l" "a-a'")
             test (VarDeclStmt "a" (Just "ma")) (VarDeclStmt "a-a" (Just "a-ma"))
             test (VarDecl "a" "l" ["as"]) (VarDecl "a-a" "l-l" ["a-as"])
-            test (DeclSpecArray (Just "ma")) (DeclSpecArray (Just "a-ma"))
-            test (ArrayDim NullabilityUnspecified "a") (ArrayDim NullabilityUnspecified "a-a")
+            test (DeclSpecArray NullabilityUnspecified (Just "ma")) (DeclSpecArray NullabilityUnspecified (Just "a-ma"))
 
             -- Expressions
             test (InitialiserList ["as"]) (InitialiserList ["a-as"])
@@ -111,7 +110,6 @@ spec = do
             test (AssignExpr "a" AopEq "a'") (AssignExpr "a-a" AopEq "a-a'")
             test (ParenExpr "a") (ParenExpr "a-a")
             test (CastExpr "a" "a'") (CastExpr "a-a" "a-a'")
-            test (CompoundExpr "a" "a'") (CompoundExpr "a-a" "a-a'")
             test (CompoundLiteral "a" "a'") (CompoundLiteral "a-a" "a-a'")
             test (SizeofExpr "a") (SizeofExpr "a-a")
             test (SizeofType "a") (SizeofType "a-a")

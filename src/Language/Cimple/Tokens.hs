@@ -4,9 +4,11 @@ module Language.Cimple.Tokens
     ( LexemeClass (..)
     ) where
 
-import           Data.Aeson    (FromJSON, ToJSON)
-import           Data.Hashable (Hashable)
-import           GHC.Generics  (Generic)
+import           Data.Aeson      (FromJSON, ToJSON)
+import           Data.Hashable   (Hashable)
+import           GHC.Generics    (Generic)
+import           Test.QuickCheck (Arbitrary (..), arbitraryBoundedEnum,
+                                  suchThat)
 
 data LexemeClass
     = IdConst
@@ -134,3 +136,10 @@ data LexemeClass
 instance FromJSON LexemeClass
 instance ToJSON LexemeClass
 instance Hashable LexemeClass
+
+instance Arbitrary LexemeClass where
+    arbitrary = arbitraryBoundedEnum `suchThat` ok
+      where
+        ok ErrorToken = False
+        ok Eof        = False
+        ok _          = True

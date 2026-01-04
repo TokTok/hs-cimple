@@ -32,6 +32,7 @@ haskell_library(
     ],
     deps = [
         ":ast",
+        "//third_party/haskell:QuickCheck",
         "//third_party/haskell:aeson",
         "//third_party/haskell:array",
         "//third_party/haskell:base",
@@ -209,6 +210,7 @@ haskell_library(
         ":lexer",
         ":parser",
         ":tree-parser",
+        "//third_party/haskell:QuickCheck",
         "//third_party/haskell:aeson",
         "//third_party/haskell:array",
         "//third_party/haskell:base",

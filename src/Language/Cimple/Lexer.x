@@ -38,6 +38,7 @@ import qualified Data.Text.Encoding     as Text
 import           GHC.Generics           (Generic)
 import           Language.Cimple.Ast    (Node)
 import           Language.Cimple.Tokens (LexemeClass (..))
+import           Test.QuickCheck        (Arbitrary (..))
 }
 
 %wrapper "monadUserState-bytestring"
@@ -123,6 +124,9 @@ tokens :-
 <0>		"msgpack_vrefbuffer"			{ mkL IdSueType }
 <0>		"msgpack_zbuffer"			{ mkL IdSueType }
 <0>		"msgpack_zone"				{ mkL IdSueType }
+
+-- Sodium types.
+<0>		"crypto_generichash_blake2b_state"	{ mkL IdSueType }
 
 -- Sodium constants.
 <0,ppSC>	"crypto_"[a-z0-9_]+[A-Z][A-Z0-9_]*	{ mkL IdConst }
@@ -326,8 +330,15 @@ instance ToJSONKey AlexPosn where toJSONKey = Aeson.toJSONKeyText (Text.pack . s
 instance Hashable AlexPosn
 deriving instance Read AlexPosn
 
+instance Arbitrary AlexPosn where
+    arbitrary = AlexPn <$> arbitrary <*> arbitrary <*> arbitrary
+
 data Lexeme text = L AlexPosn LexemeClass text
     deriving (Eq, Show, Read, Generic, Functor, Foldable, Traversable, Ord)
+
+instance Arbitrary text => Arbitrary (Lexeme text) where
+    arbitrary = L <$> arbitrary <*> arbitrary <*> arbitrary
+
 
 instance FromJSON text => FromJSON (Lexeme text)
 instance ToJSON text => ToJSON (Lexeme text)

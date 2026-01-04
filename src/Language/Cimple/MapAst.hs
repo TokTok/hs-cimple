@@ -253,10 +253,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (VarDeclStmt <$> recurse decl <*> recurse ini)
         VarDecl ty name arrs ->
             Fix <$> (VarDecl <$> recurse ty <*> recurse name <*> recurse arrs)
-        DeclSpecArray size ->
-            Fix <$> (DeclSpecArray <$> recurse size)
-        ArrayDim nullability size ->
-            Fix <$> (ArrayDim nullability <$> recurse size)
+        DeclSpecArray nullability size ->
+            Fix <$> (DeclSpecArray nullability <$> recurse size)
         InitialiserList values ->
             Fix <$> (InitialiserList <$> recurse values)
         UnaryExpr op expr ->
@@ -271,8 +269,6 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (ParenExpr <$> recurse expr)
         CastExpr ty expr ->
             Fix <$> (CastExpr <$> recurse ty <*> recurse expr)
-        CompoundExpr ty expr -> -- DEPRECATED
-            Fix <$> (CompoundExpr <$> recurse ty <*> recurse expr)
         CompoundLiteral ty expr ->
             Fix <$> (CompoundLiteral <$> recurse ty <*> recurse expr)
         SizeofExpr expr ->

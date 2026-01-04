@@ -458,9 +458,9 @@ DeclSpecArrays
 
 DeclSpecArray :: { NonTerm }
 DeclSpecArray
-:	'[' ']'							{ Fix $ DeclSpecArray Nothing }
-|	'[' Nullability Expr ']'				{ Fix $ DeclSpecArray (Just (Fix (ArrayDim $2 $3))) }
-|	'[' '/*!' Expr '*/' ']'					{ Fix $ DeclSpecArray (Just $3) }
+:	'[' Nullability ']'					{ Fix $ DeclSpecArray $2 Nothing }
+|	'[' Nullability Expr ']'				{ Fix $ DeclSpecArray $2 (Just $3) }
+|	'[' Nullability '/*!' Expr '*/' ']'			{ Fix $ DeclSpecArray $2 (Just $4) }
 
 InitialiserExpr :: { NonTerm }
 InitialiserExpr
@@ -692,7 +692,7 @@ TypedefDecl
 
 QualType(leafType)
 :	bitwise ID_STD_TYPE					{ Fix (TyBitwise (Fix (TyStd $2))) }
-|	force leafType						{ Fix (TyForce $2) }
+|	force QualType(leafType)				{ Fix (TyForce $2) }
 |	leafType ConstQual					{                              ($2      $1)    }
 |	leafType ConstQual '*'					{                (tyPointer ($2      $1))   }
 |	leafType ConstQual '*' QualList				{                $4 (tyPointer ($2      $1))   }

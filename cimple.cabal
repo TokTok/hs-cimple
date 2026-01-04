@@ -53,7 +53,8 @@ library
     Language.Cimple.TreeParser
 
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , array
     , base                 <5
     , bytestring

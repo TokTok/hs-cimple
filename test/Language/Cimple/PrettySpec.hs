@@ -173,6 +173,10 @@ spec = do
             compact "void foo(int a, const char *msg, ...);"
                 `shouldBe` "void foo(int a, char const* msg, ...);\n"
 
+        it "formats array parameters" $ do
+            compact "void f(int matrix[ 10][ 10], int j);"
+                `shouldBe` "void f(int matrix[10][10], int j);\n"
+
         it "supports C preprocessor directives" $ do
             compact "#ifndef XYZZY\n#define XYZZY 123\n#endif /* XYZZY */\n"
                 `shouldBe` "#ifndef XYZZY\n#define XYZZY 123\n#endif  /* XYZZY */\n"
