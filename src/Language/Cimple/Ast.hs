@@ -26,6 +26,8 @@ import           Data.Functor.Classes.Generic (FunctorClassesDefault (..))
 import           Data.Hashable                (Hashable (..))
 import           Data.Hashable.Lifted         (Hashable1)
 import           GHC.Generics                 (Generic, Generic1)
+import           Test.QuickCheck              (Arbitrary (..),
+                                               arbitraryBoundedEnum)
 
 getNodeId :: Hashable a => Node a -> Int
 getNodeId = hash
@@ -404,3 +406,24 @@ instance Hashable LiteralType where
 instance Hashable Scope where
 instance Hashable CommentStyle where
 instance Hashable Nullability where
+
+instance Arbitrary AssignOp where
+    arbitrary = arbitraryBoundedEnum
+
+instance Arbitrary BinaryOp where
+    arbitrary = arbitraryBoundedEnum
+
+instance Arbitrary UnaryOp where
+    arbitrary = arbitraryBoundedEnum
+
+instance Arbitrary LiteralType where
+    arbitrary = arbitraryBoundedEnum
+
+instance Arbitrary Scope where
+    arbitrary = arbitraryBoundedEnum
+
+instance Arbitrary CommentStyle where
+    arbitrary = arbitraryBoundedEnum
+
+instance Arbitrary Nullability where
+    arbitrary = arbitraryBoundedEnum

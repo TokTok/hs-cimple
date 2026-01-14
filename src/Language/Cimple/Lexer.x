@@ -58,11 +58,12 @@ tokens :-
 <0>		"QueryPerformanceCounter"		{ mkL IdVar }
 <0>		"QueryPerformanceFrequency"		{ mkL IdVar }
 <0>		"SecureZeroMemory"			{ mkL IdVar }
-<0>		"WSAAddressToString"			{ mkL IdVar }
+<0>		"WSAAddressToString"("A"?)		{ mkL IdVar }
 <0>		"WSACleanup"				{ mkL IdVar }
 <0>		"WSAGetLastError"			{ mkL IdVar }
+<0>		"WSASetLastError"			{ mkL IdVar }
 <0>		"WSAStartup"				{ mkL IdVar }
-<0>		"WSAStringToAddress"			{ mkL IdVar }
+<0>		"WSAStringToAddress"("A"?)		{ mkL IdVar }
 
 -- Winapi struct members.
 <0>		"GatewayList"				{ mkL IdVar }
@@ -79,6 +80,7 @@ tokens :-
 <0>		"INT"					{ mkL IdStdType }
 <0>		"LPSOCKADDR"				{ mkL IdStdType }
 <0>		"IP_ADAPTER_INFO"			{ mkL IdStdType }
+<0>		"LPSTR"					{ mkL IdStdType }
 <0>		"LPTSTR"				{ mkL IdStdType }
 <0>		"u_long"				{ mkL IdStdType }
 <0>		"LARGE_INTEGER"				{ mkL IdStdType }

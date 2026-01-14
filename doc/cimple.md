@@ -44,12 +44,13 @@ Cimple enforces strict naming conventions for different types of identifiers.
 
 - **Variables and Functions**: Must use `snake_case` or `camelCase` starting
   with a lowercase letter (e.g., `my_variable`, `calculateValue`).
-- **Structs, Unions, and Enum Types**: Must use `PascalCase` (which may include
-  underscores) containing at least one lowercase letter (e.g., `My_Struct`,
-  `Address_Info`, `Error_Code`). Pure `UPPER_CASE` is not allowed.
-- **Standard Type Typedefs**: Typedefs for data types must generally end with
-  `_t` (e.g., `uint32_t`, `status_t`). Note: Some built-in system types (e.g.,
-  `DWORD`, `SOCKET`) are supported as exceptions.
+- **Structs, Unions, and Enum Types**: Must use `PascalCase` (which may
+  include underscores) containing at least one lowercase letter (e.g.,
+  `My_Struct`, `Address_Info`, `Error_Code`). Pure `UPPER_CASE` is not
+  allowed.
+- **Standard C Type Typedefs**: Typedefs for data types (e.g., `uint32_t`,
+  `size_t`) are supported natively (built-in), but can not be defined within
+  Cimple code. I.e. you can not write `typedef unsigned int size_t;`.
 - **Function Type Typedefs**: Typedefs for function types must end with `_cb`
   (for "callback") (e.g., `network_event_cb`).
 - **Constants, Enum Members, and Goto Labels**: Must use
@@ -188,10 +189,32 @@ if (condition)
 ### Structured `switch` Cases
 
 Cimple enforces a more structured `switch` statement that prevents accidental
-fallthrough. Each `case` block must end explicitly with a `break;`, `return;`,
-or another `case` label to indicate intentional fallthrough. Arbitrary
-statements are not allowed to precede a `break` or `return` without being
-enclosed in a compound statement.
+fallthrough.
+
+- Each `case` block must end explicitly with a `break;`, `return;`, or another
+  case label to indicate intentional fallthrough.
+- **Mandatory Braces**: Any statements other than a single `break` or `return`
+  must be enclosed in a compound statement (`{...}`).
+
+**Invalid:**
+
+```c
+case VAL:
+    do_something();
+    break;
+```
+
+**Valid:**
+
+```c
+case VAL: {
+    do_something();
+    break;
+}
+
+case VAL:
+    break; // Single break is allowed without braces
+```
 
 ### `for` Loop Initialization and Advancement
 
@@ -373,10 +396,13 @@ not a valid statement in Cimple and will result in a parse error.
 
 ### No Anonymous or Nested Aggregate Types
 
-To enforce naming conventions and simplify static analysis, all structs,
-unions, and enums must be defined at the top level (global scope) and must be
-named. Anonymous aggregate types and aggregate types defined within another
-struct or union are not supported.
+To enforce naming conventions and simplify static analysis, all structs, unions,
+and enums must be defined at the top level (global scope) and must be named.
+Anonymous aggregate types and aggregate types defined within another struct or
+union are not supported.
+
+**Typedef Naming**: When using `typedef` to define an alias for a `struct`,
+`union`, or `enum`, the underlying aggregate itself must also be named.
 
 **Invalid:**
 
@@ -388,11 +414,21 @@ struct My_Struct {
         float b;
     } data;
 };
+
+typedef enum { // Unnamed enum inside typedef
+    VAL_A,
+    VAL_B
+} My_Enum;
 ```
 
 **Valid:**
 
 ```c
+typedef enum My_Enum {
+    VAL_A,
+    VAL_B
+} My_Enum;
+
 union My_Union {
     int a;
     float b;

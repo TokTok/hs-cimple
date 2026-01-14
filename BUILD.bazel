@@ -55,6 +55,7 @@ haskell_library(
         "//tools/haskell:__pkg__",
     ],
     deps = [
+        "//third_party/haskell:QuickCheck",
         "//third_party/haskell:aeson",
         "//third_party/haskell:base",
         "//third_party/haskell:data-fix",
@@ -202,7 +203,7 @@ haskell_library(
         "haskell",
         "no-cross",
     ],
-    version = "0.0.28",
+    version = "0.0.29",
     visibility = ["//visibility:public"],
     deps = [
         ":ast",
