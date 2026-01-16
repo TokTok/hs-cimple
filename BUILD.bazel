@@ -203,7 +203,7 @@ haskell_library(
         "haskell",
         "no-cross",
     ],
-    version = "0.0.29",
+    version = "0.0.30",
     visibility = ["//visibility:public"],
     deps = [
         ":ast",

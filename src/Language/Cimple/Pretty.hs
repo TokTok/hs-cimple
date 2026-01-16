@@ -357,9 +357,9 @@ ppNodeF = \case
         kwTypedef <+> proto <> semi
 
     ConstDecl ty name ->
-        kwExtern <+> kwConst <+> ty <+> ppLexeme name <> semi
+        kwExtern <+> ty <+> ppLexeme name <> semi
     ConstDefn scope ty name value ->
-        ppScope scope <> kwConst <+>
+        ppScope scope <>
         ty <+> ppLexeme name <+> equals <+> value <> semi
 
     Enumerator name  Nothing -> ppLexeme name <> comma

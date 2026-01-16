@@ -64,7 +64,7 @@ spec = do
                 , " * This is cool stuff."
                 , " */"
                 , ""
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
     describe "showNode" $ do

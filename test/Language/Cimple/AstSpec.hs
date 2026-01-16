@@ -29,7 +29,8 @@ spec = do
                 Fix (Compose (Annot () (
                     ConstDefn Global
                         (Fix (Compose (Annot () (
-                            TyStd (L (AlexPn 6 1 7) IdStdType "int")))))
+                            TyConst (Fix (Compose (Annot () (
+                                TyStd (L (AlexPn 6 1 7) IdStdType "int")))))))))
                         (L (AlexPn 10 1 11) IdVar "a")
                         (Fix (Compose (Annot () (
                             LiteralExpr Int (L (AlexPn 14 1 15) LitInteger "3"))))))))
@@ -38,7 +39,7 @@ spec = do
 
             addAnnot ast `shouldSatisfy` \case
                 (removeAnnot -> Fix (ConstDefn Global
-                    (Fix (TyStd (L (AlexPn 6 1 7) IdStdType "int")))
+                    (Fix (TyConst (Fix (TyStd (L (AlexPn 6 1 7) IdStdType "int")))))
                     (L (AlexPn 10 1 11) IdVar "a")
                     (Fix (LiteralExpr Int (L (AlexPn 14 1 15) LitInteger "3"))))) -> True
                 _ -> False

@@ -167,6 +167,7 @@ describeExpected options
     | ["ID_CONST", "sizeof", "LIT_CHAR", "LIT_FALSE", "LIT_INTEGER"] `isPrefixOf` options = "constant expression"
     | ["ID_CONST", "ID_SUE_TYPE", "'/*'" ] `isPrefixOf` options = "enumerator, type name, or comment"
     | wants ["'defined'"] = "preprocessor constant expression"
+    | wants ["ID_CONST", "sizeof", "LIT_CHAR", "LIT_FLOAT", "LIT_FALSE", "LIT_TRUE", "LIT_INTEGER", "LIT_STRING", "'('", "'\\n'"] = "macro body"
     | wants ["'&'", "'&&'", "'*'", "'=='", "';'"] = "operator or end of statement"
     | wants ["'&'", "'&&'", "'*'", "'^'", "'!='"] = "operator"
     | wants ["ID_CONST", "ID_VAR", "LIT_CHAR", "'*'", "'('"] = "expression"
@@ -175,6 +176,7 @@ describeExpected options
     | ["'&='", "'->'", "'*='"] `isPrefixOf` options = "assignment or member/array access"
     | wants ["'='", "'*='", "'/='", "'+='", "'-='"] = "assignment operator"
     | wants ["CMT_WORD"] = "comment contents"
+    | wants ["','", "'}'", "'/*'"] = "',' or closing brace (or a comment)"
 
     | length options == 2 = commaOr options
     | otherwise           = "one of " <> commaOr options

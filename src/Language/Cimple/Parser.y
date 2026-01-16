@@ -26,8 +26,7 @@ import           Language.Cimple.Lexer       (Alex, AlexPosn (..), Lexeme (..),
 import           Language.Cimple.Tokens      (LexemeClass (..))
 }
 
--- Conflict between (static) FunctionDecl and (static) ConstDecl.
-%expect 2
+%expect 0
 
 %name parseTranslationUnit TranslationUnit
 %name parseExpr Expr
@@ -290,8 +289,8 @@ IgnoreBody
 |	IgnoreBody IGN_BODY					{ $2 : $1 }
 
 PreprocIfdef(decls)
-:	'#ifdef' ID_CONST decls PreprocElse(decls) Endif	{ Fix $ PreprocIfdef $2 (reverse $3) $4 }
-|	'#ifndef' ID_CONST decls PreprocElse(decls) Endif	{ Fix $ PreprocIfndef $2 (reverse $3) $4 }
+:	'#ifdef' ID_CONST decls PreprocElif(decls) Endif	{ Fix $ PreprocIfdef $2 (reverse $3) $4 }
+|	'#ifndef' ID_CONST decls PreprocElif(decls) Endif	{ Fix $ PreprocIfndef $2 (reverse $3) $4 }
 
 PreprocIf(decls)
 :	'#if' PreprocConstExpr '\n' decls PreprocElif(decls) Endif	{ Fix $ PreprocIf $2 (reverse $4) $5 }
@@ -784,9 +783,9 @@ FunctionParam
 
 ConstDecl :: { NonTerm }
 ConstDecl
-:	extern const GlobalLeafType ID_VAR ';'			{ Fix $ ConstDecl $3 $4 }
-|	const GlobalLeafType ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Global $2 $3 $5 }
-|	static const GlobalLeafType ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Static $3 $4 $6 }
+:	extern QualType(GlobalLeafType) ID_VAR ';'			{ Fix $ ConstDecl $2 $3 }
+|	QualType(GlobalLeafType) ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Global $1 $2 $4 }
+|	static QualType(GlobalLeafType) ID_VAR '=' InitialiserExpr ';'	{ Fix $ ConstDefn Static $2 $3 $5 }
 
 {
 type Term = Lexeme Text

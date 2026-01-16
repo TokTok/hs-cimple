@@ -34,6 +34,10 @@ spec = do
             let ast = parseText "int a(void) { return 3; }"
             ast `shouldSatisfy` isRight1
 
+        it "should parse a const function declaration" $ do
+            let ast = parseText "const int f(void);"
+            ast `shouldSatisfy` isRight1
+
         it "should parse dereferencing a function pointer" $ do
             let ast = parseText "void f() { struct My_Struct s_var = *get_s(1); }"
             ast `shouldSatisfy` isRight1
@@ -66,6 +70,66 @@ spec = do
                     , "  int y;"
                     , "};"
                     ]
+            ast `shouldSatisfy` isRight1
+
+        it "should parse #ifdef/#elif" $ do
+            let ast = parseText $ Text.unlines
+                    [ "struct Foo {"
+                    , "  int x;"
+                    , "#ifdef HAVE_FOO_BAR"
+                    , "  int foo_bar;"
+                    , "#elif defined(HAVE_BAR_FOO)"
+                    , "  int bar_foo;"
+                    , "#endif /* HAVE_FOO_BAR */"
+                    , "  int y;"
+                    , "};"
+                    ]
+            ast `shouldSatisfy` isRight1
+
+        it "should parse #ifndef/#elif" $ do
+            let ast = parseText $ Text.unlines
+                    [ "struct Foo {"
+                    , "  int x;"
+                    , "#ifndef HAVE_FOO_BAR"
+                    , "  int foo_bar;"
+                    , "#elif defined(HAVE_BAR_FOO)"
+                    , "  int bar_foo;"
+                    , "#endif /* HAVE_FOO_BAR */"
+                    , "  int y;"
+                    , "};"
+                    ]
+            ast `shouldSatisfy` isRight1
+
+        it "should parse LOGGER_INFO as a constant" $ do
+            let ast = parseText "void f() { int x = LOGGER_INFO; }"
+            ast `shouldSatisfy` isRight1
+
+        it "should parse IP_ADAPTER_INFO as a type" $ do
+            let ast = parseText "void f() { IP_ADAPTER_INFO *x; }"
+            ast `shouldSatisfy` isRight1
+
+        it "should parse LARGE_INTEGER as a type" $ do
+            let ast = parseText "void f() { LARGE_INTEGER x; }"
+            ast `shouldSatisfy` isRight1
+
+        it "should parse POLLIN as a constant" $ do
+            let ast = parseText "void f() { int x = POLLIN; }"
+            ast `shouldSatisfy` isRight1
+
+        it "should parse WSAEWOULDBLOCK as a constant" $ do
+            let ast = parseText "void f() { int x = WSAEWOULDBLOCK; }"
+            ast `shouldSatisfy` isRight1
+
+        it "should parse WSADATA as a type" $ do
+            let ast = parseText "void f() { WSADATA wsaData; }"
+            ast `shouldSatisfy` isRight1
+
+        it "should parse DHT as a type" $ do
+            let ast = parseText "void f() { DHT *dht; }"
+            ast `shouldSatisfy` isRight1
+
+        it "should parse _WIN32 as a constant" $ do
+            let ast = parseText "void f() { int x = _WIN32; }"
             ast `shouldSatisfy` isRight1
 
         it "should parse a comment" $ do

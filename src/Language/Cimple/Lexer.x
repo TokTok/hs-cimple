@@ -43,6 +43,28 @@ import           Test.QuickCheck        (Arbitrary (..))
 
 %wrapper "monadUserState-bytestring"
 
+$digit          = [0-9]
+$alpha          = [a-zA-Z]
+$upper          = [A-Z]
+$lower          = [a-z]
+
+@alphanum       = $alpha | $digit
+@alphanum_      = $alpha | $digit | \_
+
+@ident_upper    = $upper ($upper | $digit | \_)*
+@ident_lower    = $lower ($lower | $digit | \_)*
+
+@upper_snake    = $upper ($upper | $digit)* \_ ($upper | $digit | \_)*
+@lower_snake    = $lower ($lower | $digit)* \_ ($lower | $digit | \_)*
+@pascal_case    = $upper @alphanum_* $lower @alphanum_*
+@camel_case     = $lower @alphanum_* $upper @alphanum_*
+
+@win_type_prefix = WSA (EVENT | DATA) | LP (STR | TSTR | SOCKADDR)
+@win_type_suffix = $upper @alphanum* (INFO | DATA | PARAMS | HEADER | STRUCT | UNION | INTEGER | TIME | STATUS | EVENT)
+@win_type_extra  = IP_ADAPTER_INFO | LARGE_INTEGER | ULARGE_INTEGER
+@win_type_common = DWORD | WORD | BYTE | BOOL | SOCKET | INT | UINT | LONG | ULONG | SHORT | USHORT | CHAR | UCHAR | FILETIME | HANDLE | LONGLONG
+@win_type        = @win_type_prefix | @win_type_suffix | @win_type_extra | @win_type_common | u_long | u_int | u_short | u_char
+
 tokens :-
 
 -- Ignore attributes.
@@ -50,20 +72,14 @@ tokens :-
 <0>		"VLA"					{ mkL KwVla }
 
 -- Winapi functions.
-<0>		"FormatMessageA"			{ mkL IdVar }
-<0>		"GetAdaptersInfo"			{ mkL IdVar }
-<0>		"GetSystemTimeAsFileTime"		{ mkL IdVar }
-<0>		"GetTickCount"				{ mkL IdVar }
-<0>		"LocalFree"				{ mkL IdVar }
-<0>		"QueryPerformanceCounter"		{ mkL IdVar }
-<0>		"QueryPerformanceFrequency"		{ mkL IdVar }
+<0>		"Device" @pascal_case			{ mkL IdVar }
+<0>		"FormatMessage" [AW]?			{ mkL IdVar }
+<0>		"Get" @pascal_case			{ mkL IdVar }
+<0>		("Local"|"Heap") ("Alloc"|"Free")	{ mkL IdVar }
+<0>		"Query" @pascal_case			{ mkL IdVar }
 <0>		"SecureZeroMemory"			{ mkL IdVar }
-<0>		"WSAAddressToString"("A"?)		{ mkL IdVar }
-<0>		"WSACleanup"				{ mkL IdVar }
-<0>		"WSAGetLastError"			{ mkL IdVar }
-<0>		"WSASetLastError"			{ mkL IdVar }
-<0>		"WSAStartup"				{ mkL IdVar }
-<0>		"WSAStringToAddress"("A"?)		{ mkL IdVar }
+<0>		"Sleep"					{ mkL IdVar }
+<0>		"WSA" @pascal_case			{ mkL IdVar }
 
 -- Winapi struct members.
 <0>		"GatewayList"				{ mkL IdVar }
@@ -75,17 +91,7 @@ tokens :-
 <0>		"String"				{ mkL IdVar }
 
 -- Windows typedefs.
-<0>		"DWORD"					{ mkL IdStdType }
-<0>		"FILETIME"				{ mkL IdStdType }
-<0>		"INT"					{ mkL IdStdType }
-<0>		"LPSOCKADDR"				{ mkL IdStdType }
-<0>		"IP_ADAPTER_INFO"			{ mkL IdStdType }
-<0>		"LPSTR"					{ mkL IdStdType }
-<0>		"LPTSTR"				{ mkL IdStdType }
-<0>		"u_long"				{ mkL IdStdType }
-<0>		"LARGE_INTEGER"				{ mkL IdStdType }
-<0>		"SOCKET"				{ mkL IdStdType }
-<0>		"WSADATA"				{ mkL IdStdType }
+<0,ppSC>	@win_type				{ mkL IdStdType }
 
 -- System struct types.
 <0>		"addrinfo"				{ mkL IdSueType }
@@ -99,33 +105,10 @@ tokens :-
 <0>		"in_addr"				{ mkL IdSueType }
 <0>		"in6_addr"				{ mkL IdSueType }
 <0>		"ipv6_mreq"				{ mkL IdSueType }
-<0>		"sockaddr"				{ mkL IdSueType }
-<0>		"sockaddr_in"				{ mkL IdSueType }
-<0>		"sockaddr_in6"				{ mkL IdSueType }
-<0>		"sockaddr_storage"			{ mkL IdSueType }
+<0>		"pollfd"				{ mkL IdSueType }
+<0>		"sockaddr"("_in"|"_in6"|"_storage")?	{ mkL IdSueType }
 <0>		"timespec"				{ mkL IdSueType }
 <0>		"timeval"				{ mkL IdSueType }
-
--- Msgpack struct types.
-<0>		"msgpack_iovec"				{ mkL IdSueType }
-<0>		"msgpack_object_array"			{ mkL IdSueType }
-<0>		"msgpack_object_bin"			{ mkL IdSueType }
-<0>		"msgpack_object_ext"			{ mkL IdSueType }
-<0>		"msgpack_object_kv"			{ mkL IdSueType }
-<0>		"msgpack_object_map"			{ mkL IdSueType }
-<0>		"msgpack_object"			{ mkL IdSueType }
-<0>		"msgpack_object_str"			{ mkL IdSueType }
-<0>		"msgpack_object_type"			{ mkL IdSueType }
-<0>		"msgpack_packer"			{ mkL IdSueType }
-<0>		"msgpack_packer_write"			{ mkL IdFuncType }
-<0>		"msgpack_sbuffer"			{ mkL IdSueType }
-<0>		"msgpack_timestamp"			{ mkL IdSueType }
-<0>		"msgpack_unpacked"			{ mkL IdSueType }
-<0>		"msgpack_unpacker"			{ mkL IdSueType }
-<0>		"msgpack_unpack_return"			{ mkL IdSueType }
-<0>		"msgpack_vrefbuffer"			{ mkL IdSueType }
-<0>		"msgpack_zbuffer"			{ mkL IdSueType }
-<0>		"msgpack_zone"				{ mkL IdSueType }
 
 -- Sodium types.
 <0>		"crypto_generichash_blake2b_state"	{ mkL IdSueType }
@@ -207,6 +190,7 @@ tokens :-
 <0,ppSC>	"long int"				{ mkL IdStdType }
 <0,ppSC>	"long signed int"			{ mkL IdStdType }
 <0,ppSC>	"long"					{ mkL IdStdType }
+<0,ppSC>	"long long"				{ mkL IdStdType }
 <0,ppSC>	"signed int"				{ mkL IdStdType }
 <0,ppSC>	"unsigned int"				{ mkL IdStdType }
 <0,ppSC>	"unsigned long"				{ mkL IdStdType }
@@ -217,15 +201,18 @@ tokens :-
 <0,ppSC>	"true"					{ mkL LitTrue }
 <0,ppSC>	"__func__"				{ mkL IdVar }
 <0,ppSC>	"nullptr"				{ mkL IdConst }
-<0,ppSC>	"__"[a-zA-Z]+"__"?			{ mkL IdConst }
-<0,ppSC>	[A-Z][A-Z0-9_]{1,2}			{ mkL IdSueType }
-<0,ppSC>	_*[A-Z][A-Z0-9_]*			{ mkL IdConst }
-<0,ppSC>	[A-Z][A-Za-z0-9_]*[a-z][A-Za-z0-9_]*	{ mkL IdSueType }
-<0,ppSC>	"cmp_"[a-z][a-z0-9_]*_[suet]		{ mkL IdSueType }
-<0,ppSC>	[a-z][a-z0-9_]*_t			{ mkL IdStdType }
-<0,ppSC>	[a-z][a-z0-9_]*_cb			{ mkL IdFuncType }
-<0,ppSC>	"cmp_"("reader"|"writer"|"skipper")	{ mkL IdFuncType }
-<0,ppSC>	[a-z][A-Za-z0-9_]*			{ mkL IdVar }
+<0,ppSC>	"nullptr"				{ mkL IdConst }
+<0,ppSC>	"__" @alphanum_+ "__"?			{ mkL IdConst }
+<0,ppSC>	"_" @ident_upper			{ mkL IdConst }
+<0,ppSC>	$upper ($upper | $digit | \_){1,2}	{ mkL IdSueType }
+<0,ppSC>	@ident_upper				{ mkL IdConst }
+<0,ppSC>	@pascal_case				{ mkL IdSueType }
+<0,ppSC>	"cmp_" @ident_lower "_" [suet]		{ mkL IdSueType }
+<0,ppSC>	@ident_lower "_t"			{ mkL IdStdType }
+<0,ppSC>	@ident_lower "_cb"			{ mkL IdFuncType }
+<0,ppSC>	"cmp_" ("reader"|"writer"|"skipper")	{ mkL IdFuncType }
+<0,ppSC>	@camel_case				{ mkL IdVar }
+<0,ppSC>	@ident_lower				{ mkL IdVar }
 <0,ppSC,cmtSC>	[0-9]+[LU]*				{ mkL LitInteger }
 <0,ppSC,cmtSC>	[0-9]+"."[0-9]+[Ff]?			{ mkL LitFloat }
 <0,ppSC>	0x[0-9a-fA-F]+[LU]*			{ mkL LitInteger }

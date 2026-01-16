@@ -45,13 +45,13 @@ spec = do
                 [ "/**"
                 , " * @brief hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @brief hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a doc comment with a paragraph" $
@@ -61,7 +61,7 @@ spec = do
                 , " *"
                 , " * There's more to say about today."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
@@ -69,7 +69,7 @@ spec = do
                 , " *"
                 , " * There's more to say about today."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a @param" $
@@ -77,13 +77,13 @@ spec = do
                 [ "/**"
                 , " * @param p1 hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @param p1 hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a @param with [in] attribute" $
@@ -91,13 +91,13 @@ spec = do
                 [ "/**"
                 , " * @param[in] p1 hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @param[in] p1 hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a @return" $
@@ -105,13 +105,13 @@ spec = do
                 [ "/**"
                 , " * @return hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @return hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a @retval" $
@@ -120,14 +120,14 @@ spec = do
                 , " * @retval 0 Success."
                 , " * @retval 1 Failure."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @retval 0 Success."
                 , " * @retval 1 Failure."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a bullet list" $
@@ -136,14 +136,14 @@ spec = do
                 , " * - item 1"
                 , " * - item 2"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * - item 1"
                 , " * - item 2"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a nested bullet list" $
@@ -153,7 +153,7 @@ spec = do
                 , " *   - nested item 1"
                 , " * - item 2"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
@@ -161,7 +161,7 @@ spec = do
                 , " *   - nested item 1"
                 , " * - item 2"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a numbered list" $
@@ -170,14 +170,14 @@ spec = do
                 , " * 1. item 1"
                 , " * 2. item 2"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * 1. item 1"
                 , " * 2. item 2"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a code block" $
@@ -188,7 +188,7 @@ spec = do
                 , " *     y = 3;"
                 , " * @endcode"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
@@ -197,7 +197,7 @@ spec = do
                 , " *     y = 3;"
                 , " * @endcode"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @deprecated" $
@@ -205,13 +205,13 @@ spec = do
                 [ "/**"
                 , " * @deprecated Use new_function instead."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @deprecated Use new_function instead."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @see" $
@@ -219,13 +219,13 @@ spec = do
                 [ "/**"
                 , " * @see other_function for more details."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @see other_function for more details."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @attention" $
@@ -233,13 +233,13 @@ spec = do
                 [ "/**"
                 , " * @attention This is important."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @attention This is important."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @note" $
@@ -247,13 +247,13 @@ spec = do
                 [ "/**"
                 , " * @note This is a note."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @note This is a note."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @private" $
@@ -261,13 +261,13 @@ spec = do
                 [ "/**"
                 , " * @private"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @private"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @extends" $
@@ -275,13 +275,13 @@ spec = do
                 [ "/**"
                 , " * @extends BaseClass"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @extends BaseClass"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @implements" $
@@ -289,13 +289,13 @@ spec = do
                 [ "/**"
                 , " * @implements Interface"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @implements Interface"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @security_rank" $
@@ -303,13 +303,13 @@ spec = do
                 [ "/**"
                 , " * @security_rank(sink, data, 1)"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @security_rank(sink, data, 1)"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print a complex comment" $
@@ -324,7 +324,7 @@ spec = do
                 , " * @param p1 Description for p1."
                 , " * @return Description for return."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
@@ -337,7 +337,7 @@ spec = do
                 , " * @param p1 Description for p1."
                 , " * @return Description for return."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print words with operators" $
@@ -345,13 +345,13 @@ spec = do
                 [ "/**"
                 , " * check if x == 5"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * check if x == 5"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @ref" $
@@ -359,13 +359,13 @@ spec = do
                 [ "/**"
                 , " * see @ref my_ref"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * see @ref my_ref"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @p" $
@@ -373,13 +373,13 @@ spec = do
                 [ "/**"
                 , " * @p my_p"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @p my_p"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @file" $
@@ -387,13 +387,13 @@ spec = do
                 [ "/**"
                 , " * @file"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @file"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @section" $
@@ -401,13 +401,13 @@ spec = do
                 [ "/**"
                 , " * @section sec_id sec_title"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @section sec_id sec_title"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print @subsection" $
@@ -415,13 +415,13 @@ spec = do
                 [ "/**"
                 , " * @subsection subsec_id subsec_title"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * @subsection subsec_id subsec_title"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print words with colon" $
@@ -429,13 +429,13 @@ spec = do
                 [ "/**"
                 , " * Note:"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * Note:"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print words with parens" $
@@ -443,13 +443,13 @@ spec = do
                 [ "/**"
                 , " * (Note)"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * (Note)"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print words with parens including long sentences going to the next line" $
@@ -458,14 +458,14 @@ spec = do
                 , " * This is a comment (and there is more"
                 , " * to say about this)."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * This is a comment (and there is more"
                 , " * to say about this)."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print words with operators" $
@@ -473,13 +473,13 @@ spec = do
                 [ "/**"
                 , " * a + b = c"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * a + b = c"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print words with assignment" $
@@ -487,13 +487,13 @@ spec = do
                 [ "/**"
                 , " * x = 5"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * x = 5"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should pretty-print sentences with various punctuation" $
@@ -503,7 +503,7 @@ spec = do
                 , " * This is exciting!"
                 , " * This is a clause;"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
@@ -511,7 +511,7 @@ spec = do
                 , " * This is exciting!"
                 , " * This is a clause;"
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should allow numbers in the text" $
@@ -519,13 +519,13 @@ spec = do
                 [ "/**"
                 , " * I have 3 things on my mind."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * I have 3 things on my mind."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
 
         it "should allow numbers at the start of the text" $
@@ -534,14 +534,14 @@ spec = do
                 , " * I have 3 things on my mind. You have"
                 , " * 20 things on your mind. We are not the same."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * I have 3 things on my mind. You have"
                 , " * 20 things on your mind. We are not the same."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ]
 
         it "should allow numbers at the end of the sentence at the start of a line" $
@@ -550,14 +550,14 @@ spec = do
                 , " * I have 3 things on my mind. The number of things on your mind is"
                 , " * 20."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
                 , " * I have 3 things on my mind. The number of things on your mind is"
                 , " * 20."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ]
 
         it "should treat numbers like words and be able to continue normally" $
@@ -567,7 +567,7 @@ spec = do
                 , " * 1, maybe more or less, and we can talk a lot about"
                 , " * 2022. This is the next sentence."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
@@ -575,7 +575,7 @@ spec = do
                 , " * 1, maybe more or less, and we can talk a lot about"
                 , " * 2022. This is the next sentence."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ]
 
         it "should print numbered lists as is" $
@@ -588,7 +588,7 @@ spec = do
                 , " *"
                 , " * Here is some more text not part of the list items."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ])
             `shouldBe` unlines
                 [ "/**"
@@ -599,7 +599,7 @@ spec = do
                 , " *"
                 , " * Here is some more text not part of the list items."
                 , " */"
-                , "const int my_mind = 3;"
+                , "int const my_mind = 3;"
                 ]
 
         it "should pretty-print a doc comment with content on the first line" $
@@ -607,11 +607,11 @@ spec = do
                 [ "/** @file test.c"
                 , " * @brief hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ])
             `shouldBe` unlines
                 [ "/** @file test.c"
                 , " * @brief hello world."
                 , " */"
-                , "const int abc = 3;"
+                , "int const abc = 3;"
                 ]
