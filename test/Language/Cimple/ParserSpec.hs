@@ -72,6 +72,10 @@ spec = do
                     ]
             ast `shouldSatisfy` isRight1
 
+        it "should parse a typedef with an array" $ do
+            let ast = parseText "typedef uint8_t Public_Key[32];"
+            ast `shouldSatisfy` isRight1
+
         it "should parse #ifdef/#elif" $ do
             let ast = parseText $ Text.unlines
                     [ "struct Foo {"

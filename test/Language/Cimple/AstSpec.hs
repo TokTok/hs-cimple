@@ -127,7 +127,7 @@ spec = do
             test (EnumDecl "l" ["as"] "l'") (EnumDecl "l-l" ["a-as"] "l-l'")
             test (Enumerator "l" (Just "ma")) (Enumerator "l-l" (Just "a-ma"))
             test (AggregateDecl "a") (AggregateDecl "a-a")
-            test (Typedef "a" "l") (Typedef "a-a" "l-l")
+            test (Typedef "a" "l" ["as"]) (Typedef "a-a" "l-l" ["a-as"])
             test (TypedefFunction "a") (TypedefFunction "a-a")
             test (Struct "l" ["as"]) (Struct "l-l" ["a-as"])
             test (Union "l" ["as"]) (Union "l-l" ["a-as"])

@@ -106,7 +106,7 @@ data NodeF lexeme a
     | EnumDecl lexeme [a] lexeme
     | Enumerator lexeme (Maybe a)
     | AggregateDecl a
-    | Typedef a lexeme
+    | Typedef a lexeme [a]
     | TypedefFunction a
     | Struct lexeme [a]
     | Union lexeme [a]
@@ -205,7 +205,7 @@ instance Bifunctor NodeF where
         EnumDecl l as l' -> EnumDecl (f l) (map g as) (f l')
         Enumerator l ma -> Enumerator (f l) (fmap g ma)
         AggregateDecl a -> AggregateDecl (g a)
-        Typedef a l -> Typedef (g a) (f l)
+        Typedef a l as -> Typedef (g a) (f l) (map g as)
         TypedefFunction a -> TypedefFunction (g a)
         Struct l as -> Struct (f l) (map g as)
         Union l as -> Union (f l) (map g as)

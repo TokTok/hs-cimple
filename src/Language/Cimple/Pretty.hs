@@ -351,8 +351,8 @@ ppNodeF = \case
             kwUnion <+> ppLexeme name <+> lbrace <> line <>
             vcat members
         ) <> line <> rbrace
-    Typedef ty tyname ->
-        kwTypedef <+> ty <+> dullgreen (ppLexeme tyname) <> semi
+    Typedef ty tyname arrs ->
+        kwTypedef <+> ty <+> dullgreen (ppLexeme tyname) <> hcat arrs <> semi
     TypedefFunction proto ->
         kwTypedef <+> proto <> semi
 

@@ -660,7 +660,7 @@ EnumeratorName
 AggregateDecl :: { NonTerm }
 AggregateDecl
 :	AggregateType ';'					{ Fix $ AggregateDecl $1 }
-|	typedef AggregateType ID_SUE_TYPE ';'			{ Fix $ Typedef $2 $3 }
+|	typedef AggregateType ID_SUE_TYPE ';'			{ Fix $ Typedef $2 $3 [] }
 
 AggregateType :: { NonTerm }
 AggregateType
@@ -685,9 +685,9 @@ MemberDecl
 
 TypedefDecl :: { NonTerm }
 TypedefDecl
-:	typedef QualType(GlobalLeafType) ID_SUE_TYPE ';'	{ Fix $ Typedef $2 $3 }
+:	typedef QualType(GlobalLeafType) ID_SUE_TYPE DeclSpecArrays ';'	{ Fix $ Typedef $2 $3 $4 }
 |	typedef FunctionPrototype(ID_FUNC_TYPE) ';'		{ Fix $ TypedefFunction $2 }
-|	struct ID_SUE_TYPE ';'					{ Fix $ Typedef (Fix (TyStruct $2)) $2 }
+|	struct ID_SUE_TYPE ';'					{ Fix $ Typedef (Fix (TyStruct $2)) $2 [] }
 
 QualType(leafType)
 :	bitwise ID_STD_TYPE					{ Fix (TyBitwise (Fix (TyStd $2))) }

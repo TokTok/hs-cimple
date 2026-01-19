@@ -297,8 +297,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (Enumerator <$> recurse name <*> recurse value)
         AggregateDecl struct ->
             Fix <$> (AggregateDecl <$> recurse struct)
-        Typedef ty name ->
-            Fix <$> (Typedef <$> recurse ty <*> recurse name)
+        Typedef ty name arrs ->
+            Fix <$> (Typedef <$> recurse ty <*> recurse name <*> recurse arrs)
         TypedefFunction ty ->
             Fix <$> (TypedefFunction <$> recurse ty)
         Struct name members ->

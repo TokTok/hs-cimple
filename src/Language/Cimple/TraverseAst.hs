@@ -377,9 +377,10 @@ instance TraverseAst text (Node (Lexeme text)) where
         AggregateDecl struct -> do
             _ <- recurse struct
             pure ()
-        Typedef ty name -> do
+        Typedef ty name arrs -> do
             _ <- recurse ty
             _ <- recurse name
+            _ <- recurse arrs
             pure ()
         TypedefFunction ty ->
             recurse ty

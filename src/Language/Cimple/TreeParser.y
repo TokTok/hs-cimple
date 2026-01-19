@@ -105,7 +105,7 @@ import           Language.Cimple.Tokens        (LexemeClass (..))
     enumerator		{ Fix (Enumerator{}) }
     aggregateDecl	{ Fix (AggregateDecl{}) }
     typedefFunction	{ Fix (TypedefFunction{}) }
-    typedefStruct	{ Fix (Typedef (Fix Struct{}) _) }
+    typedefStruct	{ Fix (Typedef (Fix Struct{}) _ _) }
     typedef		{ Fix (Typedef{}) }
     struct		{ Fix (Struct{}) }
     union		{ Fix (Union{}) }
@@ -253,9 +253,9 @@ processAggregate (Fix (Union name members)) = do
 processAggregate (Fix (AggregateDecl agg)) = do
     processedAgg <- processAggregate agg
     return $ Fix (AggregateDecl processedAgg)
-processAggregate (Fix (Typedef agg name)) = do
+processAggregate (Fix (Typedef agg name arrs)) = do
     processedAgg <- processAggregate agg
-    return $ Fix (Typedef processedAgg name)
+    return $ Fix (Typedef processedAgg name arrs)
 processAggregate n = return n -- Return other types unchanged
 
 recurse :: ([NonTerm] -> ParseResult [NonTerm]) -> NonTerm -> ParseResult NonTerm
