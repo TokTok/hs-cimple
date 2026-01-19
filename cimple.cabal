@@ -125,6 +125,7 @@ test-suite testsuite
     Language.Cimple.ParserSpec
     Language.Cimple.PrettyCommentSpec
     Language.Cimple.PrettySpec
+    Language.Cimple.DiagnosticsSpec
     Language.CimpleSpec
 
   ghc-options:        -Wall -Wno-unused-imports
@@ -133,9 +134,11 @@ test-suite testsuite
       QuickCheck
     , base                 <5
     , cimple
+    , containers
     , data-fix
     , extra
     , hspec
+    , mtl
     , prettyprinter
     , prettyprinter-ansi-terminal
     , text
