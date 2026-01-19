@@ -182,7 +182,7 @@ renderPure cache = map (formatRichError cache)
         ] ++
         [ annotate (colorDull White) (pretty (replicate (width - 1) ' ') <> "-->") <+> annotate (bold <> color White) (pretty (posFile p) <> ":" <> pretty (posLine p) <> ":" <> pretty (posColumn p))
         | isRealPos p ] ++
-        (if null snippet then [] else [annotate (colorDull White) (pretty (replicate width ' ') <> "|")] ++ snippet ++ [annotate (colorDull White) (pretty (replicate width ' ') <> "|")]) ++
+        (if null snippet then [] else [annotate (colorDull White) (pretty (replicate width ' ') <> "|")] ++ snippet) ++
         map formatFooter footers
       where
                 header = case level of
@@ -218,7 +218,7 @@ renderPure cache = map (formatRichError cache)
                     let mFileLines = if isRealPos sp then Map.lookup (posFile sp) cache' else Nothing
                         row = posLine sp
                         rowStr = show row
-                        gutterStr = replicate (width - length rowStr) ' ' ++ rowStr ++ "|"
+                        gutterStr = replicate (max 0 (width - length rowStr)) ' ' ++ rowStr ++ "|"
                         gutter = pretty gutterStr
                         lineText = case mFileLines of
                                      Just fileLines | row > 0 && row <= length fileLines ->
@@ -248,8 +248,12 @@ renderPure cache = map (formatRichError cache)
                         -- Calculate visual width of that prefix (handling tabs).
                         visualCol = Text.length (expandTabs 8 prefix)
 
+                        -- Calculate visual width of the span.
+                        spanText = Text.take (byteToCharOffset (Text.drop charCol sourceLine) l) (Text.drop charCol sourceLine)
+                        visualLen = Text.length (expandTabs 8 spanText)
+
                         padding = replicate visualCol ' '
-                        underline = annotate (color Red <> bold) (pretty padding <> pretty (Text.replicate (max 1 l) "^"))
+                        underline = annotate (color Red <> bold) (pretty padding <> pretty (replicate (max 1 visualLen) '^'))
                         labelDocs = map (\lab -> line <> pretty (replicate width ' ') <> "|" <+> pretty padding <> align lab) labels
                         fullLabel = if null labels
                                     then mempty

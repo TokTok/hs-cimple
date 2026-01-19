@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts  #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Cimple.DiagnosticsSpec where
 
@@ -7,6 +8,7 @@ import           Data.Map.Strict             (Map)
 import qualified Data.Map.Strict             as Map
 import           Data.Text                   (Text)
 import qualified Data.Text                   as Text
+import           GHC.Stack                   (HasCallStack)
 import           Language.Cimple             (AlexPosn (..), BinaryOp (..),
                                               Lexeme (..), LexemeClass (..),
                                               NodeF (..))
@@ -80,21 +82,18 @@ spec = do
                 , "   --> test.c:1:1"
                 , "    |"
                 , "    | ^"
-                , "    |"
                 ]
             shouldRenderTo mempty [mkDiag NoteLevel "note"]
                 [ "note: note"
                 , "   --> test.c:1:1"
                 , "    |"
                 , "    | ^"
-                , "    |"
                 ]
             shouldRenderTo mempty [mkDiag HelpLevel "help"]
                 [ "help: help"
                 , "   --> test.c:1:1"
                 , "    |"
                 , "    | ^"
-                , "    |"
                 ]
 
         it "renders flags" $ do
@@ -112,7 +111,6 @@ spec = do
                 , "   --> test.c:1:1"
                 , "    |"
                 , "    | ^"
-                , "    |"
                 ]
 
         it "renders multiline messages" $ do
@@ -131,7 +129,6 @@ spec = do
                 , "   --> test.c:1:1"
                 , "    |"
                 , "    | ^"
-                , "    |"
                 ]
 
         it "renders line numbers > 1000 correctly" $ do
@@ -152,7 +149,6 @@ spec = do
                 , "    |"
                 , "1000| target line"
                 , "    | ^^^^^^"
-                , "    |"
                 ]
 
         it "renders line numbers > 10000 correctly" $ do
@@ -173,7 +169,6 @@ spec = do
                 , "     |"
                 , "10000| target line"
                 , "     | ^^^^^^"
-                , "     |"
                 ]
 
         it "renders a simple error without source context" $ do
@@ -190,8 +185,7 @@ spec = do
                 [ "error: something went wrong"
                 , "   --> test.c:1:1"
                 , "    |"
-                , "    | ^^^^^"
-                , "    |"
+                , "    | ^"
                 ]
 
         it "renders an error with source context" $ do
@@ -212,7 +206,6 @@ spec = do
                 , "    |"
                 , "   1| int x = ;"
                 , "    |         ^"
-                , "    |"
                 ]
 
         it "renders an error with multiple spans" $ do
@@ -241,7 +234,6 @@ spec = do
                 , "    |             ^"
                 , "    |             |"
                 , "    |             this is float"
-                , "    |"
                 ]
 
         it "renders footers" $ do
@@ -259,7 +251,6 @@ spec = do
                 , "   --> test.c:1:1"
                 , "    |"
                 , "    | ^"
-                , "    |"
                 , "    = note: did you mean something else?"
                 ]
 
@@ -295,7 +286,6 @@ spec = do
                 , "    | ^^^^^"
                 , "    | |"
                 , "    | usage"
-                , "    |"
                 ]
 
         it "includes implicit primary span if not present in spans" $ do
@@ -321,7 +311,6 @@ spec = do
                 , "    | |"
                 , "    | type"
                 , "    |     ^"
-                , "    |"
                 ]
 
     describe "diagToText" $ do
@@ -367,7 +356,6 @@ spec = do
                 , "    |"
                 , "   1| abc     var"
                 , "    |         ^^^"
-                , "    |"
                 ]
 
         it "handles multi-byte characters correctly" $ do
@@ -401,10 +389,9 @@ spec = do
                 , "    |"
                 , "   1| /* é */ int x;"
                 , "    |         ^^^"
-                , "    |"
                 ]
 
-shouldRenderTo :: Map FilePath [Text] -> [Diagnostic CimplePos] -> [Text] -> Expectation
+shouldRenderTo :: HasCallStack => Map FilePath [Text] -> [Diagnostic CimplePos] -> [Text] -> Expectation
 shouldRenderTo cache diags expected =
     let docs = renderPure cache diags
         opts = defaultLayoutOptions { layoutPageWidth = Unbounded }
