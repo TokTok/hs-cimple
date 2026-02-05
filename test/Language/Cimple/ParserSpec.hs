@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase        #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Language.Cimple.ParserSpec where
 
@@ -139,6 +140,12 @@ spec = do
         it "should parse a comment" $ do
             let ast = parseText "/* hello */"
             ast `shouldSatisfy` isRight1
+
+        it "should parse postfix nullability on a pointer" $ do
+            let ast = parseText "void foo(int _Nonnull *p);"
+            case ast of
+                Right [Fix (FunctionDecl _ (Fix (FunctionPrototype _ _ [Fix (VarDecl (Fix (TyPointer (Fix (TyNonnull (Fix (TyStd _)))))) (L _ _ "p") [])])))] -> return ()
+                _ -> expectationFailure $ "Unexpected AST: " ++ show ast
 
         it "supports single declarators" $ do
             let ast = parseText "int main() { int a; }"

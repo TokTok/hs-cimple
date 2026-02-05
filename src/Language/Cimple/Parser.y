@@ -692,18 +692,12 @@ TypedefDecl
 QualType(leafType)
 :	bitwise ID_STD_TYPE					{ Fix (TyBitwise (Fix (TyStd $2))) }
 |	force QualType(leafType)				{ Fix (TyForce $2) }
-|	leafType ConstQual					{                              ($2      $1)    }
-|	leafType ConstQual '*'					{                (tyPointer ($2      $1))   }
-|	leafType ConstQual '*' QualList				{                $4 (tyPointer ($2      $1))   }
-|	leafType ConstQual '*' QualMaybe '*' QualMaybe		{ $6 (tyPointer ($4 (tyPointer ($2      $1)))) }
-|	const leafType						{                              (tyConst $2)    }
-|	const leafType '*' QualMaybe				{                $4 (tyPointer (tyConst $2))   }
-|	const leafType '*' QualMaybe '*' QualMaybe		{ $6 (tyPointer ($4 (tyPointer (tyConst $2)))) }
+|	PtrType(leafType)					{ $1 }
 
-ConstQual :: { NonTerm -> NonTerm }
-ConstQual
-:								{ id }
-|	const							{ tyConst }
+PtrType(leafType)
+:	leafType QualMaybe					{ $2 $1 }
+|	const leafType QualMaybe				{ $3 (tyConst $2) }
+|	PtrType(leafType) '*' QualMaybe				{ $3 (tyPointer $1) }
 
 QualList :: { NonTerm -> NonTerm }
 QualList
