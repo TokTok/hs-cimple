@@ -313,6 +313,39 @@ spec = do
                 , "    |     ^"
                 ]
 
+        it "renders multiple spans in different files" $ do
+            let cache = Map.fromList
+                    [ ("file1.c", ["line 1 in file 1"])
+                    , ("file2.h", ["line 1 in file 2"])
+                    ]
+            let diag = Diagnostic
+                    { diagPos = CimplePos "file1.c" 1 1
+                    , diagLen = 4
+                    , diagLevel = ErrorLevel
+                    , diagMsg = "error across files"
+                    , diagFlag = Nothing
+                    , diagSpans =
+                        [ DiagnosticSpan (CimplePos "file1.c" 1 1) 4 ["primary"]
+                        , DiagnosticSpan (CimplePos "file2.h" 1 1) 4 ["secondary"]
+                        ]
+                    , diagFooter = []
+                    }
+            shouldRenderTo cache [diag]
+                [ "error: error across files"
+                , "   --> file1.c:1:1"
+                , "    |"
+                , "   1| line 1 in file 1"
+                , "    | ^^^^"
+                , "    | |"
+                , "    | primary"
+                , "   ::: file2.h:1:1"
+                , "    |"
+                , "   1| line 1 in file 2"
+                , "    | ^^^^"
+                , "    | |"
+                , "    | secondary"
+                ]
+
     describe "diagToText" $ do
         it "converts diagnostic to simple text format" $ do
             let diag = Diagnostic

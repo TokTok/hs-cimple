@@ -104,7 +104,7 @@ data CimplePos = CimplePos
     , cimpleLine   :: Int
     , cimpleColumn :: Int
     }
-    deriving (Show, Eq)
+    deriving (Show, Eq, Ord)
 
 instance IsPosition CimplePos where
     posFile = cimpleFile
@@ -203,8 +203,36 @@ renderPure cache = map (formatRichError cache)
                         maxLine = if null lineNums then 0 else maximum lineNums
                     in max 4 (length (show maxLine))
 
-                groupedSpans = groupBy ((==) `on` (posLine . spanPos)) $ sortBy (compare `on` (posLine . spanPos)) spansToShow
-                snippet = concatMap renderGrouped groupedSpans
+                posCompare s1 s2 =
+                    let p1 = spanPos s1
+                        p2 = spanPos s2
+                        isPrimary f = f == posFile p
+                    in compare (not (isPrimary (posFile p1))) (not (isPrimary (posFile p2))) <>
+                       compare (posFile p1) (posFile p2) <>
+                       compare (posLine p1) (posLine p2) <>
+                       compare (posColumn p1) (posColumn p2)
+
+                posEqLine s1 s2 =
+                    let p1 = spanPos s1
+                        p2 = spanPos s2
+                    in posFile p1 == posFile p2 && posLine p1 == posLine p2
+
+                posEqFile s1 s2 = posFile (spanPos s1) == posFile (spanPos s2)
+
+                groupedByFile = groupBy posEqFile $ sortBy posCompare spansToShow
+
+                renderFileGroup gs@(s:_) =
+                    let p_g = spanPos s
+                        sep = if posFile p_g /= posFile p
+                              then [ annotate (colorDull White) (pretty (replicate (width - 1) ' ') <> ":::") <+> annotate (bold <> color White) (pretty (posFile p_g) <> ":" <> pretty (posLine p_g) <> ":" <> pretty (posColumn p_g))
+                                   , annotate (colorDull White) (pretty (replicate width ' ') <> "|")
+                                   ]
+                              else []
+                        lineGroups = groupBy posEqLine gs
+                    in sep ++ concatMap renderGrouped lineGroups
+                renderFileGroup [] = []
+
+                snippet = concatMap renderFileGroup groupedByFile
 
                 formatFooter (l, d) =
                     let pref = case l of
