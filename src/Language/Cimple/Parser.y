@@ -757,7 +757,7 @@ CallbackDecl
 
 FunctionPrototype(id)
 :	QualType(GlobalLeafType) id FunctionParamList		{ Fix $ FunctionPrototype $1 $2 $3 }
-|	ID_FUNC_TYPE '*' id FunctionParamList			{ Fix $ FunctionPrototype (Fix $ TyPointer $ Fix $ TyFunc $1) $3 $4 }
+|	ID_FUNC_TYPE '*' QualMaybe id FunctionParamList		{ Fix $ FunctionPrototype ($3 (Fix $ TyPointer $ Fix $ TyFunc $1)) $4 $5 }
 
 FunctionParamList :: { [NonTerm] }
 FunctionParamList

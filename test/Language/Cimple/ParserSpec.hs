@@ -147,6 +147,10 @@ spec = do
                 Right [Fix (FunctionDecl _ (Fix (FunctionPrototype _ _ [Fix (VarDecl (Fix (TyPointer (Fix (TyNonnull (Fix (TyStd _)))))) (L _ _ "p") [])])))] -> return ()
                 _ -> expectationFailure $ "Unexpected AST: " ++ show ast
 
+        it "should parse a function returning a nullable callback" $ do
+            let ast = parseText "tox_log_cb *_Nullable tox_options_get_log_callback(void);"
+            ast `shouldSatisfy` isRight1
+
         it "supports single declarators" $ do
             let ast = parseText "int main() { int a; }"
             ast `shouldBe` Right
