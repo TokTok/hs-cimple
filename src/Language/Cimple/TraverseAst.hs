@@ -118,6 +118,16 @@ instance TraverseAst text (Comment (Lexeme text)) where
         DocSee ref -> do
             _ <- recurse ref
             pure ()
+        DocThread role -> do
+            _ <- recurse role
+            pure ()
+        DocGuardedBy lock -> do
+            _ <- recurse lock
+            pure ()
+        DocRequires param field -> do
+            _ <- recurse param
+            _ <- recurse field
+            pure ()
         DocSecurityRank kw mparam rank -> do
             _ <- recurse kw
             _ <- recurse mparam

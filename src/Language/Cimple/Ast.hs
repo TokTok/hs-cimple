@@ -256,6 +256,9 @@ data CommentF lexeme a
     | DocSection lexeme
     | DocSecurityRank lexeme (Maybe lexeme) lexeme
     | DocSee lexeme
+    | DocThread lexeme
+    | DocGuardedBy lexeme
+    | DocRequires lexeme lexeme
     | DocSubsection lexeme
 
     | DocPrivate
@@ -285,6 +288,9 @@ instance Bifunctor CommentF where
         DocSection l            -> DocSection (f l)
         DocSecurityRank l ml l' -> DocSecurityRank (f l) (fmap f ml) (f l')
         DocSee l                -> DocSee (f l)
+        DocThread l             -> DocThread (f l)
+        DocGuardedBy l          -> DocGuardedBy (f l)
+        DocRequires l l'        -> DocRequires (f l) (f l')
         DocSubsection l         -> DocSubsection (f l)
         DocPrivate              -> DocPrivate
         DocLine as              -> DocLine (map g as)

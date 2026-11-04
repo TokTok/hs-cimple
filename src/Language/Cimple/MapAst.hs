@@ -131,6 +131,12 @@ instance MapAst itext otext (Comment (Lexeme itext)) where
             Fix <$> (DocSection <$> recurse sec)
         DocSee ref ->
             Fix <$> (DocSee <$> recurse ref)
+        DocThread role ->
+            Fix <$> (DocThread <$> recurse role)
+        DocGuardedBy lock ->
+            Fix <$> (DocGuardedBy <$> recurse lock)
+        DocRequires param field ->
+            Fix <$> (DocRequires <$> recurse param <*> recurse field)
         DocSecurityRank kw param rank ->
             Fix <$> (DocSecurityRank <$> recurse kw <*> recurse param <*> recurse rank)
         DocSubsection subsec ->

@@ -203,6 +203,33 @@ spec = do
                 ]
             `shouldSatisfy` isRight1
 
+        it "should parse @thread" $
+            parseLines
+                [ "/**"
+                , " * @thread any"
+                , " */"
+                , "void send_frame(void);"
+                ]
+            `shouldSatisfy` isRight1
+
+        it "should parse @guarded_by" $
+            parseLines
+                [ "struct Call {"
+                , "  /** @guarded_by mutex */"
+                , "  int bit_rate;"
+                , "};"
+                ]
+            `shouldSatisfy` isRight1
+
+        it "should parse @requires" $
+            parseLines
+                [ "/**"
+                , " * @requires(call, mutex)"
+                , " */"
+                , "void call_send(Call *call);"
+                ]
+            `shouldSatisfy` isRight1
+
         it "should parse a complex comment" $
             parseLines
                 [ "/**"

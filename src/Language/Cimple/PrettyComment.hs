@@ -69,6 +69,9 @@ ppCommentInfo = foldFix go
     DocReturn         -> kwDocReturn
     DocRetval         -> kwDocRetval
     DocSee name       -> kwDocSee        <+> ppRef name
+    DocThread role    -> kwDocThread     <+> ppLexeme role
+    DocGuardedBy lock -> kwDocGuardedBy  <+> ppLexeme lock
+    DocRequires p f   -> kwDocRequires <> pretty '(' <> ppLexeme p <> pretty ',' <+> ppLexeme f <> pretty ')'
     DocRef name         -> kwDocRef        <+> ppRef name
     DocP name           -> kwDocP          <+> ppRef name
     DocExtends feat     -> kwDocExtends    <+> ppLexeme feat
