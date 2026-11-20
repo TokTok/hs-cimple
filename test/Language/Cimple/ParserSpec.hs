@@ -10,8 +10,9 @@ import           Data.Text           (Text)
 import qualified Data.Text           as Text
 import           Language.Cimple     (AlexPosn (..), Lexeme (..),
                                       LexemeClass (..), Node, NodeF (..),
-                                      Scope (..), UnaryOp (..),
-                                      formatParseError, preprocessorEnabled)
+                                      Nullability (..), Scope (..),
+                                      UnaryOp (..), formatParseError,
+                                      preprocessorEnabled)
 import           Language.Cimple.IO  (parseExpr, parseStmt, parseText)
 import           Language.CimpleSpec (sampleToken)
 import           Test.Hspec          (Spec, describe, expectationFailure, it,
@@ -146,6 +147,21 @@ spec = do
             case ast of
                 Right [Fix (FunctionDecl _ (Fix (FunctionPrototype _ _ [Fix (VarDecl (Fix (TyPointer (Fix (TyNonnull (Fix (TyStd _)))))) (L _ _ "p") [])])))] -> return ()
                 _ -> expectationFailure $ "Unexpected AST: " ++ show ast
+
+        it "reads /*! _Nullable */ and /*! _Nonnull */ as the qualifiers" $ do
+            case parseText "char * /*! _Nonnull */ f(const int * /*! _Nullable */ p);" of
+                Right [Fix (FunctionDecl _ (Fix (FunctionPrototype
+                    (Fix (TyNonnull (Fix (TyPointer _)))) _
+                    [Fix (VarDecl (Fix (TyNullable (Fix (TyPointer _)))) (L _ _ "p") [])])))] -> return ()
+                ast -> expectationFailure $ "Unexpected AST: " ++ show ast
+
+        it "reads /*! _Nullable */ in an array parameter as its nullability" $ do
+            case parseText "void f(const uint8_t a[/*! _Nullable */ 32], const uint8_t b[/*! _Nonnull */]);" of
+                Right [Fix (FunctionDecl _ (Fix (FunctionPrototype _ _
+                    [ Fix (VarDecl _ (L _ _ "a") [Fix (DeclSpecArray Nullable (Just _))])
+                    , Fix (VarDecl _ (L _ _ "b") [Fix (DeclSpecArray Nonnull Nothing)])
+                    ])))] -> return ()
+                ast -> expectationFailure $ "Unexpected AST: " ++ show ast
 
         it "should parse a function returning a nullable callback" $ do
             let ast = parseText "tox_log_cb *_Nullable tox_options_get_log_callback(void);"

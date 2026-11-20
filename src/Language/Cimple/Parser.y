@@ -459,7 +459,11 @@ DeclSpecArray :: { NonTerm }
 DeclSpecArray
 :	'[' Nullability ']'					{ Fix $ DeclSpecArray $2 Nothing }
 |	'[' Nullability Expr ']'				{ Fix $ DeclSpecArray $2 (Just $3) }
-|	'[' Nullability '/*!' Expr '*/' ']'			{ Fix $ DeclSpecArray $2 (Just $4) }
+|	'[' '/*!' Expr '*/' ']'					{ Fix $ DeclSpecArray NullabilityUnspecified (Just $3) }
+|	'[' nullable '/*!' Expr '*/' ']'			{ Fix $ DeclSpecArray Nullable (Just $4) }
+|	'[' nonnull '/*!' Expr '*/' ']'				{ Fix $ DeclSpecArray Nonnull (Just $4) }
+|	'[' CommentNullability ']'				{ Fix $ DeclSpecArray $2 Nothing }
+|	'[' CommentNullability Expr ']'				{ Fix $ DeclSpecArray $2 (Just $3) }
 
 InitialiserExpr :: { NonTerm }
 InitialiserExpr
@@ -715,6 +719,14 @@ Qual
 |	nonnull							{ tyNonnull }
 |	nullable						{ tyNullable }
 |	owner							{ tyOwner }
+|	'/*!' nonnull '*/'					{ tyNonnull }
+|	'/*!' nullable '*/'					{ tyNullable }
+
+-- | A header's nullability before it can say @_Nullable@: @/*! _Nullable */@.
+CommentNullability :: { Nullability }
+CommentNullability
+:	'/*!' nullable '*/'					{ Nullable }
+|	'/*!' nonnull '*/'					{ Nonnull }
 
 Nullability :: { Nullability }
 Nullability
