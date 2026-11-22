@@ -326,6 +326,8 @@ ppNodeF = \case
 
     AttrPrintf fmt ellipsis fun ->
         kwGnuPrintf <> ppIntList [fmt, ellipsis] <> line <> fun
+    AttrAllocSize sizes fun ->
+        kwGnuAllocSize <> ppIntList sizes <> line <> fun
     CallbackDecl ty name ->
         ppLexeme ty <+> ppLexeme name
     FunctionPrototype ty name params ->

@@ -68,6 +68,7 @@ $lower          = [a-z]
 tokens :-
 
 -- Ignore attributes.
+<0>		"GNU_ALLOC_SIZE"			{ mkL KwGnuAllocSize }
 <0>		"GNU_PRINTF"				{ mkL KwGnuPrintf }
 <0>		"VLA"					{ mkL KwVla }
 

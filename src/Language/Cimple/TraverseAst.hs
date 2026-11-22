@@ -435,6 +435,10 @@ instance TraverseAst text (Node (Lexeme text)) where
             _ <- recurse ellipsis
             _ <- recurse fun
             pure ()
+        AttrAllocSize sizes fun -> do
+            _ <- recurse sizes
+            _ <- recurse fun
+            pure ()
         FunctionDecl _scope proto ->
             recurse proto
         FunctionDefn _scope proto body -> do

@@ -123,6 +123,7 @@ import           Language.Cimple.Tokens        (LexemeClass (..))
     ellipsis		{ Fix (Ellipsis) }
     nonNull		{ Fix (NonNull{}) }
     attrPrintf		{ Fix (AttrPrintf{}) }
+    attrAllocSize	{ Fix (AttrAllocSize{}) }
     -- Constants
     constDecl		{ Fix (ConstDecl{}) }
     constDefn		{ Fix (ConstDefn{}) }
@@ -151,6 +152,7 @@ CommentableDecl
 |	functionDefn						{ $1 }
 |	nonNull							{ $1 }
 |	attrPrintf						{ $1 }
+|	attrAllocSize						{ $1 }
 |	aggregateDecl						{% processAggregate $1 }
 |	struct							{% processAggregate $1 }
 |	union							{% processAggregate $1 }

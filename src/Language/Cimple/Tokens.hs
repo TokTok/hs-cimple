@@ -28,6 +28,7 @@ data LexemeClass
     | KwExtern
     | KwFor
     | KwForce
+    | KwGnuAllocSize
     | KwGnuPrintf
     | KwGoto
     | KwIf

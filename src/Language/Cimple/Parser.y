@@ -55,6 +55,7 @@ import           Language.Cimple.Tokens      (LexemeClass (..))
     extern			{ L _ KwExtern			_ }
     for				{ L _ KwFor			_ }
     force			{ L _ KwForce			_ }
+    GNU_ALLOC_SIZE		{ L _ KwGnuAllocSize		_ }
     GNU_PRINTF			{ L _ KwGnuPrintf		_ }
     goto			{ L _ KwGoto			_ }
     if				{ L _ KwIf			_ }
@@ -756,6 +757,8 @@ FunctionDecl
 Attrs :: { NonTerm -> NonTerm }
 Attrs
 :	GNU_PRINTF '(' LIT_INTEGER ',' LIT_INTEGER ')'		{ Fix . AttrPrintf $3 $5 }
+|	GNU_ALLOC_SIZE '(' LIT_INTEGER ')'			{ Fix . AttrAllocSize [$3] }
+|	GNU_ALLOC_SIZE '(' LIT_INTEGER ',' LIT_INTEGER ')'	{ Fix . AttrAllocSize [$3, $5] }
 
 FunctionDeclarator :: { Scope -> NonTerm }
 FunctionDeclarator

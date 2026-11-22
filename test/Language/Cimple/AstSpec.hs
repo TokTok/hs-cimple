@@ -147,6 +147,7 @@ spec = do
 
             -- Functions
             test (AttrPrintf "l" "l'" "a") (AttrPrintf "l-l" "l-l'" "a-a")
+            test (AttrAllocSize ["l"] "a") (AttrAllocSize ["l-l"] "a-a")
             test (FunctionDecl Global "a") (FunctionDecl Global "a-a")
             test (FunctionDefn Global "a" "a'") (FunctionDefn Global "a-a" "a-a'")
             test (FunctionPrototype "a" "l" ["as"]) (FunctionPrototype "a-a" "l-l" ["a-as"])

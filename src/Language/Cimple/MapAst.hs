@@ -339,6 +339,8 @@ instance MapAst itext otext (Node (Lexeme itext)) where
             Fix <$> (TyUserDefined <$> recurse name)
         AttrPrintf fmt ellipsis fun ->
             Fix <$> (AttrPrintf <$> recurse fmt <*> recurse ellipsis <*> recurse fun)
+        AttrAllocSize sizes fun ->
+            Fix <$> (AttrAllocSize <$> recurse sizes <*> recurse fun)
         FunctionDecl scope proto ->
             Fix <$> (FunctionDecl scope <$> recurse proto)
         FunctionDefn scope proto body ->

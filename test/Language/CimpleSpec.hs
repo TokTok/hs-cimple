@@ -28,6 +28,7 @@ sampleToken c = case c of
     KwExtern              -> "extern"
     KwFor                 -> "for"
     KwForce               -> "force"
+    KwGnuAllocSize        -> "gnu_alloc_size"
     KwGnuPrintf           -> "gnu_printf"
     KwGoto                -> "goto"
     KwIf                  -> "if"

@@ -95,6 +95,16 @@ spec = do
                 , "} Foo;"
                 ]
 
+        it "pretty-prints an allocation size attribute" $ do
+            pretty "GNU_ALLOC_SIZE(2) void *mem_balloc(const Memory *mem, uint32_t size);" `shouldBe` unlines
+                [ "GNU_ALLOC_SIZE(2)"
+                , "void* mem_balloc(Memory const* mem, uint32_t size);"
+                ]
+            pretty "GNU_ALLOC_SIZE(2, 3) void *mem_valloc(const Memory *mem, uint32_t nmemb, uint32_t size);" `shouldBe` unlines
+                [ "GNU_ALLOC_SIZE(2, 3)"
+                , "void* mem_valloc(Memory const* mem, uint32_t nmemb, uint32_t size);"
+                ]
+
     describe "renderCompact" $ do
         it "pretty-prints a simple C function" $ do
             let pp = compact "int a(void) { return 3; }"

@@ -125,6 +125,7 @@ data NodeF lexeme a
     | TyUserDefined lexeme
     -- Functions
     | AttrPrintf lexeme lexeme a
+    | AttrAllocSize [lexeme] a
     | FunctionDecl Scope a
     | FunctionDefn Scope a a
     | FunctionPrototype a lexeme [a]
@@ -223,6 +224,7 @@ instance Bifunctor NodeF where
         TyStd l -> TyStd (f l)
         TyUserDefined l -> TyUserDefined (f l)
         AttrPrintf l l' a -> AttrPrintf (f l) (f l') (g a)
+        AttrAllocSize ls a -> AttrAllocSize (map f ls) (g a)
         FunctionDecl s a -> FunctionDecl s (g a)
         FunctionDefn s a a' -> FunctionDefn s (g a) (g a')
         FunctionPrototype a l as -> FunctionPrototype (g a) (f l) (map g as)
