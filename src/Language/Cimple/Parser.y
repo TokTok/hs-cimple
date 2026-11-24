@@ -692,6 +692,7 @@ TypedefDecl :: { NonTerm }
 TypedefDecl
 :	typedef QualType(GlobalLeafType) ID_SUE_TYPE DeclSpecArrays ';'	{ Fix $ Typedef $2 $3 $4 }
 |	typedef FunctionPrototype(ID_FUNC_TYPE) ';'		{ Fix $ TypedefFunction $2 }
+|	Attrs typedef FunctionPrototype(ID_FUNC_TYPE) ';'	{ $1 $ Fix $ TypedefFunction $3 }
 |	struct ID_SUE_TYPE ';'					{ Fix $ Typedef (Fix (TyStruct $2)) $2 [] }
 
 QualType(leafType)
