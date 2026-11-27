@@ -27,7 +27,9 @@ haskell_binary(
     visibility = ["//visibility:public"],
     deps = [
         "//hs-cimple",
+        "//third_party/haskell:aeson",
         "//third_party/haskell:base",
+        "//third_party/haskell:bytestring",
         "//third_party/haskell:groom",
     ],
 )

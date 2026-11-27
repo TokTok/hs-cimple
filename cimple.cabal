@@ -89,7 +89,9 @@ executable dump-ast
   ghc-options:      -Wall
   main-is:          dump-ast.hs
   build-depends:
-      base        <5
+      aeson
+    , base        <5
+    , bytestring
     , cimple
     , groom
 
